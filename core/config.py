@@ -27,6 +27,12 @@ POSTGRES_MAX_OVERFLOW = int(os.getenv("POSTGRES_MAX_OVERFLOW", 20))
 
 POSTGRES_ECHO = os.getenv("POSTGRES_ECHO", "True").lower() in ('true', '1')
 
+# CORS ENV variables
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", ["*"])
+
+# Bot ENV variables
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
 
 class RunConfig(BaseModel):
     debug: bool = DEBUG
@@ -55,9 +61,19 @@ class DBConfig(BaseModel):
         return v
 
 
+class CORSConfig(BaseModel):
+    allowed_origins: list = ALLOWED_ORIGINS
+    
+
+class BotConfig(BaseModel):
+    token: str = BOT_TOKEN
+
+
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DBConfig = DBConfig()
+    cors: CORSConfig = CORSConfig()
+    bot: BotConfig = BotConfig()
 
 
 settings = Settings()
