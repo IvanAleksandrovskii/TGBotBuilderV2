@@ -33,6 +33,11 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", ["*"])
 # Bot ENV variables
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+# SQLAdmin ENV variables
+SQLADMIN_SECRET_KEY = os.getenv("SQLADMIN_SECRET_KEY", "sqladmin_secret_key")
+SQLADMIN_USERNAME = os.getenv("SQLADMIN_USERNAME", "admin")
+SQLADMIN_PASSWORD = os.getenv("SQLADMIN_PASSWORD", "password")
+
 # Media ENV variables
 MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
 BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://5df3-184-22-35-211.ngrok-free.app")
@@ -71,6 +76,12 @@ class CORSConfig(BaseModel):
 
 class BotConfig(BaseModel):
     token: str = BOT_TOKEN
+
+
+class SQLAdminConfig(BaseModel):
+    secret_key: str = SQLADMIN_SECRET_KEY
+    username: str = SQLADMIN_USERNAME
+    password: str = SQLADMIN_PASSWORD
 
 
 class MediaConfig(BaseModel):
@@ -130,6 +141,7 @@ class Settings(BaseSettings):
     db: DBConfig = DBConfig()
     cors: CORSConfig = CORSConfig()
     bot: BotConfig = BotConfig()
+    admin_panel: SQLAdminConfig = SQLAdminConfig()
     media: MediaConfig = MediaConfig()
     bot_admin_text: BotAdminTexts = BotAdminTexts()
     bot_main_page_text: BotMainPageTexts = BotMainPageTexts()

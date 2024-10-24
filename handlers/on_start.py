@@ -15,7 +15,7 @@ from core.models import User, db_helper
 from services import UserService
 from services.text_service import TextService
 from services.button_service import ButtonService
-from .utils import send_new_message, send_or_edit_message
+from .utils import send_or_edit_message
 
 
 # ic.disable()
@@ -138,7 +138,7 @@ async def start_command(message: types.Message, bot: Bot, state: FSMContext):
     else:
         await state.clear()
     
-    await send_new_message(message, text, entities, keyboard, media_url)
+    await send_or_edit_message(message, text, entities, keyboard, media_url)
 
 
 @router.callback_query(lambda c: c.data == "end_first_greeting")

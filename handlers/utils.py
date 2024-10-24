@@ -65,18 +65,18 @@ def get_input_media(media_url: str, caption: str, entities: list[types.MessageEn
         return InputMediaVideo(media=media_url, caption=caption, caption_entities=entities)
     
 
-async def send_new_message(message: types.Message, text: str, entities: list[types.MessageEntity], keyboard=None, media_url: str = None):
-    file_ext = media_url.split('.')[-1].lower() if media_url else None
+# async def send_new_message(message: types.Message, text: str, entities: list[types.MessageEntity], keyboard=None, media_url: str = None):
+#     file_ext = media_url.split('.')[-1].lower() if media_url else None
     
-    if file_ext == 'gif':
-        await message.answer_animation(animation=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
-    elif file_ext in ['jpg', 'jpeg', 'png']:
-        await message.answer_photo(photo=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
-    elif file_ext in ['mp4', 'avi', 'mov']:
-        await message.answer_video(video=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
-    else:
-        # If no media is found or it is not supported, send the text 
-        await message.answer(text=text, entities=entities, reply_markup=keyboard)
+#     if file_ext == 'gif':
+#         await message.answer_animation(animation=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
+#     elif file_ext in ['jpg', 'jpeg', 'png']:
+#         await message.answer_photo(photo=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
+#     elif file_ext in ['mp4', 'avi', 'mov']:
+#         await message.answer_video(video=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
+#     else:
+#         # If no media is found or it is not supported, send the text 
+#         await message.answer(text=text, entities=entities, reply_markup=keyboard)
 
 
 async def get_content(context_marker: str, session: AsyncSession):

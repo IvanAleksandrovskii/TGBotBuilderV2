@@ -18,9 +18,9 @@ import uvicorn
 
 from core.models import db_helper
 
-# from sqladmin import Admin
-# from core.admin import async_sqladmin_db_helper, sqladmin_authentication_backend
-# from core.admin.models import setup_admin
+from sqladmin import Admin
+from core.admin import async_sqladmin_db_helper, sqladmin_authentication_backend
+from core.admin.models import setup_admin
 
 from core import settings, log
 
@@ -28,7 +28,6 @@ from handlers import router as main_router
 
 
 # TODO: Add signit signal handler for graceful shutdown
-# TODO: Add admin panel, storages 
 
 
 # Initialize bot and dispatcher
@@ -62,7 +61,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     log.info("Shutting down the FastAPI application...")
 
     await db_helper.dispose()
-    # await async_sqladmin_db_helper.dispose()
+    await async_sqladmin_db_helper.dispose()
 
     # Stop polling
     if polling_task:
@@ -85,13 +84,13 @@ main_app = FastAPI(
 )
 
 # Mount media storage
-main_app.mount("/media/", StaticFiles(directory=settings.media.root[4:]), name="media")
+main_app.mount("/app/media/", StaticFiles(directory=settings.media.root[4:]), name="media")
 
 # SQLAdmin
-# admin = Admin(main_app, engine=async_sqladmin_db_helper.engine, authentication_backend=sqladmin_authentication_backend)
+admin = Admin(main_app, engine=async_sqladmin_db_helper.engine, authentication_backend=sqladmin_authentication_backend)
 
 # Register admin views
-# setup_admin(admin)
+setup_admin(admin)
 
 
 # Favicon.ico errors silenced
