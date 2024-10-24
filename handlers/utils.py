@@ -6,7 +6,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import InputMediaAnimation, InputMediaPhoto, InputMediaVideo
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core import logger, settings
+from core import log, settings
 
 # from core.models.user import User
 from services.button_service import ButtonService
@@ -14,7 +14,7 @@ from services.text_service import TextService
 
 
 async def send_or_edit_message(message: types.Message | types.CallbackQuery, text: str, entities: list[types.MessageEntity], keyboard=None, media_url: str = None):
-    logger.info(f"text: {text} \n entities: {entities} \n keyboard: {keyboard} \n media_url: {media_url}")
+    log.info(f"text: {text} \n entities: {entities} \n keyboard: {keyboard} \n media_url: {media_url}")
     try:
         if isinstance(message, types.CallbackQuery):
             message = message.message
@@ -28,31 +28,31 @@ async def send_or_edit_message(message: types.Message | types.CallbackQuery, tex
                     await message.answer_photo(photo=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
             except TelegramBadRequest as e:
                 if "message is not modified" in str(e).lower():
-                    logger.debug("Message was not modified as the content didn't change")
+                    log.debug("Message was not modified as the content didn't change")
                 else:
-                    logger.error(f"Error editing message with media: {e}")
+                    log.error(f"Error editing message with media: {e}")
                     await message.answer(text=text, entities=entities, reply_markup=keyboard)
             except Exception as e:
-                logger.error(f"Error sending media: {e}")
+                log.error(f"Error sending media: {e}")
                 await message.answer(text=text, entities=entities, reply_markup=keyboard)
         else:
             try:
                 await message.edit_text(text=text, entities=entities, reply_markup=keyboard)
             except TelegramBadRequest as e:
                 if "message is not modified" in str(e).lower():
-                    logger.debug("Message was not modified as the content didn't change")
+                    log.debug("Message was not modified as the content didn't change")
                 else:
-                    logger.error(f"Error editing message: {e}")
+                    log.error(f"Error editing message: {e}")
                     await message.answer(text=text, entities=entities, reply_markup=keyboard)
             except Exception as e:
-                logger.error(f"Error in send_or_edit_message: {e}")
+                log.error(f"Error in send_or_edit_message: {e}")
                 await message.answer(text=text, entities=entities, reply_markup=keyboard)
     except Exception as e:
-        logger.error(f"Unexpected error in send_or_edit_message: {e}")
+        log.error(f"Unexpected error in send_or_edit_message: {e}")
         try:
             await message.answer(settings.bot_text.utils_error_message)
         except Exception as final_error:
-            logger.critical(f"Failed to send error message: {final_error}")
+            log.critical(f"Failed to send error message: {final_error}")
 
 
 def get_input_media(media_url: str, caption: str, entities: list[types.MessageEntity]):
@@ -85,7 +85,7 @@ async def get_content(context_marker: str, session: AsyncSession):
 
     content_data = await text_service.get_text_with_media(context_marker, session)
     if not content_data:
-        logger.warning(f"Content not found for marker: {context_marker}")
+        log.warning(f"Content not found for marker: {context_marker}")
         content_data = {"text": settings.bot_text.utils_handler_content_not_found, "entities": [], "media_urls": []}
 
     keyboard = await button_service.create_inline_keyboard(context_marker, session)

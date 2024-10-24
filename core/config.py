@@ -120,6 +120,11 @@ class BotAdminTexts(BaseModel):
     confirming_words: list[str] = ["да", "yes", "конечно", "отправить", "send", "accept", "absolutely", "lf"]
 
 
+class BotMainPageTexts(BaseModel):
+    user_error_message: str = "Something went wrong. Please try again later."
+    welcome_fallback_user_word: str = "пользователь"
+
+
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DBConfig = DBConfig()
@@ -127,6 +132,7 @@ class Settings(BaseSettings):
     bot: BotConfig = BotConfig()
     media: MediaConfig = MediaConfig()
     bot_admin_text: BotAdminTexts = BotAdminTexts()
+    bot_main_page_text: BotMainPageTexts = BotMainPageTexts()
 
 
 settings = Settings()
