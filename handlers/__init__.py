@@ -3,4 +3,6 @@ from aiogram import Router
 
 router = Router()
 
-# router.include_route(...)
+from .on_start import router as on_start_router
+
+router.include_router(on_start_router)
