@@ -85,12 +85,47 @@ class MediaConfig(BaseModel):
         return v
 
 
+class BotAdminTexts(BaseModel):
+    """
+    RUSSIAN VERSION
+    """
+    full_success_broadcast: str = "Рассылка выполнена успешно: отправлено всем пользователям:"
+    not_all_broadcast_1: str = "Рассылка выполнена, успешно отправлено пользователям"
+    not_all_broadcast_2: str = "Но не удалось отправить сообщение пользователям:" 
+    not_all_broadcast_3: str = "Пользователи могли не активировать чат с ботом."
+    unsupported_file_type: str = "Извините, не поддерживаемый тип контента:"
+    unsupported_message_type: str = "Неподдерживаемый тип сообщения: "
+    broadcast_cancelled: str = "Рассылка отменена"
+    added_to_broadcast: str = "Сообщение добавлено в рассылку. Отправьте еще сообщения или используйте /done для завершения."
+    boadcast_approve: str = "Вы добавили сообщение(й) для рассылки. Вы уверены, что хотите начать рассылку? (да/нет)"
+    braodcast_preview: str = "Вот предварительный просмотр вашей рассылки:"
+    empty_broadcast: str = "Вы не добавили ни одного сообщения для рассылки. Пожалуйста, добавьте хотя бы одно сообщение. Вы сможете отменить на разу после этого."
+    greeting: str = """Введите сообщение для массовой рассылки. Вы можете отправить следующие типы контента:\n\n
+        • Текст\n
+        • Фото\n
+        • Видео\n
+        • Аудио\n
+        • Документ\n
+        • Анимация (GIF)\n
+        • Голосовое сообщение\n
+        • Видеозапись\n
+        • Стикер\n
+        • Местоположение\n
+        • Место (venue)\n
+        • Контакт\n
+        Вы можете отправить несколько сообщений разных типов. 
+        Когда закончите, отправьте команду /done для подтверждения рассылки."""
+    no_admin_rules: str = "У вас нет прав для выполнения этой команды."
+    error_message: str = "Something went wrong. Please try again later or contact the developer."
+
+
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DBConfig = DBConfig()
     cors: CORSConfig = CORSConfig()
     bot: BotConfig = BotConfig()
     media: MediaConfig = MediaConfig()
+    bot_admin_text: BotAdminTexts = BotAdminTexts()
 
 
 settings = Settings()
