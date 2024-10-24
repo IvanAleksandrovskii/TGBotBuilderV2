@@ -33,6 +33,10 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", ["*"])
 # Bot ENV variables
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+# Media ENV variables
+MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
+BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://5df3-184-22-35-211.ngrok-free.app")
+
 
 class RunConfig(BaseModel):
     debug: bool = DEBUG
@@ -69,11 +73,24 @@ class BotConfig(BaseModel):
     token: str = BOT_TOKEN
 
 
+class MediaConfig(BaseModel):
+    root: str = "app/media"
+    base_url: str = BASE_SERVER_URL
+    allowed_image_extensions: list[str] = list(MEDIA_FILES_ALLOWED_EXTENSIONS)
+
+    @field_validator('allowed_image_extensions')
+    def validate_extensions(cls, v):
+        if not all(ext.startswith('.') for ext in v):
+            raise ValueError("All extensions must start with a dot")
+        return v
+
+
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DBConfig = DBConfig()
     cors: CORSConfig = CORSConfig()
     bot: BotConfig = BotConfig()
+    media: MediaConfig = MediaConfig()
 
 
 settings = Settings()

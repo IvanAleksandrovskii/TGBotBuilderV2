@@ -85,7 +85,7 @@ main_app = FastAPI(
 )
 
 # Mount media storage
-# main_app.mount("/media/", StaticFiles(directory=settings.media.root[4:]), name="media")
+main_app.mount("/media/", StaticFiles(directory=settings.media.root[4:]), name="media")
 
 # SQLAdmin
 # admin = Admin(main_app, engine=async_sqladmin_db_helper.engine, authentication_backend=sqladmin_authentication_backend)
