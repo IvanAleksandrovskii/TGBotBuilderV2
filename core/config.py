@@ -117,6 +117,7 @@ class BotAdminTexts(BaseModel):
         Когда закончите, отправьте команду /done для подтверждения рассылки."""
     no_admin_rules: str = "У вас нет прав для выполнения этой команды."
     error_message: str = "Something went wrong. Please try again later or contact the developer."
+    confirming_words: list[str] = ["да", "yes", "конечно", "отправить", "send", "accept", "absolutely", "lf"]
 
 
 class Settings(BaseSettings):
