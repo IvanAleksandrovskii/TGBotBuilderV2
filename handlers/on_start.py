@@ -1,8 +1,7 @@
 # handlers/on_start.py
 
 from aiogram import Router, Bot, types
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
+from aiogram.filters import Command  # CommandStart
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
@@ -120,6 +119,8 @@ async def start_command(message: types.Message, bot: Bot, state: FSMContext):
     bot_info = await bot.get_me()
     ic(bot_info)
     
+    ic(f"Отправитель (полная инфо): {message.from_user}")
+    
     if args:
         # Если есть параметры, берем первый
         start_parameter = args[0]
@@ -143,6 +144,9 @@ async def start_command(message: types.Message, bot: Bot, state: FSMContext):
 
 @router.callback_query(lambda c: c.data == "end_first_greeting")
 async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMContext):
+    
+    await callback_query.answer("Going to Bot")  # TODO: Move to config
+    
     chat_id = int(callback_query.from_user.id)
     username = callback_query.from_user.username
 
@@ -156,6 +160,9 @@ async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMCont
 
 @router.callback_query(lambda c: c.data == "back_to_start")
 async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
+    
+    await callback_query.answer("Back to start")  # TODO: Move to config
+    
     await state.clear()
     chat_id = int(callback_query.from_user.id)
     username = callback_query.from_user.username

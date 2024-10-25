@@ -3,7 +3,7 @@
 from sqlalchemy import select
 
 from fastapi import Request
-from fastapi.exceptions import HTTPException
+# from fastapi.exceptions import HTTPException
 from wtforms import validators, SelectMultipleField, StringField, TextAreaField
 from wtforms.widgets import ListWidget, CheckboxInput
 
@@ -23,10 +23,10 @@ class TextAdmin(BaseAdminModel, model=Text):
 
     # form_args = {
     #     'body': {
-    #         'render_kw': {"rows": 10}
+    #         'render_kw': {"rows": 20}
     #     },
     #     'body_html': {
-    #         'render_kw': {"rows": 10}
+    #         'render_kw': {"rows": 20}
     #     }
     # }
 
@@ -35,28 +35,28 @@ class TextAdmin(BaseAdminModel, model=Text):
     icon = "fa-solid fa-file-lines"
     category = "Important Data"
 
-    # async def scaffold_form(self):
-    #     form_class = await super().scaffold_form()
-        # form_class.context_marker = StringField(
-        #     'Context Marker',
-        #     validators=[validators.DataRequired(message="Context Marker is required")]
-        # )
-        # form_class.body = TextAreaField(
-        #     'Body',
-        #     validators=[validators.DataRequired(message="Body is required")]
-        # )
-        # form_class.body_html = TextAreaField(
-        #     'Body HTML',
-        # )
-        # form_class.media_files = SelectMultipleField(
-        #     'Media Files',
-        #     choices=await self._get_media_choices(),
-        #     widget=ListWidget(prefix_label=False),
-        #     option_widget=CheckboxInput(),
-        #     coerce=self._coerce_media,
-        #     validators=[validators.Length(max=10, message="You can select up to 10 media files.")]
-        # )
-        # return form_class
+    async def scaffold_form(self):
+        form_class = await super().scaffold_form()
+        form_class.context_marker = StringField(
+            'Context Marker',
+            validators=[validators.DataRequired(message="Context Marker is required")]
+        )
+        form_class.body = TextAreaField(
+            'Body',
+            validators=[validators.DataRequired(message="Body is required")]
+        )
+        form_class.body_html = TextAreaField(
+            'Body HTML',
+        )
+        form_class.media_files = SelectMultipleField(
+            'Media Files',
+            choices=await self._get_media_choices(),
+            widget=ListWidget(prefix_label=False),
+            option_widget=CheckboxInput(),
+            coerce=self._coerce_media,
+            validators=[validators.Length(max=10, message="You can select up to 10 media files.")]
+        )
+        return form_class
 
     def _coerce_media(self, value):
         if hasattr(value, 'id'):
@@ -100,11 +100,11 @@ class TextAdmin(BaseAdminModel, model=Text):
     #                 try:
     #                     # Fetch the Text model within this session
     #                     model = await session.merge(model)
-                        
+    
     #                     # Fetch Media objects within the same session
     #                     media_objects = await session.execute(select(Media).where(Media.id.in_(media_files)))
     #                     model.media_files = media_objects.scalars().all()
-                        
+    
     #                     # Commit the changes
     #                     await session.commit()
     #                 except Exception as e:

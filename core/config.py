@@ -40,7 +40,7 @@ SQLADMIN_PASSWORD = os.getenv("SQLADMIN_PASSWORD", "password")
 
 # Media ENV variables
 MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
-BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://5df3-184-22-35-211.ngrok-free.app")
+BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://b797-184-22-35-211.ngrok-free.app")
 
 
 class RunConfig(BaseModel):
