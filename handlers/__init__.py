@@ -8,7 +8,10 @@ from .admin import router as admin_router
 
 from .promocode import router as promocode_router
 
+from .universal_page import router as universal_page_router
+
 router.include_router(on_start_router)
 router.include_router(admin_router)
 
 router.include_router(promocode_router)
+router.include_router(universal_page_router)
