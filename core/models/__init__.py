@@ -5,6 +5,8 @@ __all__ = [
     "Media",
     "text_media_association",
     "Button",
+    "Promocode",
+    "PromoRegistration",
 ]
 
 
@@ -15,3 +17,5 @@ from .text import Text
 from .media import Media
 from .media_to_text import text_media_association
 from .button import Button
+
+from .promocode import Promocode, PromoRegistration

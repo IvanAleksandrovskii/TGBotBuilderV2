@@ -12,6 +12,7 @@ from icecream import ic
 from core import log, settings
 from core.models import User, db_helper
 from services import UserService
+from services.promocode_service import PromoCodeService
 from services.text_service import TextService
 from services.button_service import ButtonService
 from .utils import send_or_edit_message
@@ -107,31 +108,63 @@ async def get_start_content(chat_id: int, username: str | None):
             await session.close()
 
 
+# @router.message(Command("start"))
+# async def start_command(message: types.Message, bot: Bot, state: FSMContext):
+#     """
+#     Обработчик команды /start с поддержкой deep linking параметров
+#     """
+#     # Получаем аргументы после команды start
+#     args = message.text.split()[1:]  # Разделяем сообщение на части и берём всё после /start
+#     ic(args)
+    
+#     bot_info = await bot.get_me()
+#     ic(bot_info)
+    
+#     ic(f"Отправитель (полная инфо): {message.from_user}")
+    
+#     if args:
+#         # Если есть параметры, берем первый
+#         start_parameter = args[0]
+#         ic(f"Параметр старта: {start_parameter}")
+#     else:
+#         # Если параметров нет
+#         ic("Команда /start без параметров")
+
+#     chat_id = int(message.chat.id)
+#     username = message.from_user.username
+
+#     text, entities, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
+    
+#     if is_new_user:
+#         await state.set_state(FirstGreetingStates.GREETING)
+#     else:
+#         await state.clear()
+    
+#     await send_or_edit_message(message, text, entities, keyboard, media_url)
+
+
 @router.message(Command("start"))
 async def start_command(message: types.Message, bot: Bot, state: FSMContext):
-    """
-    Обработчик команды /start с поддержкой deep linking параметров
-    """
-    # Получаем аргументы после команды start
-    args = message.text.split()[1:]  # Разделяем сообщение на части и берём всё после /start
-    ic(args)
-    
-    bot_info = await bot.get_me()
-    ic(bot_info)
-    
-    ic(f"Отправитель (полная инфо): {message.from_user}")
-    
-    if args:
-        # Если есть параметры, берем первый
-        start_parameter = args[0]
-        ic(f"Параметр старта: {start_parameter}")
-    else:
-        # Если параметров нет
-        ic("Команда /start без параметров")
-
+    """Handler for /start command with promocode support"""
+    args = message.text.split()[1:]
     chat_id = int(message.chat.id)
     username = message.from_user.username
 
+    # Handle promocode if provided
+    if args:
+        promocode = args[0]
+        user = await UserService().get_user(chat_id)
+        
+        if user and not user.is_new_user:
+            # Existing user can't use promocodes
+            await message.answer("Promocodes are only for new users!")
+            return
+        
+        if user:
+            # Register promocode usage for new user
+            await PromoCodeService.register_promo_usage(promocode, user.id)
+
+    # Continue with regular start flow
     text, entities, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
     
     if is_new_user:

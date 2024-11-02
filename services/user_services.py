@@ -7,6 +7,8 @@ from core import log  # , settings
 from core.models import User, db_helper
 
 
+# TODO: Implement caching for user service and others
+
 class UserService:
 
     @staticmethod
