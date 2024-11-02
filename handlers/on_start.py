@@ -149,24 +149,41 @@ async def start_command(message: types.Message, bot: Bot, state: FSMContext):
     args = message.text.split()[1:]
     chat_id = int(message.chat.id)
     username = message.from_user.username
+    promocode = args[0] if args else None
+    
+    log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Promocode: {promocode}")
 
-    # Handle promocode if provided
-    if args:
-        promocode = args[0]
-        user = await UserService().get_user(chat_id)
-        
-        if user and not user.is_new_user:
-            # Existing user can't use promocodes
-            await message.answer("Promocodes are only for new users!")
-            return
-        
-        if user:
-            # Register promocode usage for new user
-            await PromoCodeService.register_promo_usage(promocode, user.id)
-
-    # Continue with regular start flow
+    # Get start content will create user if needed
     text, entities, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
     
+    # Now get the user that was just created or retrieved
+    user_service = UserService()
+    user = await user_service.get_user(chat_id)
+    
+    if not user:
+        log.error(f"Failed to get/create user for chat_id {chat_id}")
+        await message.answer("An error occurred. Please try again later.")
+        return
+
+    # Handle promocode if provided and user is new
+    if promocode and is_new_user:
+        log.info(f"Processing promocode {promocode} for new user {chat_id}")
+        try:
+            success = await PromoCodeService.register_promo_usage(promocode, user.id)
+            if success:
+                log.info(f"Successfully registered promocode usage for user {chat_id}")
+                # Optionally notify about successful referral
+                await message.answer("Welcome! You've joined using a referral link!")
+            else:
+                log.warning(f"Failed to register promocode usage for user {chat_id}")
+        except Exception as e:
+            log.exception(f"Error processing promocode: {e}")
+    elif promocode and not is_new_user:
+        log.info(f"Existing user {chat_id} tried to use promocode {promocode}")
+        await message.answer("Promocodes are only for new users!")
+        return
+
+    # Set state and send message
     if is_new_user:
         await state.set_state(FirstGreetingStates.GREETING)
     else:

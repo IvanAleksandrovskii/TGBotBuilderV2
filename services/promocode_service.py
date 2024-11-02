@@ -1,17 +1,11 @@
 # services/promocode_service.py
 
-# TODO: method for pormo check and generation if not one in User object
-# add table containing users registered by using the promo with a time stamp
-# create metod to make a record about users who used the promocode to register the usage (on start event by getting args)
-# TODO: Make it without relationships (maybe)
-
-
 import random
 import string
 from uuid import UUID
 from sqlalchemy import select, and_, func
 
-from core.models import Promocode, PromoRegistration, db_helper, User
+from core.models import Promocode, PromoRegistration, db_helper
 from core import log
 
 
@@ -23,7 +17,7 @@ class PromoCodeService:
         return ''.join(random.choice(chars) for _ in range(length))
 
     @staticmethod
-    async def create_promocode(user_id: UUID) -> Promocode | None:
+    async def create_promocode(user_id: UUID) -> Promocode:
         """Creates a new promocode for a user"""
         async for session in db_helper.session_getter():
             try:
@@ -32,8 +26,9 @@ class PromoCodeService:
                     select(Promocode)
                     .where(and_(Promocode.user_id == user_id, Promocode.is_active == True))
                 )
-                if existing.scalar_one_or_none():
-                    return None
+                existing_promo = existing.scalar_one_or_none()
+                if existing_promo:
+                    return existing_promo
 
                 code = PromoCodeService.generate_code()
                 promocode = Promocode(
