@@ -54,7 +54,8 @@ class PromocodeAdmin(BaseAdminModel, model=Promocode):
     
     form_excluded_columns = [
         "created_at",
-        "updated_at"
+        "updated_at",
+        "registrations"
     ]
     
     can_create = True
