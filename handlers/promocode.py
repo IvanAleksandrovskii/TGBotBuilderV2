@@ -1,7 +1,9 @@
 # handlers/promocode.py
 
-from aiogram import Router, types
-from aiogram.fsm.context import FSMContext
+import os
+
+from aiogram import Router, types, Bot
+from aiogram.types import FSInputFile
 
 from core import log
 from services import UserService
@@ -11,7 +13,7 @@ router = Router()
 
 
 @router.callback_query(lambda c: c.data == "getpromo")
-async def get_promo_command(message: types.Message, state: FSMContext):
+async def get_promo_command(message: types.CallbackQuery, bot: Bot):
     """Handler for /getpromo command that generates a promocode for the user"""
     try:
         chat_id = message.from_user.id
@@ -47,11 +49,59 @@ async def get_promo_command(message: types.Message, state: FSMContext):
             )
         
         keyboard = InlineKeyboardMarkup(inline_keyboard=[[btn]])
-                
+        
+        # TODO: NEW
+        
+        user_photos = await bot.get_user_profile_photos(user.chat_id)
+        
+        # Create directory if it doesn't exist
+        os.makedirs("media/users", exist_ok=True)
+        
+        
         from .utils import send_or_edit_message
 
-        await send_or_edit_message(message, f"Here's your unique invite link:\n{invite_link}\n\nShare it with friends! We'll track how many people join using your link.", keyboard, None)
+        # Check if user has any photos
+        if user_photos.total_count > 0:
+            try:
+                # Get the file path of the photo
+                file = await bot.get_file(user_photos.photos[0][-1].file_id)
+                # Download the photo
+                photo_path = f"media/users/{chat_id}_photo.jpg"
+                await bot.download_file(file.file_path, photo_path)
+                
+                # Create FSInputFile for the photo
+                input_file = FSInputFile(photo_path)
 
+                await bot.send_photo(
+                    chat_id=message.from_user.id,
+                    photo=input_file,
+                    caption=f"Here's your unique invite link:\n{invite_link}\n\nShare it with friends! We'll track how many people join using your link.",
+                    reply_markup=keyboard,
+                )
+                
+                # Clean up the temporary file
+                if os.path.exists(photo_path):
+                    os.remove(photo_path)
+                    
+            except Exception as photo_error:
+                log.exception(f"Error processing photo: {photo_error}")
+                # If photo processing fails, send message without photo
+                await send_or_edit_message(
+                    message,
+                    f"Here's your unique invite link:\n{invite_link}\n\n"
+                    f"Share it with friends! We'll track how many people join using your link.",
+                    keyboard,
+                    None
+                )
+        else:
+            await send_or_edit_message(
+                message,
+                f"Here's your unique invite link:\n{invite_link}\n\n"
+                f"Share it with friends! We'll track how many people join using your link.",
+                keyboard,
+                None
+            )
+            
     except Exception as e:
         log.exception(f"Error in get_promo_command: {e}")
         await message.answer("Sorry, something went wrong. Please try again later.")
