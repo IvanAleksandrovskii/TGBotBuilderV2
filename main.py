@@ -52,6 +52,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize bot and dispatcher
     bot, dp = setup_bot()
     
+    # TODO: NEW - Delete requests sent before start up
+    await bot.delete_webhook(drop_pending_updates=True)
+    
     # Start polling in a separate task
     polling_task = asyncio.create_task(dp.start_polling(bot))
 
