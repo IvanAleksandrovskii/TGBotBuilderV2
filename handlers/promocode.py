@@ -50,7 +50,7 @@ async def get_promo_command(message: types.Message, state: FSMContext):
                 
         from .utils import send_or_edit_message
 
-        await send_or_edit_message(message, f"Here's your unique invite link:\n{invite_link}\n\nShare it with friends! We'll track how many people join using your link.", [], keyboard, None)
+        await send_or_edit_message(message, f"Here's your unique invite link:\n{invite_link}\n\nShare it with friends! We'll track how many people join using your link.", keyboard, None)
 
     except Exception as e:
         log.exception(f"Error in get_promo_command: {e}")

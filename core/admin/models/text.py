@@ -15,11 +15,11 @@ from core.admin import async_sqladmin_db_helper
 
 class TextAdmin(BaseAdminModel, model=Text):
     column_list = [Text.id, Text.context_marker, Text.is_default_media, Text.is_active, Text.reading_pagination, Text.created_at, Text.updated_at]
-    column_details_list = [Text.id, Text.context_marker, Text.body, Text.body_html, Text.is_default_media, Text.is_active, Text.reading_pagination, Text.created_at, Text.updated_at, Text.media_files]
+    column_details_list = [Text.id, Text.context_marker, Text.body, Text.is_default_media, Text.is_active, Text.reading_pagination, Text.created_at, Text.updated_at, Text.media_files]
     column_sortable_list = [Text.id, Text.context_marker, Text.is_default_media, Text.is_active, Text.created_at, Text.updated_at]
     column_searchable_list = [Text.id, Text.context_marker]
     column_filters = [Text.context_marker, Text.is_default_media, Text.is_active]
-    form_columns = ['context_marker', 'body', 'body_html', 'is_default_media', 'is_active', 'reading_pagination', 'media_files']
+    form_columns = ['context_marker', 'body', 'is_default_media', 'is_active', 'reading_pagination', 'media_files']
 
     # form_args = {
     #     'body': {
@@ -44,9 +44,6 @@ class TextAdmin(BaseAdminModel, model=Text):
         form_class.body = TextAreaField(
             'Body',
             validators=[validators.DataRequired(message="Body is required")]
-        )
-        form_class.body_html = TextAreaField(
-            'Body HTML',
         )
         form_class.media_files = SelectMultipleField(
             'Media Files',

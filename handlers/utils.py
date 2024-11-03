@@ -13,8 +13,8 @@ from services.button_service import ButtonService
 from services.text_service import TextService
 
 
-async def send_or_edit_message(message: types.Message | types.CallbackQuery, text: str, entities: list[types.MessageEntity], keyboard=None, media_url: str = None):
-    log.info(f"text: {text} \n entities: {entities} \n keyboard: {keyboard} \n media_url: {media_url}")
+async def send_or_edit_message(message: types.Message | types.CallbackQuery, text: str, keyboard=None, media_url: str = None):
+    log.info(f"text: {text} \n keyboard: {keyboard} \n media_url: {media_url}")
     try:
         if isinstance(message, types.CallbackQuery):
             message = message.message
@@ -22,31 +22,31 @@ async def send_or_edit_message(message: types.Message | types.CallbackQuery, tex
         if media_url:
             try:
                 if message.photo or message.video or message.animation:
-                    media = get_input_media(media_url, text, entities)
+                    media = get_input_media(media_url, text)
                     await message.edit_media(media=media, reply_markup=keyboard)
                 else:
-                    await message.answer_photo(photo=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
+                    await message.answer_photo(photo=media_url, caption=text, reply_markup=keyboard)
             except TelegramBadRequest as e:
                 if "message is not modified" in str(e).lower():
                     log.debug("Message was not modified as the content didn't change")
                 else:
                     log.error(f"Error editing message with media: {e}")
-                    await message.answer(text=text, entities=entities, reply_markup=keyboard)
+                    await message.answer(text=text, reply_markup=keyboard)
             except Exception as e:
                 log.error(f"Error sending media: {e}")
-                await message.answer(text=text, entities=entities, reply_markup=keyboard)
+                await message.answer(text=text, reply_markup=keyboard)
         else:
             try:
-                await message.edit_text(text=text, entities=entities, reply_markup=keyboard)
+                await message.edit_text(text=text, reply_markup=keyboard)
             except TelegramBadRequest as e:
                 if "message is not modified" in str(e).lower():
                     log.debug("Message was not modified as the content didn't change")
                 else:
                     log.error(f"Error editing message: {e}")
-                    await message.answer(text=text, entities=entities, reply_markup=keyboard)
+                    await message.answer(text=text, reply_markup=keyboard)
             except Exception as e:
                 log.error(f"Error in send_or_edit_message: {e}")
-                await message.answer(text=text, entities=entities, reply_markup=keyboard)
+                await message.answer(text=text, reply_markup=keyboard)
     except Exception as e:
         log.error(f"Unexpected error in send_or_edit_message: {e}")
         try:
@@ -54,16 +54,15 @@ async def send_or_edit_message(message: types.Message | types.CallbackQuery, tex
         except Exception as final_error:
             log.critical(f"Failed to send error message: {final_error}")
 
-
-def get_input_media(media_url: str, caption: str, entities: list[types.MessageEntity]):
+def get_input_media(media_url: str, caption: str):
     file_ext = media_url.split('.')[-1].lower()
     if file_ext in ['jpg', 'jpeg', 'png']:
-        return InputMediaPhoto(media=media_url, caption=caption, caption_entities=entities)
+        return InputMediaPhoto(media=media_url, caption=caption)
     elif file_ext == 'gif':
-        return InputMediaAnimation(media=media_url, caption=caption, caption_entities=entities)
+        return InputMediaAnimation(media=media_url, caption=caption)
     else:
-        return InputMediaVideo(media=media_url, caption=caption, caption_entities=entities)
-    
+        return InputMediaVideo(media=media_url, caption=caption)
+
 
 # async def send_new_message(message: types.Message, text: str, entities: list[types.MessageEntity], keyboard=None, media_url: str = None):
 #     file_ext = media_url.split('.')[-1].lower() if media_url else None
@@ -86,7 +85,10 @@ async def get_content(context_marker: str, session: AsyncSession):
     content_data = await text_service.get_text_with_media(context_marker, session)
     if not content_data:
         log.warning(f"Content not found for marker: {context_marker}")
-        content_data = {"text": settings.bot_text.utils_handler_content_not_found, "entities": [], "media_urls": []}
+        content_data = {
+            "text": settings.bot_text.utils_handler_content_not_found,
+            "media_urls": []
+        }
 
     keyboard = await button_service.create_inline_keyboard(context_marker, session)
 
@@ -94,4 +96,4 @@ async def get_content(context_marker: str, session: AsyncSession):
     if not media_url:
         media_url = await text_service.get_default_media(session)
 
-    return content_data["text"], content_data["entities"], keyboard, media_url
+    return content_data["text"], keyboard, media_url

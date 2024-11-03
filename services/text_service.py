@@ -9,7 +9,7 @@ from core.models.text import Text
 from core.models.media import Media
 from core.config import settings
 
-from .entities_parser import html_to_entities
+# from .entities_parser import html_to_entities
 
 
 class TextService:
@@ -42,17 +42,10 @@ class TextService:
 
         media_urls = await TextService.get_media_urls(text, session)
 
-        if text.body_html:
-            text_content, entities = html_to_entities(text.body_html)
-        else:
-            text_content, entities = text.body, []
-
-        log.debug("Original text: %s", text_content)
-        log.debug("Original entities: %s", entities)
+        log.debug("Text content: %s", text.body)
 
         return {
-            "text": text_content,
-            "entities": entities,
+            "text": text.body,
             "media_urls": media_urls,
             "chunk_size": text.reading_pagination if text.reading_pagination else None
         }

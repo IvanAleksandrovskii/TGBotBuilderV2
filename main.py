@@ -7,6 +7,9 @@ from typing import AsyncGenerator
 import asyncio
 
 from aiogram import Bot, Dispatcher
+
+from aiogram.client.bot import DefaultBotProperties
+
 from aiogram.client.session.aiohttp import AiohttpSession
 
 from fastapi.responses import ORJSONResponse, JSONResponse
@@ -33,7 +36,7 @@ from handlers import router as main_router
 # Initialize bot and dispatcher
 def setup_bot():
     session = AiohttpSession(timeout=60)
-    bot = Bot(token=settings.bot.token, session=session)
+    bot = Bot(token=settings.bot.token, session=session, default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher()
     dp.include_router(main_router)
     return bot, dp

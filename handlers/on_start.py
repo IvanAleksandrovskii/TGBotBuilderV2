@@ -71,25 +71,11 @@ async def get_start_content(chat_id: int, username: str | None):
                 return settings.bot_main_page_text.user_error_message, [], None, None, False
 
             text = content["text"]
-            entities = content["entities"]
             media_url = content["media_urls"][0] if content["media_urls"] else None
 
             formatted_text = text.replace("{username}", username or settings.bot_main_page_text.welcome_fallback_user_word)
             
             updated_entities = []
-            for entity in entities:
-                new_offset = entity.offset
-                if "{username}" in text and entity.offset > text.index("{username}"):
-                    new_offset += len(username or settings.bot_main_page_text.welcome_fallback_user_word) - len("{username}")
-                updated_entities.append(
-                    types.MessageEntity(
-                        type=entity.type,
-                        offset=new_offset,
-                        length=entity.length,
-                        url=entity.url
-                    )
-                )
-
             keyboard = await button_service.create_inline_keyboard(context_marker, session)
 
             log.debug("Media URL: %s", media_url)
@@ -99,7 +85,7 @@ async def get_start_content(chat_id: int, username: str | None):
             if not media_url:
                 media_url = await text_service.get_default_media(session)
 
-            return formatted_text, updated_entities, keyboard, media_url, is_new_user or user.is_new_user
+            return formatted_text, keyboard, media_url, is_new_user or user.is_new_user
 
         except Exception as e:
             log.error("Error in get_start_content: %s", e)
@@ -154,7 +140,7 @@ async def start_command(message: types.Message, bot: Bot, state: FSMContext):
     log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Promocode: {promocode}")
 
     # Get start content will create user if needed
-    text, entities, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
+    text, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
     
     # Now get the user that was just created or retrieved
     user_service = UserService()
@@ -189,7 +175,7 @@ async def start_command(message: types.Message, bot: Bot, state: FSMContext):
     else:
         await state.clear()
     
-    await send_or_edit_message(message, text, entities, keyboard, media_url)
+    await send_or_edit_message(message, text, keyboard, media_url)
 
 
 @router.callback_query(lambda c: c.data == "end_first_greeting")
@@ -203,9 +189,9 @@ async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMCont
     user_service = UserService()
     await user_service.mark_user_as_not_new(chat_id)
 
-    text, entities, keyboard, media_url, _ = await get_start_content(chat_id, username)
+    text, keyboard, media_url, _ = await get_start_content(chat_id, username)
     await state.clear()
-    await send_or_edit_message(callback_query, text, entities, keyboard, media_url)
+    await send_or_edit_message(callback_query, text, keyboard, media_url)
 
 
 @router.callback_query(lambda c: c.data == "back_to_start")
@@ -216,5 +202,5 @@ async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()
     chat_id = int(callback_query.from_user.id)
     username = callback_query.from_user.username
-    text, entities, keyboard, media_url, _ = await get_start_content(chat_id, username)
-    await send_or_edit_message(callback_query.message, text, entities, keyboard, media_url)
+    text, keyboard, media_url, _ = await get_start_content(chat_id, username)
+    await send_or_edit_message(callback_query.message, text, keyboard, media_url)

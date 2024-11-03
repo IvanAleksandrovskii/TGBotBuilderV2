@@ -30,12 +30,12 @@ async def show_universal_page(callback_query: types.CallbackQuery, state: FSMCon
     
     async for session in db_helper.session_getter():
         try:
-            text, entities, keyboard, media_url = await get_content(context_marker, session)
+            text, keyboard, media_url = await get_content(context_marker, session)
             
             await state.set_state(UniversalPageStates.VIEWING_UNIVERSAL_PAGE)
             await state.update_data(current_page=context_marker)
             
-            await send_or_edit_message(callback_query, text, entities, keyboard, media_url)
+            await send_or_edit_message(callback_query, text, keyboard, media_url)
         except Exception as e:
             log.error(f"Error in show_universal_page: {e}")
             await callback_query.answer(settings.bot_text.universal_page_error)
@@ -61,8 +61,8 @@ async def process_page_action(callback_query: types.CallbackQuery, state: FSMCon
         await state.clear()
         chat_id = callback_query.from_user.id
         username = callback_query.from_user.username
-        text, entities, keyboard, media_url = await get_start_content(chat_id, username)
-        await send_or_edit_message(callback_query, text, entities, keyboard, media_url)
+        text, keyboard, media_url = await get_start_content(chat_id, username)
+        await send_or_edit_message(callback_query, text, keyboard, media_url)
     # elif action == "show_quizzes": 
     #     await state.clear()
     #     await show_quizzes(callback_query, state)
