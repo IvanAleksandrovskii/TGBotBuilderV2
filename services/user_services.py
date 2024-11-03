@@ -1,9 +1,9 @@
 # services/user_service.py
 
 from sqlalchemy import select, update
-# from async_lru import alru_cache
+from async_lru import alru_cache
 
-from core import log  # , settings
+from core import log, settings
 from core.models import User, db_helper
 
 
@@ -12,7 +12,6 @@ from core.models import User, db_helper
 class UserService:
 
     @staticmethod
-    # @alru_cache(ttl=settings.bot.max_users_cached_time_seconds, maxsize=settings.bot.max_users_cached)
     async def create_user(chat_id: int, username: str | None) -> User:
         async for session in db_helper.session_getter():
             try:
@@ -37,6 +36,7 @@ class UserService:
                 await session.close()
 
     @staticmethod
+    @alru_cache(ttl=settings.bot.max_users_cached_time_seconds, maxsize=settings.bot.max_users_cached)
     async def get_user(chat_id: int) -> User | None:
         async for session in db_helper.session_getter():
             try:

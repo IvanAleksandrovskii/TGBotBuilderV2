@@ -76,6 +76,10 @@ class CORSConfig(BaseModel):
 
 class BotConfig(BaseModel):
     token: str = BOT_TOKEN
+    
+    # TODO: Move to conf vars
+    max_users_cached_time_seconds: int = 300
+    max_users_cached: int = 1000 
 
 
 class SQLAdminConfig(BaseModel):

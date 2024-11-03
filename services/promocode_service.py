@@ -5,6 +5,8 @@ import string
 from uuid import UUID
 from sqlalchemy import select, and_, func
 
+from async_lru import alru_cache
+
 from core.models import Promocode, PromoRegistration, db_helper
 from core import log
 
@@ -17,6 +19,7 @@ class PromoCodeService:
         return ''.join(random.choice(chars) for _ in range(length))
 
     @staticmethod
+    @alru_cache(maxsize=100, ttl=300)  # TODO: Move to config
     async def create_promocode(user_id: UUID) -> Promocode:
         """Creates a new promocode for a user"""
         async for session in db_helper.session_getter():
@@ -76,6 +79,7 @@ class PromoCodeService:
             finally:
                 await session.close()
 
+    # TODO: Not implemented
     @staticmethod
     async def get_registrations_count(promocode: str) -> int:
         """Gets the number of registrations for a specific promocode"""
