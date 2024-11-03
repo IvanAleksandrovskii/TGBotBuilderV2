@@ -134,6 +134,7 @@ class BotAdminTexts(BaseModel):
 class BotMainPageTexts(BaseModel):
     user_error_message: str = "Something went wrong. Please try again later."
     welcome_fallback_user_word: str = "пользователь"
+    utils_error_message: str = "Something went wrong. Please try again later."
 
 
 class Settings(BaseSettings):

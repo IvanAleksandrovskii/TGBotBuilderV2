@@ -50,7 +50,7 @@ async def send_or_edit_message(message: types.Message | types.CallbackQuery, tex
     except Exception as e:
         log.error(f"Unexpected error in send_or_edit_message: {e}")
         try:
-            await message.answer(settings.bot_text.utils_error_message)
+            await message.answer(settings.bot_main_page_text.utils_error_message)
         except Exception as final_error:
             log.critical(f"Failed to send error message: {final_error}")
 
