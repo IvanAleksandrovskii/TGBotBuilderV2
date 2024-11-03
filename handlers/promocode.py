@@ -4,6 +4,7 @@ import os
 
 from aiogram import Router, types, Bot
 from aiogram.types import FSInputFile
+from aiogram.types import InputMediaPhoto
 
 from core import log
 from services import UserService
@@ -72,11 +73,24 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
                 # Create FSInputFile for the photo
                 input_file = FSInputFile(photo_path)
 
-                await bot.send_photo(
-                    chat_id=message.from_user.id,
-                    photo=input_file,
-                    caption=f"Here's your unique invite link:\n{invite_link}\n\nShare it with friends! We'll track how many people join using your link.",
-                    reply_markup=keyboard,
+                # await bot.send_photo(
+                #     chat_id=message.from_user.id,
+                #     photo=input_file,
+                #     caption=f"Here's your unique invite link:\n{invite_link}\n\nShare it with friends! We'll track how many people join using your link.",
+                #     reply_markup=keyboard,
+                # )
+                
+                # Create InputMediaPhoto for editing
+                media = InputMediaPhoto(
+                    media=input_file,
+                    caption=f"Here's your unique invite link:\n{invite_link}\n\n"
+                           f"Share it with friends! We'll track how many people join using your link."
+                )
+
+                # Edit existing message with new photo and text
+                await message.message.edit_media(
+                    media=media,
+                    reply_markup=keyboard
                 )
                 
                 # Clean up the temporary file
