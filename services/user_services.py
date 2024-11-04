@@ -35,8 +35,7 @@ class UserService:
             finally:
                 await session.close()
 
-    @staticmethod
-    @alru_cache(ttl=settings.bot.max_users_cached_time_seconds, maxsize=settings.bot.max_users_cached)
+    @staticmethod  # @alru_cache(ttl=settings.bot.max_users_cached_time_seconds, maxsize=settings.bot.max_users_cached)
     async def get_user(chat_id: int) -> User | None:
         async for session in db_helper.session_getter():
             try:

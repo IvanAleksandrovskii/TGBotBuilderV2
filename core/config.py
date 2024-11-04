@@ -40,7 +40,7 @@ SQLADMIN_PASSWORD = os.getenv("SQLADMIN_PASSWORD", "password")
 
 # Media ENV variables
 MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
-BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://f761-184-22-35-232.ngrok-free.app")
+BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://64c6-184-22-35-232.ngrok-free.app")
 
 
 class RunConfig(BaseModel):
@@ -78,8 +78,8 @@ class BotConfig(BaseModel):
     token: str = BOT_TOKEN
     
     # TODO: Move to conf vars
-    max_users_cached_time_seconds: int = 300
-    max_users_cached: int = 1000 
+    # max_users_cached_time_seconds: int = 300
+    # max_users_cached: int = 1000 
 
 
 class SQLAdminConfig(BaseModel):
