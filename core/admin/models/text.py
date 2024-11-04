@@ -21,15 +21,6 @@ class TextAdmin(BaseAdminModel, model=Text):
     column_filters = [Text.context_marker, Text.is_default_media, Text.is_active]
     form_columns = ['context_marker', 'body', 'is_default_media', 'is_active', 'reading_pagination', 'media_files']
 
-    # form_args = {
-    #     'body': {
-    #         'render_kw': {"rows": 20}
-    #     },
-    #     'body_html': {
-    #         'render_kw': {"rows": 20}
-    #     }
-    # }
-
     name = "Text"
     name_plural = "Texts"
     icon = "fa-solid fa-file-lines"
@@ -43,7 +34,11 @@ class TextAdmin(BaseAdminModel, model=Text):
         )
         form_class.body = TextAreaField(
             'Body',
-            validators=[validators.DataRequired(message="Body is required")]
+            validators=[validators.DataRequired(message="Body is required")],
+            render_kw={
+                "rows": 20,
+                "style": "width: 100% !important; min-height: 500px !important; resize: vertical !important;"
+            }
         )
         form_class.media_files = SelectMultipleField(
             'Media Files',
