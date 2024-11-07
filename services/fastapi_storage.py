@@ -49,6 +49,7 @@ ALLOWED_IMAGE_EXTENSIONS = settings.media.allowed_image_extensions
 
 main_storage_location = settings.media.root[4:]
 
-main_storage = CustomFileSystemStorage(main_storage_location, ALLOWED_IMAGE_EXTENSIONS)
+main_storage = CustomFileSystemStorage(main_storage_location, ALLOWED_IMAGE_EXTENSIONS)  # TODO: Fix Allowed media ext not working, 
+# maybe del all mechanics cause in fact can dens almost all media 
 
 log.info("Initialized all storage instances")

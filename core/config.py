@@ -40,7 +40,10 @@ SQLADMIN_PASSWORD = os.getenv("SQLADMIN_PASSWORD", "password")
 
 # Media ENV variables
 MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
-BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://64c6-184-22-35-232.ngrok-free.app")
+BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://ede0-184-22-35-232.ngrok-free.app")
+
+HTTP_CLIENT_TIMEOUT = int(os.getenv("HTTP_CLIENT_TIMEOUT", "300"))
+HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS = int(os.getenv("HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS", "10"))
 
 
 class RunConfig(BaseModel):
@@ -100,6 +103,11 @@ class MediaConfig(BaseModel):
         return v
 
 
+class HTTPClientConfig(BaseModel):
+    timeout: int = HTTP_CLIENT_TIMEOUT
+    max_keepalive_connections: int = HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS
+
+
 class BotAdminTexts(BaseModel):
     """
     RUSSIAN VERSION
@@ -150,6 +158,8 @@ class Settings(BaseSettings):
     media: MediaConfig = MediaConfig()
     bot_admin_text: BotAdminTexts = BotAdminTexts()
     bot_main_page_text: BotMainPageTexts = BotMainPageTexts()
+    http_client: HTTPClientConfig = HTTPClientConfig()
+
 
 
 settings = Settings()

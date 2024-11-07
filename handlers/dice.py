@@ -34,7 +34,7 @@ async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext, 
     
     # await asyncio.sleep(5)
     
-    result = await bot.send_dice(callback_query.from_user.id, emoji=DiceEmoji.SLOT_MACHINE)
+    result = await bot.send_dice(callback_query.from_user.id, emoji=DiceEmoji.DICE)
     
     await asyncio.sleep(4)
     

@@ -10,6 +10,8 @@ from .button import ButtonAdmin
 # from .quiz_result import QuizResultAdmin
 from .promocode import PromocodeAdmin, PromoRegistrationAdmin
 
+from .ai_provider import AIProviderAdmin
+
 # Register admin views
 def setup_admin(admin):
     admin.add_view(UserAdmin)
@@ -22,3 +24,4 @@ def setup_admin(admin):
     # admin.add_view(QuizResultAdmin)
     admin.add_view(PromocodeAdmin)
     admin.add_view(PromoRegistrationAdmin)
+    admin.add_view(AIProviderAdmin)

@@ -17,9 +17,6 @@ class Text(Base):
 
     body: Mapped[str] = mapped_column(String, nullable=False)  
 
-    # Field to store HTML version of the text
-    # body_html: Mapped[str] = mapped_column(String, nullable=True)
-
     is_default_media: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     reading_pagination: Mapped[int] = mapped_column(nullable=True)

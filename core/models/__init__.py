@@ -7,6 +7,8 @@ __all__ = [
     "Button",
     "Promocode",
     "PromoRegistration",
+    "client_manager",
+    "AIProvider"
 ]
 
 
@@ -19,3 +21,7 @@ from .media_to_text import text_media_association
 from .button import Button
 
 from .promocode import Promocode, PromoRegistration
+
+from .http_client import client_manager
+
+from .ai_provider import AIProvider

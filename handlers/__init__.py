@@ -18,3 +18,6 @@ router.include_router(universal_page_router)
 
 from .dice import router as test_router
 router.include_router(test_router)
+
+from .ai_chat import router as ai_chat_router
+router.include_router(ai_chat_router)
