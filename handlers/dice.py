@@ -17,18 +17,18 @@ from .utils import send_or_edit_message
 
 router = Router()
 
-@router.callback_query(lambda c: c.data == "test")
+@router.callback_query(lambda c: c.data == "dice")
 async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext, bot: Bot, **kwargs: Any):
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="restart", url=None, callback_data="back_to_start")]])
     
-    text = "Test"
+    text = "Your dice roll is..."  # TODO: Make configurable
     ic(kwargs)
     
     from services.text_service import TextService
     
     async with db_helper.db_session() as session:
-        media = await TextService.get_default_media(session)
+        media = await TextService.get_default_media(session)  # TODO: Make configurable
     
     await send_or_edit_message(callback_query.message, text, keyboard, media)
     
