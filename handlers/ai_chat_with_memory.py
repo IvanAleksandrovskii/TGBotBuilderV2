@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from typing import List, Dict
 
-from core import log
+from core import log, settings
 from core.models import db_helper
 from services.ai_services import get_ai_response
 from services.text_service import TextService
@@ -44,7 +44,10 @@ async def update_chat_history(state: FSMContext, role: str, content: str):
     })
     
     # Оставляем только последние 5 сообщений
-    messages = messages[-5:]
+    
+    history_length = settings.ai_chat.history_length
+    
+    messages = messages[-history_length:]
     
     # Обновляем состояние
     await state.update_data(chat_history=messages)

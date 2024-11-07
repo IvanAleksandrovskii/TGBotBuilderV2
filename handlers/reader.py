@@ -11,7 +11,6 @@ from core import log, settings
 from services.text_service import TextService
 from services.button_service import ButtonService
 from .utils import send_or_edit_message
-from .on_start import get_start_content
 
 
 router = Router()
@@ -100,7 +99,7 @@ async def start_reading(message: types.Message | types.CallbackQuery, state: FSM
             )
             await state.set_state(LargeTextStates.READING)
             
-            await send_chunk(message, chunks[0], 1, len(chunks), keyboard, media_url)
+            await send_chunk(message, chunks[0], keyboard, media_url)
         except Exception as e:
             log.error(f"Error in start_reading: {e}")
         finally:
@@ -119,32 +118,18 @@ async def process_reading(callback_query: types.CallbackQuery, state: FSMContext
     
     action = callback_query.data
     
-    if action in ["next_page", "prev_page", "current_page", "finish_reading"]:
+    if action in ["next_page", "prev_page", "current_page"]:
         if action == "next_page" and current_chunk < total_chunks - 1:
             current_chunk += 1
         elif action == "prev_page" and current_chunk > 0:
             current_chunk -= 1
-        elif action == "finish_reading":
-            await state.clear()
-            text, keyboard, start_media_url, _ = await get_start_content(
-                callback_query.from_user.id,
-                callback_query.from_user.username
-            )
-            await send_or_edit_message(
-                callback_query,
-                text=text,
-                keyboard=keyboard,
-                media_url=start_media_url
-            )
-            return
+
 
         await state.update_data(current_chunk=current_chunk)
         keyboard = create_navigation_keyboard(current_chunk, total_chunks, custom_buttons)
         await send_chunk(
             callback_query,
             chunks[current_chunk],
-            current_chunk + 1,
-            total_chunks,
             keyboard,
             media_url
         )
@@ -171,20 +156,19 @@ async def process_page_input(message: types.Message, state: FSMContext):
             await send_chunk(
                 message,
                 chunks[current_chunk],
-                current_chunk + 1,
-                total_chunks,
                 keyboard,
                 media_url
             )
+        else:
+            await message.answer("Page number is out of range.")  # TODO: Move to config
     except ValueError:
+        await message.answer("Invalid page number. Should be a number in range of pages count.")  # TODO: Move to config
         pass
 
 
 async def send_chunk(
     message: types.Message | types.CallbackQuery,
     chunk_text: str,
-    current_page: int,
-    total_pages: int,
     keyboard: types.InlineKeyboardMarkup,
     media_url: str
 ):
@@ -264,7 +248,7 @@ def create_navigation_keyboard(
     keyboard.append([
         types.InlineKeyboardButton(
             text=settings.bot_reader_text.reader_end_reading_to_main,
-            callback_data="finish_reading"
+            callback_data="back_to_start"
         )
     ])
     
@@ -275,7 +259,7 @@ async def process_custom_action(
     action: str,
     context_marker: str,
     state: FSMContext
-):
+):  # TODO: Add other actions too
     async for session in db_helper.session_getter():
         try:
             button_service = ButtonService()
@@ -290,18 +274,6 @@ async def process_custom_action(
                     from .universal_page import get_content
                     context_marker = action.split("_", 2)[2]
                     text, keyboard, media_url = await get_content(context_marker, session)
-                    await send_or_edit_message(
-                        callback_query,
-                        text,
-                        keyboard,
-                        media_url
-                    )
-                elif action == "back_to_start":
-                    await state.clear()
-                    text, keyboard, media_url = await get_start_content(
-                        callback_query.from_user.id,
-                        callback_query.from_user.username
-                    )
                     await send_or_edit_message(
                         callback_query,
                         text,

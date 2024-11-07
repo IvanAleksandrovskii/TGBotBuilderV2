@@ -164,6 +164,10 @@ class BotReaderTexts(BaseModel):
     reader_page_number_button_ansewer: str = "Номер страницы, введите в чат"
 
 
+class AIChatConfig(BaseSettings):
+    history_length: int = 5
+
+
 
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
@@ -177,6 +181,7 @@ class Settings(BaseSettings):
     http_client: HTTPClientConfig = HTTPClientConfig()
     webhook: WebhookConfig = WebhookConfig()
     bot_reader_text: BotReaderTexts = BotReaderTexts()
+    ai_chat: AIChatConfig = AIChatConfig()
 
 
 
