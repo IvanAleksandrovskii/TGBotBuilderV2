@@ -149,6 +149,10 @@ class BotMainPageTexts(BaseModel):
     utils_error_message: str = "Something went wrong. Please try again later."
 
 
+class WebhookConfig(BaseModel):
+    path: str = "/webhook/bot/"
+
+
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DBConfig = DBConfig()
@@ -159,6 +163,7 @@ class Settings(BaseSettings):
     bot_admin_text: BotAdminTexts = BotAdminTexts()
     bot_main_page_text: BotMainPageTexts = BotMainPageTexts()
     http_client: HTTPClientConfig = HTTPClientConfig()
+    webhook: WebhookConfig = WebhookConfig()
 
 
 
