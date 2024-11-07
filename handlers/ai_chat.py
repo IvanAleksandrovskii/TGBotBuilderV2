@@ -25,7 +25,7 @@ async def start_ai_chat(callback_query: types.CallbackQuery, state: FSMContext):
     text_service = TextService()
     async for session in db_helper.session_getter():
         try:
-            content = await text_service.get_text_with_media("ai_chat_start", session)
+            content = await text_service.get_text_with_media("ai_chat", session)
             text = content["text"] if content else "Welcome to AI Chat! Send me a message and I'll respond."
             media_url = content["media_urls"][0] if content and content["media_urls"] else None
 

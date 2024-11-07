@@ -153,6 +153,18 @@ class WebhookConfig(BaseModel):
     path: str = "/webhook/bot/"
 
 
+class BotReaderTexts(BaseModel):
+    reader_chunks: int = 500
+    reader_command_error: str = "Пожалуйста, укажите идентификатор текста после команды /read"
+    reader_text_not_found: str = "Извините, текст не найден: "
+    reader_end_reading_to_main: str = "Главное меню"
+    reader_custom_action_processing_error: str = "Произошла ошибка при обработке действия. Попробуйте еще раз."
+    reader_action_unkown: str = "Неизвестное действие"
+    reader_page_load_error: str = "Произошла ошибка при загрузке страницы. Попробуйте еще раз."
+    reader_page_number_button_ansewer: str = "Номер страницы, введите в чат"
+
+
+
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DBConfig = DBConfig()
@@ -164,6 +176,7 @@ class Settings(BaseSettings):
     bot_main_page_text: BotMainPageTexts = BotMainPageTexts()
     http_client: HTTPClientConfig = HTTPClientConfig()
     webhook: WebhookConfig = WebhookConfig()
+    bot_reader_text: BotReaderTexts = BotReaderTexts()
 
 
 
