@@ -22,5 +22,8 @@ router.include_router(test_router)
 from .ai_chat import router as ai_chat_router
 router.include_router(ai_chat_router)
 
+from .ai_chat_with_memory import router as ai_chat_with_memory_router
+router.include_router(ai_chat_with_memory_router)
+
 from .reader import router as reader_router
 router.include_router(reader_router)
