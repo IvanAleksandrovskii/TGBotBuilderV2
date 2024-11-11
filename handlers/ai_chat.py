@@ -26,8 +26,8 @@ async def start_ai_chat(callback_query: types.CallbackQuery, state: FSMContext):
     async for session in db_helper.session_getter():
         try:
             content = await text_service.get_text_with_media("ai_chat", session)
-            text = content["text"] if content else "Welcome to AI Chat! Send me a message and I'll respond."
-            media_url = content["media_urls"][0] if content and content["media_urls"] else None
+            text = content["text"] if content else "Welcome to AI Chat! Send me a message and I'll respond."  # TODO: Move to config
+            media_url = content["media_urls"][0] if content and content["media_urls"] else None  # TODO: Make it work the same like every other place
 
             keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
                 [types.InlineKeyboardButton(text="End Chat", callback_data="back_to_start")]
@@ -50,15 +50,15 @@ async def handle_message(message: types.Message, state: FSMContext):
             if result and result.content:
                 ai_response = result.content
             else:
-                ai_response = "Sorry, I couldn't generate a response. Please try again."
+                ai_response = "Sorry, I couldn't generate a response. Please try again."  # TODO: Move to config
 
             keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                [types.InlineKeyboardButton(text="End Chat", callback_data="back_to_start")]
+                [types.InlineKeyboardButton(text="End Chat", callback_data="back_to_start")]  # TODO: Move to config
             ])
 
             await message.reply(ai_response, reply_markup=keyboard)
         except Exception as e:
             log.error(f"Error in handle_message: {e}")
-            await message.reply("An error occurred. Please try again.")
+            await message.reply("An error occurred. Please try again.")  # TODO: Move to config
         finally:
             await session.close()

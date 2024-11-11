@@ -35,7 +35,7 @@ class ButtonService:
     @staticmethod
     async def create_inline_keyboard(context_marker: str, session: Session) -> InlineKeyboardMarkup:
         buttons = await ButtonService.get_buttons_by_marker(context_marker, session)
-        # logger.info(f"Retrieved {len(buttons)} buttons for marker {context_marker}")
+        # log.info(f"Retrieved {len(buttons)} buttons for marker {context_marker}")
         
         keyboard = []
         current_row = []
@@ -51,19 +51,19 @@ class ButtonService:
             if button.is_half_width:
                 current_row.append(btn)
                 if len(current_row) == 2:  # Max 2 buttons in a row
-                    # logger.info(f"Adding half-width row: {[b.text for b in current_row]}")
+                    # log.info(f"Adding half-width row: {[b.text for b in current_row]}")
                     keyboard.append(current_row)
                     current_row = []
             else:
                 if current_row:
-                    # logger.info(f"Adding incomplete half-width row: {[b.text for b in current_row]}")
+                    # log.info(f"Adding incomplete half-width row: {[b.text for b in current_row]}")
                     keyboard.append(current_row)
                     current_row = []
-                # logger.info(f"Adding full-width button: {button.text}")
+                # log.info(f"Adding full-width button: {button.text}")
                 keyboard.append([btn])
 
         if current_row:
-            # logger.info(f"Adding final incomplete row: {[b.text for b in current_row]}")
+            # log.info(f"Adding final incomplete row: {[b.text for b in current_row]}")
             keyboard.append(current_row)
 
         log.info("Final keyboard structure: %s", keyboard)

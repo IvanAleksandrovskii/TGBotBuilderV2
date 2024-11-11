@@ -35,7 +35,8 @@ class UserService:
             finally:
                 await session.close()
 
-    @staticmethod  # @alru_cache(ttl=settings.bot.max_users_cached_time_seconds, maxsize=settings.bot.max_users_cached)
+    @staticmethod  
+    @alru_cache(ttl=settings.bot.max_users_cached_time_seconds, maxsize=settings.bot.max_users_cached)
     async def get_user(chat_id: int) -> User | None:
         async for session in db_helper.session_getter():
             try:
@@ -81,7 +82,7 @@ class UserService:
                     log.info("Updated username for user %s to %s", chat_id, new_username)
                     
                     # Clear cache for updated user
-                    UserService.get_user.cache_clear()
+                    # UserService.get_user.cache_clear()
                     # UserService.create_user.cache_clear()
 
                     return True
@@ -108,6 +109,9 @@ class UserService:
                 await session.commit()
                 if result.rowcount > 0:
                     log.info(f"Marked user {chat_id} as not new")
+                    
+                    # Clear cache for updated user
+                    UserService.get_user.cache_clear()
 
                     return True
                 

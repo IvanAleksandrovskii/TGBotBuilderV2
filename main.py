@@ -4,15 +4,10 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-# import asyncio
-import aiohttp.web
 
 from aiogram import Bot, Dispatcher
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiogram.types import WebhookInfo
-
+from aiogram.types import WebhookInfo, Update
 from aiogram.client.bot import DefaultBotProperties
-
 from aiogram.client.session.aiohttp import AiohttpSession
 
 from fastapi.responses import ORJSONResponse, JSONResponse
@@ -22,77 +17,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
+from sqladmin import Admin
+
+from core import log, settings
 from core.models import db_helper
 
-from sqladmin import Admin
 from core.admin import async_sqladmin_db_helper, sqladmin_authentication_backend
 from core.admin.models import setup_admin
 
-from core import log, settings
-
 from handlers import router as main_router
 
-
-# TODO: Add signit signal handler for graceful shutdown
-
-
-# Initialize bot and dispatcher
-# def setup_bot():
-#     session = AiohttpSession(timeout=60)
-#     bot = Bot(token=settings.bot.token, session=session, default=DefaultBotProperties(parse_mode='HTML'))
-#     dp = Dispatcher()
-#     dp.include_router(main_router)
-#     return bot, dp
-
-# # Global variables for bot and dispatcher
-# bot = None
-# dp = None
-# polling_task = None
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-#     global bot, dp, polling_task
-#     # Startup
-#     log.info("Starting up the FastAPI application...")
-
-#     # Initialize bot and dispatcher
-#     bot, dp = setup_bot()
-    
-#     # TODO: NEW - Delete requests sent before start up
-#     await bot.delete_webhook(drop_pending_updates=True)
-    
-#     # Start polling in a separate task
-#     polling_task = asyncio.create_task(dp.start_polling(bot))
-
-#     yield
-
-#     # Shutdown
-#     log.info("Shutting down the FastAPI application...")
-
-#     await db_helper.dispose()
-#     await async_sqladmin_db_helper.dispose()
-
-#     # Stop polling
-#     if polling_task:
-#         polling_task.cancel()
-#         try:
-#             await polling_task
-#         except asyncio.CancelledError:
-#             pass
-
-#     # Close bot session
-#     if bot:
-#         await bot.session.close()
-
-#     log.info("Bot stopped successfully")
-
-
-# main_app = FastAPI(
-#     lifespan=lifespan,
-#     default_response_class=ORJSONResponse,
-# )
-
-from aiogram.types import Update
 
 class BotWebhookManager:
     def __init__(self):
@@ -108,7 +42,7 @@ class BotWebhookManager:
         self.dp = Dispatcher()
         self.dp.include_router(router)
         
-        # Формируем URL для вебхука
+        # URL for webhook
         self.webhook_url = f"{webhook_host}{webhook_path}"
         
     async def start_webhook(self):
@@ -135,13 +69,13 @@ class BotWebhookManager:
     async def handle_webhook_request(self, request: Request):
         """Handle incoming webhook request from FastAPI"""
         try:
-            # Получаем данные из запроса
+            # Get data from request
             data = await request.json()
             
-            # Создаем объект Update из полученных данных
+            # Create Update object from received data
             update = Update(**data)
             
-            # Обрабатываем обновление
+            # Process update
             await self.dp.feed_webhook_update(self.bot, update)
             
             return Response(status_code=200)

@@ -12,7 +12,7 @@ class Button(Base):
     text: Mapped[str] = mapped_column(String, nullable=False)
     callback_data: Mapped[str] = mapped_column(String, nullable=True)
     url: Mapped[str] = mapped_column(String, nullable=True)
-    is_inline: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # is_inline: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)  Unnecessary for now
 
     is_half_width: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 

@@ -18,9 +18,9 @@ from .utils import send_or_edit_message
 router = Router()
 
 @router.callback_query(lambda c: c.data == "dice")
-async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext, bot: Bot, **kwargs: Any):
+async def dice(callback_query: types.CallbackQuery, state: FSMContext, bot: Bot, **kwargs: Any):
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="restart", url=None, callback_data="back_to_start")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Main Menu", url=None, callback_data="back_to_start")]])  # TODO: Make configurable
     
     text = "Your dice roll is..."  # TODO: Make configurable
     ic(kwargs)

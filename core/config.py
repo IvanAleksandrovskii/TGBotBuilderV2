@@ -40,7 +40,7 @@ SQLADMIN_PASSWORD = os.getenv("SQLADMIN_PASSWORD", "password")
 
 # Media ENV variables
 MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
-BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://ede0-184-22-35-232.ngrok-free.app")
+BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://59a5-184-22-35-232.ngrok-free.app")
 
 HTTP_CLIENT_TIMEOUT = int(os.getenv("HTTP_CLIENT_TIMEOUT", "300"))
 HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS = int(os.getenv("HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS", "10"))
@@ -81,8 +81,8 @@ class BotConfig(BaseModel):
     token: str = BOT_TOKEN
     
     # TODO: Move to conf vars
-    # max_users_cached_time_seconds: int = 300
-    # max_users_cached: int = 1000 
+    max_users_cached_time_seconds: int = 300
+    max_users_cached: int = 1000 
 
 
 class SQLAdminConfig(BaseModel):
@@ -93,7 +93,7 @@ class SQLAdminConfig(BaseModel):
 
 class MediaConfig(BaseModel):
     root: str = "app/media"
-    base_url: str = BASE_SERVER_URL
+    base_url: str = BASE_SERVER_URL  # TODO: Move to main configurations
     allowed_image_extensions: list[str] = list(MEDIA_FILES_ALLOWED_EXTENSIONS)
 
     @field_validator('allowed_image_extensions')
@@ -149,6 +149,11 @@ class BotMainPageTexts(BaseModel):
     utils_error_message: str = "Something went wrong. Please try again later."
 
 
+class UniversalPageTexts(BaseModel):
+    universal_page_error: str = "An error occurred while loading the page. Please try again."
+    universal_page_try_again: str = "An error occurred. Please try starting over."
+
+
 class WebhookConfig(BaseModel):
     path: str = "/webhook/bot/"
 
@@ -182,6 +187,7 @@ class Settings(BaseSettings):
     webhook: WebhookConfig = WebhookConfig()
     bot_reader_text: BotReaderTexts = BotReaderTexts()
     ai_chat: AIChatConfig = AIChatConfig()
+    universal_page_text: UniversalPageTexts = UniversalPageTexts()
 
 
 

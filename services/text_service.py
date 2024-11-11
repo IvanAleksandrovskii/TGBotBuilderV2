@@ -9,8 +9,6 @@ from core.models.text import Text
 from core.models.media import Media
 from core.config import settings
 
-# from .entities_parser import html_to_entities
-
 
 class TextService:
     @staticmethod

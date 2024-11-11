@@ -10,9 +10,13 @@ from core import log
 from services import UserService
 from services.promocode_service import PromoCodeService
 
+from .utils import send_or_edit_message
+
+
 router = Router()
 
 
+# TODO: Make everything configurable
 @router.callback_query(lambda c: c.data == "getpromo")
 async def get_promo_command(message: types.CallbackQuery, bot: Bot):
     """Handler for /getpromo command that generates a promocode for the user"""
@@ -27,19 +31,9 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
 
         # Generate promocode
         promocode = await PromoCodeService.create_promocode(user.id)
-        # if not promocode:
-        #     await message.answer("You already have an active promocode!")
-        #     return
 
         bot_username = (await message.bot.get_me()).username
         invite_link = f"https://t.me/{bot_username}?start={promocode.code}"
-        
-        # await message.answer(
-        #     f"Here's your unique invite link:\n{invite_link}\n\n"
-        #     f"Share it with friends! We'll track how many people join using your link."
-        # )  # TODO: Fix this, make a separate message instead of alert answer
-        
-        # from core.models import db_helper
         
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -51,15 +45,12 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
         
         keyboard = InlineKeyboardMarkup(inline_keyboard=[[btn]])
         
-        # TODO: NEW
+        # TODO: NEW, remove and make the normal one with default media and media and text by marker
         
         user_photos = await bot.get_user_profile_photos(user.chat_id)
         
         # Create directory if it doesn't exist
         os.makedirs("media/users", exist_ok=True)
-        
-        
-        from .utils import send_or_edit_message
 
         # Check if user has any photos
         if user_photos.total_count > 0:
@@ -72,13 +63,6 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
                 
                 # Create FSInputFile for the photo
                 input_file = FSInputFile(photo_path)
-
-                # await bot.send_photo(
-                #     chat_id=message.from_user.id,
-                #     photo=input_file,
-                #     caption=f"Here's your unique invite link:\n{invite_link}\n\nShare it with friends! We'll track how many people join using your link.",
-                #     reply_markup=keyboard,
-                # )
                 
                 # Create InputMediaPhoto for editing
                 media = InputMediaPhoto(
