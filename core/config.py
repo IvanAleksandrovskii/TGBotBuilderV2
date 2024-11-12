@@ -93,6 +93,7 @@ class SQLAdminConfig(BaseModel):
 
 class MediaConfig(BaseModel):
     root: str = "app/media"
+    quiz_media: str = "app/media/quiz"
     base_url: str = BASE_SERVER_URL  # TODO: Move to main configurations
     allowed_image_extensions: list[str] = list(MEDIA_FILES_ALLOWED_EXTENSIONS)
 
@@ -173,6 +174,27 @@ class AIChatConfig(BaseSettings):
     history_length: int = 5
 
 
+class QuizTexts(BaseModel):
+    quiz_back_to_start: str = "Return to main menu"
+    quiz_list_menu_button_for_end_quiz: str = "Return to quiz list"
+    psycological_menu_button_for_end_quiz: str = "Return to tests list"
+    quizes_list_menu: str = "Select a quiz to take:"  # will be used if no quiz_list text is provided
+    psycological_rests_list_menu: str = "Select a test to take:"
+    quiz_not_found: str = "Test not found"
+    quiz_start_approve: str = "Start test"
+    user_not_found: str = "User not found"
+    forbidden_to_play_again_quiz_text: str = "You have already taken this test, sorry, it can only be taken once.\n\n"
+    question_text_begging_1: str = "Question "
+    question_text_begging_2: str = " of "
+    quiz_question_previous_button: str = "◀️ Back"
+    quiz_continue_button: str = "Continue"
+    question_comment_header: str = "Comment on the question:"
+    quiz_result_error_undefined: str = "Unable to determine the result."
+    quiz_result: str =  "Test completed!\n\nYour score: "
+    quiz_error: str = "Sorry, an error occurred. Please try starting again."
+    
+    quiz_multi_result: str = "Test completed!\n\nYour scores: "  # TODO: New
+
 
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
@@ -188,6 +210,7 @@ class Settings(BaseSettings):
     bot_reader_text: BotReaderTexts = BotReaderTexts()
     ai_chat: AIChatConfig = AIChatConfig()
     universal_page_text: UniversalPageTexts = UniversalPageTexts()
+    quiz_text: QuizTexts = QuizTexts()
 
 
 

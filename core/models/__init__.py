@@ -8,7 +8,11 @@ __all__ = [
     "Promocode",
     "PromoRegistration",
     "client_manager",
-    "AIProvider"
+    "AIProvider",
+    "Test",
+    "Question",
+    "Result",
+    "QuizResult",
 ]
 
 
@@ -25,3 +29,6 @@ from .promocode import Promocode, PromoRegistration
 from .http_client import client_manager
 
 from .ai_provider import AIProvider
+
+from .quiz import Test, Question, Result
+from .quiz_result import QuizResult

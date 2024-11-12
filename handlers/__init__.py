@@ -27,3 +27,6 @@ router.include_router(ai_chat_with_memory_router)
 
 from .reader import router as reader_router
 router.include_router(reader_router)
+
+from .quiz import router as quiz_router
+router.include_router(quiz_router)

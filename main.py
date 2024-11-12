@@ -121,6 +121,8 @@ async def handle_webhook(request: Request):
 # Mount media storage
 main_app.mount("/app/media/", StaticFiles(directory=settings.media.root[4:]), name="media")
 
+main_app.mount("/app/media/quiz/", StaticFiles(directory=settings.media.quiz_media[4:]), name="quiz_media")
+
 # SQLAdmin
 admin = Admin(main_app, engine=async_sqladmin_db_helper.engine, authentication_backend=sqladmin_authentication_backend)
 
