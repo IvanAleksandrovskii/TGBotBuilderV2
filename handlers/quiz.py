@@ -534,12 +534,6 @@ async def show_comment(message: types.Message, comment: str, state: FSMContext):
     data = await state.get_data()
     async for session in db_helper.session_getter():
         try:
-            # question = await session.execute(select(Question).where(Question.test_id == data['quiz_id']).offset(data['current_question']).limit(1))
-            # question = question.scalar_one()
-            
-            # questions = await get_sorted_questions(session, data['quiz_id'])
-            # question = questions[data['current_question']]
-            
             questions = await get_sorted_questions(session, data['quiz_id'])
             question = questions[data['current_question']]['question']  # получаем сам вопрос
             
