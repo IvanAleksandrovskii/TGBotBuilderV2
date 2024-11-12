@@ -195,67 +195,64 @@ async def get_sorted_questions(session, test_id):
     questions = await session.execute(
         Question.active()
         .where(Question.test_id == test_id)
-        .order_by(Question.order)  # Сначала сортируем по order
+        .order_by(Question.order)
     )
     questions = questions.scalars().all()
     
     # Group questions by order
     questions_by_order = defaultdict(list)
     for question in questions:
-        questions_by_order[question.order].append(question)
+        # Создаем копию вопроса с его данными
+        question_data = {
+            'question': question,
+            'intro_text': question.intro_text,
+            'comment': question.comment,
+            'picture': question.picture,
+            'order': question.order
+        }
+        questions_by_order[question.order].append(question_data)
     
     # Create final sorted list with randomization for same order
     sorted_questions = []
     for order in sorted(questions_by_order.keys()):
-        if len(questions_by_order[order]) > 1:
+        order_questions = questions_by_order[order]
+        if len(order_questions) > 1:
             # Randomly shuffle questions with the same order
-            random.shuffle(questions_by_order[order])
-        sorted_questions.extend(questions_by_order[order])
+            random.shuffle(order_questions)
+        sorted_questions.extend(order_questions)
     
     return sorted_questions
 
 
-async def show_intro(message: types.Message, state: FSMContext, test_id: str):
-    """Show introduction text if available for the test."""
-    async for session in db_helper.session_getter():
-        try:
-            questions = await get_sorted_questions(session, test_id)
-            first_question = questions[0] if questions else None
-            
-            if first_question and first_question.intro_text:
-                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_start_approve, callback_data=f"start_questions_{test_id}")]
-                ])
-                
-                text_service = TextService()
-                media_url = first_question.picture if first_question.picture else await text_service.get_default_media(session)
-                if media_url and not media_url.startswith(('http://', 'https://')):
-                    media_url = f"{settings.media.base_url}/app/{media_url}"
-                
-                intro_text = first_question.intro_text.replace('\\n', '\n')
-                
-                await send_or_edit_message(
-                    message,
-                    intro_text,
-                    keyboard,
-                    media_url
-                )
-                await state.set_state(QuizStates.VIEWING_INTRO)
-            else:
-                # If no intro, start questions directly
-                await start_questions(message, state, test_id)
-        
-        except Exception as e:
-            log.exception(e)
-        finally:
-            await session.close()
+@router.callback_query(QuizStates.VIEWING_INTRO)
+async def process_intro(callback_query: types.CallbackQuery, state: FSMContext):
+    if callback_query.data == "show_question":
+        data = await state.get_data()
+        data['intro_shown'] = True
+        await state.update_data(data)
+        await send_question(callback_query.message, state)
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("confirm_start_"))
 async def confirm_start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
     quiz_id = callback_query.data.split("_")[-1]
-    await state.update_data(quiz_id=quiz_id, current_question=0, answers=[], category_scores={})
-    await show_intro(callback_query.message, state, quiz_id)
+    async for session in db_helper.session_getter():
+        try:
+            # Получаем и сохраняем порядок вопросов при старте
+            sorted_questions = await get_sorted_questions(session, quiz_id)
+            await state.update_data(
+                quiz_id=quiz_id, 
+                current_question=0, 
+                answers=[], 
+                category_scores={}, 
+                intro_shown=False,
+                sorted_questions=sorted_questions  # сохраняем порядок
+            )
+            await send_question(callback_query.message, state)
+        except Exception as e:
+            log.exception(e)
+        finally:
+            await session.close()
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("start_questions_"))
@@ -269,47 +266,82 @@ async def send_question(message: types.Message, state: FSMContext):
     data = await state.get_data()
     quiz_id = data['quiz_id']
     current_question = data['current_question']
+    sorted_questions = data['sorted_questions']
 
     async for session in db_helper.session_getter():
         try:
             test = await session.execute(select(Test).where(Test.id == quiz_id))
             test = test.scalar_one_or_none()
 
-            # questions = await session.execute(Question.active().where(Question.test_id == quiz_id))
-            # questions = questions.scalars().all()
-            
-            questions = await get_sorted_questions(session, quiz_id)
-
-            if current_question >= len(questions):
+            if current_question >= len(sorted_questions):
                 await finish_quiz(message, state)
                 return
 
-            question = questions[current_question]
+            question_data = sorted_questions[current_question]
+            question = question_data['question']  # Получаем сам объект вопроса
 
+            # Проверяем наличие интро текста для текущего вопроса
+            if question_data['intro_text'] and not data.get('intro_shown'):
+                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_continue_button, callback_data="show_question")]
+                ])
+                
+                text_service = TextService()
+                # Изменяем приоритет медиа
+                if question_data['picture']:
+                    media_url = question_data['picture']
+                elif test.picture:
+                    media_url = test.picture
+                else:
+                    media_url = await text_service.get_default_media(session)
+                
+                if media_url and not media_url.startswith(('http://', 'https://')):
+                    media_url = f"{settings.media.base_url}/app/{media_url}"
+                
+                intro_text = question_data['intro_text'].replace('\\n', '\n')
+                
+                await send_or_edit_message(
+                    message,
+                    intro_text,
+                    keyboard,
+                    media_url
+                )
+                
+                data['intro_shown'] = True
+                await state.update_data(data)
+                await state.set_state(QuizStates.VIEWING_INTRO)
+                return
+
+            # Если нет интро или оно уже показано, показываем вопрос
             keyboard = []
             for i in range(1, 7):
-                answer_text = getattr(question, f'answer{i}_text')
+                answer_text = getattr(question, f'answer{i}_text')  # Используем объект вопроса для получения ответов
                 if answer_text:
                     keyboard.append([types.InlineKeyboardButton(
                         text=answer_text,
                         callback_data=f"answer_{current_question}_{i}"
                     )])
 
-            # Add "Back" button if allowed and not on the first question
             if test.allow_back and current_question > 0:
                 keyboard.append([types.InlineKeyboardButton(text=settings.quiz_text.quiz_question_previous_button, callback_data="quiz_back")])
 
             reply_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
 
             text_service = TextService()
-            media_url = question.picture if question.picture else (test.picture if test.picture else await text_service.get_default_media(session))
-
+            
+            if question_data['picture']:
+                media_url = question_data['picture']
+            elif test.picture:
+                media_url = test.picture
+            else:
+                media_url = await text_service.get_default_media(session)
+                
             if media_url and not media_url.startswith(('http://', 'https://')):
                 media_url = f"{settings.media.base_url}/app/{media_url}"
 
             log.info("Generated media URL for question: %s", media_url) 
 
-            question_text = settings.quiz_text.question_text_begging_1 + f"{current_question + 1}" + settings.quiz_text.question_text_begging_2 + f"{len(questions)}:\n\n{question.question_text.replace('\\n', '\n')}"
+            question_text = settings.quiz_text.question_text_begging_1 + f"{current_question + 1}" + settings.quiz_text.question_text_begging_2 + f"{len(sorted_questions)}:\n\n{question.question_text.replace('\\n', '\n')}"
 
             await send_or_edit_message(
                 message,
@@ -318,6 +350,8 @@ async def send_question(message: types.Message, state: FSMContext):
                 media_url
             )
 
+            data['intro_shown'] = False  # Сбрасываем флаг для следующего вопроса
+            await state.update_data(data)
             await state.set_state(QuizStates.ANSWERING)
 
         except Exception as e:
@@ -441,6 +475,7 @@ async def finish_quiz(message: types.Message, state: FSMContext):
 @router.callback_query(QuizStates.ANSWERING)
 async def process_answer(callback_query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    sorted_questions = data['sorted_questions']
     
     if callback_query.data == "quiz_back":
         if data['current_question'] > 0:
@@ -460,8 +495,8 @@ async def process_answer(callback_query: types.CallbackQuery, state: FSMContext)
     
     async for session in db_helper.session_getter():
         try:
-            questions = await get_sorted_questions(session, data['quiz_id'])
-            question = questions[question_num]
+            question_data = sorted_questions[question_num]
+            question = question_data['question']  # Получаем сам объект вопроса
             
             test = await session.execute(select(Test).where(Test.id == data['quiz_id']))
             test = test.scalar_one()
@@ -478,8 +513,8 @@ async def process_answer(callback_query: types.CallbackQuery, state: FSMContext)
             
             await state.update_data(data)
             
-            if question.comment:
-                await show_comment(callback_query.message, question.comment, state)
+            if question_data['comment']:
+                await show_comment(callback_query.message, question_data['comment'], state)
             else:
                 data['current_question'] += 1
                 await state.update_data(data)
@@ -502,9 +537,15 @@ async def show_comment(message: types.Message, comment: str, state: FSMContext):
             # question = await session.execute(select(Question).where(Question.test_id == data['quiz_id']).offset(data['current_question']).limit(1))
             # question = question.scalar_one()
             
-            questions = await get_sorted_questions(session, data['quiz_id'])
-            question = questions[data['current_question']]
+            # questions = await get_sorted_questions(session, data['quiz_id'])
+            # question = questions[data['current_question']]
             
+            questions = await get_sorted_questions(session, data['quiz_id'])
+            question = questions[data['current_question']]['question']  # получаем сам вопрос
+            
+            comment = questions[data['current_question']]['comment']  # получаем комментарий
+
+                        
             test = await session.execute(select(Test).where(Test.id == data['quiz_id']))
             test = test.scalar_one()
             
