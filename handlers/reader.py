@@ -283,6 +283,18 @@ async def process_custom_action(
                 elif action.startswith("read_"):
                     await state.clear()
                     await start_reading(callback_query, state)
+                elif action.startswith("start_quiz_"):
+                    await state.clear()
+                    from .quiz import start_quiz
+                    await start_quiz(callback_query, state)
+                elif action.startswith("show_quizzes"):
+                    await state.clear()
+                    from .quiz import show_quizzes
+                    await show_quizzes(callback_query, state)
+                elif action.startswith("show_psycho_tests"):
+                    await state.clear()
+                    from .quiz import show_psycho_tests
+                    await show_psycho_tests(callback_query, state)
                 else:
                     log.info(f"Executing action for button: {button.text}")
                     await callback_query.answer()

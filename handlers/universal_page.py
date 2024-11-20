@@ -8,7 +8,6 @@ from core import log, settings
 from core.models import db_helper
 from .utils import send_or_edit_message, get_content
 from .on_start import get_start_content
-# from services.text_service import TextService
 
 
 router = Router()
@@ -29,10 +28,6 @@ async def show_universal_page(callback_query: types.CallbackQuery, state: FSMCon
     async for session in db_helper.session_getter():
         try:
             text, keyboard, media_url = await get_content(context_marker, session)
-            
-            # if not media_url:
-            #     text_service = TextService()
-            #     media_url = await text_service.get_default_media(session)
             
             await state.set_state(UniversalPageStates.VIEWING_UNIVERSAL_PAGE)
             await state.update_data(current_page=context_marker)
@@ -66,13 +61,20 @@ async def process_page_action(callback_query: types.CallbackQuery, state: FSMCon
         text, keyboard, media_url = await get_start_content(chat_id, username)
         await send_or_edit_message(callback_query, text, keyboard, media_url)
     
-    # elif action == "show_quizzes": 
-    #     await state.clear()
-    #     await show_quizzes(callback_query, state)
+    elif action == "show_quizzes":
+        await state.clear()
+        from .quiz import show_quizzes
+        await show_quizzes(callback_query, state)
+    
+    elif action == "show_psyco_tests":
+        await state.clear()
+        from .quiz import show_psycho_tests
+        await show_psycho_tests(callback_query, state)
 
-    # elif action.startswith("start_quiz_"):
-    #     await state.clear()
-    #     await start_quiz(callback_query, state)
+    elif action.startswith("start_quiz_"):
+        await state.clear()
+        from .quiz import start_quiz
+        await start_quiz(callback_query, state)
     
     elif action.startswith("read_"):
         from .reader import start_reading

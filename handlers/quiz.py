@@ -26,8 +26,8 @@ class QuizStates(StatesGroup):
     SHOWING_COMMENT = State()
 
 
-@router.callback_query(lambda c: c.data == "show_psyco_tests")
-async def show_psyco_tests(callback_query: types.CallbackQuery, state: FSMContext):
+@router.callback_query(lambda c: c.data == "show_psycho_tests")
+async def show_psycho_tests(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()  # Clear the state before showing the list of psycological tests
     async for session in db_helper.session_getter():
         try:
@@ -40,7 +40,7 @@ async def show_psyco_tests(callback_query: types.CallbackQuery, state: FSMContex
                 keyboard.append([types.InlineKeyboardButton(text=test.name, callback_data=f"start_quiz_{test.id}")])
 
             button_service = ButtonService()
-            custom_buttons = await button_service.get_buttons_by_marker("psyco_tests_list", session)
+            custom_buttons = await button_service.get_buttons_by_marker("show_psycho_tests", session)
             for button in custom_buttons:
                 if button.url:
                     keyboard.append([types.InlineKeyboardButton(text=button.text, url=button.url)])
@@ -52,7 +52,7 @@ async def show_psyco_tests(callback_query: types.CallbackQuery, state: FSMContex
             reply_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
 
             text_service = TextService()
-            content = await text_service.get_text_with_media("psyco_tests_list", session)
+            content = await text_service.get_text_with_media("show_psycho_tests", session)
             text = content["text"] if content else settings.quiz_text.psycological_rests_list_menu
             media_url = content["media_urls"][0] if content and content["media_urls"] else await text_service.get_default_media(session)
 
@@ -82,7 +82,7 @@ async def show_quizzes(callback_query: types.CallbackQuery, state: FSMContext):
                 keyboard.append([types.InlineKeyboardButton(text=test.name, callback_data=f"start_quiz_{test.id}")])
 
             button_service = ButtonService()
-            custom_buttons = await button_service.get_buttons_by_marker("quiz_list", session)
+            custom_buttons = await button_service.get_buttons_by_marker("show_quizzes", session)
             for button in custom_buttons:
                 if button.url:
                     keyboard.append([types.InlineKeyboardButton(text=button.text, url=button.url)])
@@ -94,7 +94,7 @@ async def show_quizzes(callback_query: types.CallbackQuery, state: FSMContext):
             reply_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
 
             text_service = TextService()
-            content = await text_service.get_text_with_media("quiz_list", session)
+            content = await text_service.get_text_with_media("show_quizzes", session)
             text = content["text"] if content else settings.quiz_text.quizes_list_menu
             media_url = content["media_urls"][0] if content and content["media_urls"] else await text_service.get_default_media(session)
 
@@ -144,7 +144,7 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
 
             if test.is_psycological:
                 keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                    [types.InlineKeyboardButton(text=settings.quiz_text.psycological_menu_button_for_end_quiz, callback_data="show_psyco_tests")],
+                    [types.InlineKeyboardButton(text=settings.quiz_text.psycological_menu_button_for_end_quiz, callback_data="show_psycho_tests")],
                     [types.InlineKeyboardButton(text=settings.quiz_text.quiz_back_to_start, callback_data="back_to_start")]
                 ])
             else:
