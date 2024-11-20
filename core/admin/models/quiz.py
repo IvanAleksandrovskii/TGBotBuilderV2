@@ -6,7 +6,7 @@ from typing import Any, Type
 from fastapi import UploadFile, Request
 from sqlalchemy import select
 from wtforms import Form, TextAreaField
-from wtforms.validators import Optional
+from wtforms.validators import Optional, DataRequired
 
 from core import log
 from core.admin.models.base import BaseAdminModel
@@ -32,6 +32,7 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.name, 
         Test.is_psycological, 
         Test.multi_graph_results,
+        Test.category_names,
         Test.description, 
         Test.picture, 
         Test.allow_back, 
@@ -67,7 +68,11 @@ class TestAdmin(BaseAdminModel, model=Test):
         form_class.category_names = TextAreaField(
             'Category Names',
             validators=[Optional()],
-            description='Введите имена категорий в формате JSON. Пример: {"1": "Интроверсия", "2": "Экстраверсия"}'
+            description='Введите имена категорий в формате JSON. Пример: {"1": "Интроверсия", "2": "Экстраверсия"}',
+            render_kw={
+                "rows": 10,
+                "style": "width: 50% !important; min-height: 200px !important; resize: vertical !important;"
+            }
         )
         
         return form_class
@@ -169,6 +174,14 @@ class ResultAdmin(BaseAdminModel, model=Result):
 
     async def scaffold_form(self) -> Type[Form]:
         form_class = await super().scaffold_form()
+        form_class.text = TextAreaField(
+            'Text',
+            validators=[DataRequired(message="Text is required")],
+            render_kw={
+                "rows": 20,
+                "style": "width: 70% !important; min-height: 300px !important; resize: vertical !important;"
+            }
+        )
         return form_class
 
     async def after_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
