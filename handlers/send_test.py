@@ -10,6 +10,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import BufferedInputFile
 
 from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import log, settings
 from core.models import db_helper
@@ -38,6 +39,18 @@ class SendTestStates(StatesGroup):
     VIEWING_USER_TESTS = State()
 
 
+async def get_send_test_media_url(session: AsyncSession) -> str:
+    text_service = TextService()
+    data = await text_service.get_text_with_media("send_test", session)
+    media_ulrs = data["media_urls"]
+    
+    if media_ulrs:
+        return media_ulrs[0]
+    
+    media_url = await text_service.get_default_media(session)
+    return media_url
+
+
 @router.callback_query(lambda c: c.data == "export_csv_all")
 async def export_all_sent_tests_csv(callback_query: types.CallbackQuery, state: FSMContext):
     sender_id = callback_query.from_user.id
@@ -64,8 +77,7 @@ async def show_export_by_test_options(callback_query: types.CallbackQuery, state
             keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_back_button, callback_data="back_to_sent_tests")])
 
             text_service = TextService()
-            # content = await text_service.get_text_with_media("export_by_test_options", session)
-            # content["text"] if content else
+
             text = settings.send_test.csv_choose_test_to_export
             # content["media_urls"][0] if content and content["media_urls"] else 
             media_url = await text_service.get_default_media(session)

@@ -1,5 +1,7 @@
 # services/text_service.py
 
+from random import shuffle
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
@@ -39,6 +41,9 @@ class TextService:
             return None
 
         media_urls = await TextService.get_media_urls(text, session)
+        
+        if len(media_urls) > 1:
+            shuffle(media_urls)
 
         log.debug("Text content: %s", text.body)
 
