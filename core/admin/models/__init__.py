@@ -6,7 +6,7 @@ from .user import UserAdmin
 from .text import TextAdmin
 from .media import MediaAdmin
 from .button import ButtonAdmin
-# from .quiz_result import QuizResultAdmin
+from .quiz_result import QuizResultAdmin
 from .promocode import PromocodeAdmin, PromoRegistrationAdmin
 
 from .ai_provider import AIProviderAdmin
@@ -19,7 +19,7 @@ def setup_admin(admin):
     admin.add_view(TextAdmin)
     admin.add_view(MediaAdmin)
     admin.add_view(ButtonAdmin)
-    # admin.add_view(QuizResultAdmin)
+    admin.add_view(QuizResultAdmin)
     admin.add_view(PromocodeAdmin)
     admin.add_view(PromoRegistrationAdmin)
     admin.add_view(AIProviderAdmin)
