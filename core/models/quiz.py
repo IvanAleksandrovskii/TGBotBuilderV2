@@ -32,8 +32,8 @@ class Test(Base):
     is_psycological: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # If many graphs in test result
-    multi_graph_results: Mapped[bool] = mapped_column(Boolean, default=False)  # TODO: NEW Field 
-    # New field to store category names
+    multi_graph_results: Mapped[bool] = mapped_column(Boolean, default=False)
+    # New field to store category names dictionary
     category_names: Mapped[Dict] = mapped_column(JSON, nullable=True, default=dict)
 
 
@@ -74,7 +74,7 @@ class Test(Base):
             names[str(category_id)] = name
             self.category_names = names
         except (json.JSONDecodeError, AttributeError):
-            # В случае ошибки создаем новый словарь только с новым значением
+            # In case of an error, create a new dictionary only with the new value
             self.category_names = {str(category_id): name}
 
 
@@ -85,7 +85,7 @@ class Question(Base):
     __tablename__ = "questions"
     
     # Could be same to mix up questions or not to follow the order
-    order: Mapped[int] = mapped_column(Integer, nullable=False)  # TODO: NEW Field
+    order: Mapped[int] = mapped_column(Integer, nullable=False)
 
     question_text: Mapped[str] = mapped_column(String, nullable=False)
     picture = mapped_column(FileType(storage=quiz_storage))
@@ -93,7 +93,7 @@ class Question(Base):
     test_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tests.id"))
     test: Mapped[Test] = relationship(back_populates="questions")
 
-    intro_text: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # TODO: NEW Field   (( MAYBE ADD A PICTURE FIELD FOR INTRO TEXT TOO )) 
+    intro_text: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     comment: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     # Inline answers (6 sets of answer text and score)
@@ -148,23 +148,21 @@ class Result(Base):
     Represents a result group for a quiz test.
     """
     __tablename__ = "results"
-
+    
     test_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tests.id"))
-
     picture = mapped_column(FileType(storage=quiz_storage))
     
     category_id: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Number of category (1-4 for example) to summ all answers with the same category
-    # TODO: Add category name
-
+    
     min_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    
     max_score: Mapped[int] = mapped_column(Integer, nullable=False)
-
     text: Mapped[str] = mapped_column(String, nullable=False)
-
+    
     test: Mapped[Test] = relationship(back_populates="results")
-
+    
     def __repr__(self):
         return f"<Result(id={self.id}, test_id={self.test_id}, min_score={self.min_score}, max_score={self.max_score})>"
-
+    
     def __str__(self):
         return f"{self.test_id} - {self.min_score} - {self.max_score}"

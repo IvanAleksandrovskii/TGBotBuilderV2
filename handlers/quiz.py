@@ -360,118 +360,6 @@ async def send_question(message: types.Message, state: FSMContext):
             await session.close()
 
 
-async def calculate_results(session, test, total_scores, category_scores):
-    """Calculate results based on test type and scoring method."""
-    if test.multi_graph_results:
-        final_results = []
-        for category_id, count in category_scores.items():
-            results = await session.execute(
-                select(Result).where(
-                    Result.test_id == test.id,
-                    Result.category_id == category_id,
-                    Result.min_score <= count,
-                    Result.max_score >= count
-                )
-            )
-            category_result = results.scalar_one_or_none()
-            if category_result:
-                final_results.append({
-                    'category_id': category_id,
-                    'category_name': test.get_category_name(category_id),
-                    'score': count,
-                    'text': category_result.text,
-                    'picture': category_result.picture
-                })
-        return final_results
-    else:
-        # For traditional single-result tests
-        results = await session.execute(
-            select(Result).where(
-                Result.test_id == test.id,
-                Result.category_id.is_(None),  # Обычные результаты без категорий
-                Result.min_score <= total_scores,
-                Result.max_score >= total_scores
-            )
-        )
-        result = results.scalar_one_or_none()
-        return [{
-            'score': total_scores,
-            'text': result.text if result else settings.quiz_text.quiz_result_error_undefined,
-            'picture': result.picture if result else None
-        }]
-
-
-async def finish_quiz(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    quiz_id = data['quiz_id']
-    total_score = sum(data['answers'])
-    category_scores = data.get('category_scores', {})
-
-    async for session in db_helper.session_getter():
-        try:
-            test = await session.execute(select(Test).where(Test.id == quiz_id))
-            test = test.scalar_one()
-
-            user = await session.execute(select(User).where(User.chat_id == message.chat.id))
-            user = user.scalar_one()
-
-            # Calculate results
-            results = await calculate_results(session, test, total_score, category_scores)
-
-            # Save results
-            for result in results:
-                quiz_result = QuizResult(
-                    user_id=user.id,
-                    test_id=test.id,
-                    score=result.get('score', 0),
-                    category_id=result.get('category_id'),
-                    is_psychological=test.is_psycological,
-                    result_text=result['text']
-                )
-                session.add(quiz_result)
-            await session.commit()
-
-            # Prepare result message and media
-            if test.multi_graph_results:
-                result_message = settings.quiz_text.quiz_multi_result + "\n\n"
-                for result in results:
-                    result_message += f"{result['category_name']}: {result['score']}\n{result['text']}\n\n"
-            else:
-                result_message = settings.quiz_text.quiz_result + f"{total_score}\n\n{results[0]['text']}"
-
-            # Prepare keyboard based on test type
-            if test.is_psycological:
-                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                    [types.InlineKeyboardButton(text=settings.quiz_text.psycological_menu_button_for_end_quiz, callback_data="show_psyco_tests")],
-                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_back_to_start, callback_data="back_to_start")]
-                ])
-            else:
-                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_list_menu_button_for_end_quiz, callback_data="show_quizzes")],
-                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_back_to_start, callback_data="back_to_start")]
-                ])
-
-            # Get appropriate media URL
-            text_service = TextService()
-            media_url = (results[0].get('picture') if results else None) or test.picture or await text_service.get_default_media(session)
-            
-            if media_url and not media_url.startswith(('http://', 'https://')):
-                media_url = f"{settings.media.base_url}/app/{media_url}"
-
-            await send_or_edit_message(
-                message,
-                result_message,
-                keyboard,
-                media_url
-            )
-
-        except Exception as e:
-            log.exception(e)
-        finally:
-            await session.close()
-            await state.clear()
-
-
 @router.callback_query(QuizStates.ANSWERING)
 async def process_answer(callback_query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -579,6 +467,168 @@ async def process_comment(callback_query: types.CallbackQuery, state: FSMContext
         data['current_question'] += 1
         await state.update_data(data)
         await send_question(callback_query.message, state)
+
+
+# async def calculate_results(session, test, total_scores, category_scores):
+#     """Calculate results based on test type and scoring method."""
+#     if test.multi_graph_results:
+#         final_results = []
+#         for category_id, count in category_scores.items():
+#             results = await session.execute(
+#                 select(Result).where(
+#                     Result.test_id == test.id,
+#                     Result.category_id == category_id,
+#                     Result.min_score <= count,
+#                     Result.max_score >= count
+#                 )
+#             )
+#             category_result = results.scalar_one_or_none()
+#             if category_result:
+#                 final_results.append({
+#                     'category_id': category_id,
+#                     'category_name': test.get_category_name(category_id),
+#                     'score': count,
+#                     'text': category_result.text,
+#                     'picture': category_result.picture
+#                 })
+#         return final_results
+#     else:
+#         # For traditional single-result tests
+#         results = await session.execute(
+#             select(Result).where(
+#                 Result.test_id == test.id,
+#                 Result.category_id.is_(None),  # Обычные результаты без категорий
+#                 Result.min_score <= total_scores,
+#                 Result.max_score >= total_scores
+#             )
+#         )
+#         result = results.scalar_one_or_none()
+#         return [{
+#             'score': total_scores,
+#             'text': result.text if result else settings.quiz_text.quiz_result_error_undefined,
+#             'picture': result.picture if result else None
+#         }]
+
+async def calculate_results(session, test, total_scores, category_scores):
+    """Calculate results based on test type and scoring method."""
+    if test.multi_graph_results:
+        final_results = []
+        # Get all distinct category IDs
+        all_categories = await session.execute(
+            select(Result.category_id).distinct()
+            .where(Result.test_id == test.id)
+            .where(Result.category_id.isnot(None))
+        )
+        all_categories = [cat[0] for cat in all_categories.fetchall()]
+        
+        # Process each category including 0 score 
+        for category_id in all_categories:
+            count = category_scores.get(category_id, 0)  # If category not found, set score to 0
+            results = await session.execute(
+                select(Result).where(
+                    Result.test_id == test.id,
+                    Result.category_id == category_id,
+                    Result.min_score <= count,
+                    Result.max_score >= count
+                )
+            )
+            category_result = results.scalar_one_or_none()
+            if category_result:
+                final_results.append({
+                    'category_id': category_id,
+                    'category_name': test.get_category_name(category_id),
+                    'score': count,
+                    'text': category_result.text,
+                    'picture': category_result.picture
+                })
+        return final_results
+    else:
+        # For traditional single-result tests
+        results = await session.execute(
+            select(Result).where(
+                Result.test_id == test.id,
+                Result.category_id.is_(None),  # Regular results without categories for regular non multi-graph tests
+                Result.min_score <= total_scores,
+                Result.max_score >= total_scores
+            )
+        )
+        result = results.scalar_one_or_none()
+        return [{
+            'score': total_scores,
+            'text': result.text if result else settings.quiz_text.quiz_result_error_undefined,
+            'picture': result.picture if result else None
+        }]
+
+
+async def finish_quiz(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    quiz_id = data['quiz_id']
+    total_score = sum(data['answers'])
+    category_scores = data.get('category_scores', {})
+
+    async for session in db_helper.session_getter():
+        try:
+            test = await session.execute(select(Test).where(Test.id == quiz_id))
+            test = test.scalar_one()
+
+            user = await session.execute(select(User).where(User.chat_id == message.chat.id))
+            user = user.scalar_one()
+
+            # Calculate results
+            results = await calculate_results(session, test, total_score, category_scores)
+
+            # Save results
+            for result in results:
+                quiz_result = QuizResult(
+                    user_id=user.id,
+                    test_id=test.id,
+                    score=result.get('score', 0),
+                    category_id=result.get('category_id'),
+                    is_psychological=test.is_psycological,
+                    result_text=result['text']
+                )
+                session.add(quiz_result)
+            await session.commit()
+
+            # Prepare result message and media
+            if test.multi_graph_results:
+                result_message = settings.quiz_text.quiz_multi_result + "\n\n"
+                for result in results:
+                    result_message += f"{result['category_name']}: {result['score']}\n{result['text']}\n\n"
+            else:
+                result_message = settings.quiz_text.quiz_result + f"{total_score}\n\n{results[0]['text']}"
+
+            # Prepare keyboard based on test type
+            if test.is_psycological:
+                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                    [types.InlineKeyboardButton(text=settings.quiz_text.psycological_menu_button_for_end_quiz, callback_data="show_psyco_tests")],
+                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_back_to_start, callback_data="back_to_start")]
+                ])
+            else:
+                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_list_menu_button_for_end_quiz, callback_data="show_quizzes")],
+                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_back_to_start, callback_data="back_to_start")]
+                ])
+
+            # Get appropriate media URL
+            text_service = TextService()
+            media_url = (results[0].get('picture') if results else None) or test.picture or await text_service.get_default_media(session)
+            
+            if media_url and not media_url.startswith(('http://', 'https://')):
+                media_url = f"{settings.media.base_url}/app/{media_url}"
+
+            await send_or_edit_message(
+                message,
+                result_message,
+                keyboard,
+                media_url
+            )
+
+        except Exception as e:
+            log.exception(e)
+        finally:
+            await session.close()
+            await state.clear()
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith(("show_quizzes", "start_quiz_", "confirm_start_", "start_questions_", "answer_", "quiz_back", "continue_quiz")))
