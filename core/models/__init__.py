@@ -13,6 +13,7 @@ __all__ = [
     "Question",
     "Result",
     "QuizResult",
+    "SentTest",
 ]
 
 
@@ -32,3 +33,5 @@ from .ai_provider import AIProvider
 
 from .quiz import Test, Question, Result
 from .quiz_result import QuizResult
+
+from .sent_test import SentTest

@@ -194,7 +194,86 @@ class QuizTexts(BaseModel):
     quiz_result: str =  "Test completed!\n\nYour score: "
     quiz_error: str = "Sorry, an error occurred. Please try starting again."
     
-    quiz_multi_result: str = "Test completed!\n\nYour scores: "  # TODO: New
+    quiz_multi_result: str = "Test completed!\n\nYour scores: " 
+
+
+class SendTestTexts(BaseModel):
+    csv_export_back_button: str = "Back"
+    csv_choose_test_to_export: str = "Choose a test to export data:"
+    csv_export_by_tests_error: str = "An error occurred while loading the list of tests."
+    csv_export_success: str = "CSV file has been successfully generated and sent."
+    csv_send_success: str = "CSV file has been successfully generated and sent."
+    csv_export_error: str = "An error occurred while exporting data"
+    csv_export_all_button: str = "Export all data to CSV"
+    csv_export_by_tests_button: str = "Export by tests"
+    csv_export_user_button: str = "Export to CSV"
+    send_test_notification_reciver: str = "You have received new tests from user @"
+    send_test_notification_reciver_part_2: str = "You can take them by selecting 'Take received tests' in the main menu\n -> /start"
+    send_apply_chosen_tests_button: str = "Confirm selection"
+    send_choose_another_tests_type_button: str = "Choose another test type"
+    back_button: str = "Back"
+    cancel_button: str = "Cancel"
+    button_accept: str = "Confirm"
+    back_to_userlist_button: str = "Back to user list"
+    send_test_back_to_main_menu_button: str = "Return to main menu"
+    choose_another_test: str = "Choose a test to send:"
+    selected_tests_count: str = "Tests selected:"
+    selected_tests_list: str = "Selected tests:"
+    send_tests_error_try_again: str = "An error occurred. Please start over."
+    check_sent_tests_button: str = "View sent tests"
+    send_psyco_tests_button: str = "Psychological tests"
+    send_other_tests_button: str = "Regular tests"
+    send_tests_cancel_button: str = "Cancel"
+    send_tests_choose_type: str = "Choose an action:"
+    sent_tests_user_choose: str = "Select a user to view sent tests:"
+    send_tests_users_fetch_error: str = "An error occurred while loading the user list. Please try again."
+    
+    test_sent: str = "Sent"
+    test_delivered: str = "Delivered"
+    test_completed: str = "Completed"
+    test_rejected: str = "Rejected"
+    test_unkown_status: str = "Unknown status"
+    test_name_repr: str = "Test"
+    test_status_repr: str = "Status"
+    test_score_result_repr: str = "Result"
+    test_text_result_repr: str = "Result text"
+    no_sent_tests_from_username: str = "No sent tests for user @"
+    tests_send_to_username: str = "Tests sent to user @"
+    user_results_page_number: str = "Page number"
+    no_chosen_tests_to_send: str = "You haven't selected any tests. Please choose at least one test."
+    tests_chosen_to_send_1: str = "You have selected the following tests to send"
+    tests_chosen_to_send_2: str = "Confirm your selection or go back to make changes."
+    confirm_send_button: str = "Confirm"
+    send_test_description: str = "Test description:"
+    send_test_add_test_button: str = "Add test"
+    send_test_back_to_tests_list_button: str = "Back to test list"
+    send_test_load_info_error: str = "An error occurred while loading test information."
+    send_test_added_to_list: str = "Test added to the selected list"
+    send_test_unknown_action: str = "Unknown action"
+    send_test_enter_username: str = "Enter the username of the user you want to send tests to:"
+    send_test_error_no_tests_selected: str = "Error: no tests selected. Please start the test sending process again. Enter another username or cancel."
+    send_test_error_send_youself: str = "Error: you cannot send a test to yourself."
+    send_test_reciver_authenticated: str = "authenticated"
+    send_test_reciver_not_authenticated: str = "not authenticated"
+    send_test_all_chosen_tests_uncomplete: str = "All selected tests have already been sent and are not completed."
+    send_test_all_chosen_tests_uncomplete_2: str = "Please select other tests."
+    send_test_return_to_test_choose_button: str = "Return to test selection"
+    send_test_last_confirm: str = "You are about to send the following tests to user @"
+    send_test_last_confirm_2: str = "User status: "
+    send_test_last_confirm_3: str = " in the bot."
+    send_test_last_confirm_sent_before: str = "The following tests have already been sent and are not completed"
+    send_test_last_confirm_sent_before_2: str = "They will be skipped."
+    send_test_last_confirm_accept: str = "Confirm the action."
+    send_test_last_confirm_error: str = "An error occurred while processing the request. Please try again."
+    send_test_confirm_error: str = "Invalid action. Please confirm sending or cancel."
+    send_test_confirm_error_not_enough_data: str = "Not enough data to send tests. Please start over."
+    send_test_confirm_different_error: str = "An error occurred while sending tests. Please try again."
+    
+    tests_sent_success: str = "Tests successfully sent to user @"
+    tests_sent_success_2: str = "and they have been notified."
+    tests_sent_unsuccess: str = "Tests sent to user @"
+    tests_sent_unsuccess_2: str = "As soon as the user authorizes in the bot, they will be prompted to take the tests. \nMake sure you sent to the correct username if the tests don't reach a user who has already authorized in the bot."
+
 
 
 class Settings(BaseSettings):
@@ -212,6 +291,7 @@ class Settings(BaseSettings):
     ai_chat: AIChatConfig = AIChatConfig()
     universal_page_text: UniversalPageTexts = UniversalPageTexts()
     quiz_text: QuizTexts = QuizTexts()
+    send_test: SendTestTexts = SendTestTexts()
 
 
 

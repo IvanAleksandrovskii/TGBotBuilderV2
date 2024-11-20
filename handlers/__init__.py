@@ -33,3 +33,6 @@ router.include_router(quiz_router)
 
 from .direct_broadcast import router as direct_broadcast_router
 router.include_router(direct_broadcast_router)
+
+from .send_test import router as send_test_router
+router.include_router(send_test_router)
