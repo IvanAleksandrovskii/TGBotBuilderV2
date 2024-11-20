@@ -24,6 +24,7 @@ from core.models import db_helper
 
 from core.admin import async_sqladmin_db_helper, sqladmin_authentication_backend
 from core.admin.models import setup_admin
+from core.models import client_manager
 
 from handlers import router as main_router
 
@@ -106,6 +107,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await async_sqladmin_db_helper.dispose()
     
     log.info("Application shutdown complete")
+    
+    client_manager.dispose_all_clients()
 
 main_app = FastAPI(
     lifespan=lifespan,
@@ -171,10 +174,20 @@ main_app.add_middleware(
     allow_headers=["*"],
 )
 
+# TODO: This is fix for sqladmin with https
+@main_app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
+    return response
+
 
 if __name__ == '__main__':
     uvicorn.run("main:main_app",
         host=settings.run.host,
         port=settings.run.port,
         reload=settings.run.debug,
+        forwarded_allow_ips='*',  # Added this for htts fix
+        proxy_headers=True 
     )

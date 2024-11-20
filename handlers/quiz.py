@@ -362,15 +362,14 @@ async def send_question(message: types.Message, state: FSMContext):
 
 async def calculate_results(session, test, total_scores, category_scores):
     """Calculate results based on test type and scoring method."""
-    if test.multy_graph_results:
-        # For tests with multiple category results
+    if test.multi_graph_results:
         final_results = []
         for category_id, count in category_scores.items():
             results = await session.execute(
                 select(Result).where(
                     Result.test_id == test.id,
-                    Result.category_id == category_id,  # category_id в результате соответствует score из ответа
-                    Result.min_score <= count,  # проверяем количество ответов этой категории
+                    Result.category_id == category_id,
+                    Result.min_score <= count,
                     Result.max_score >= count
                 )
             )
@@ -378,7 +377,8 @@ async def calculate_results(session, test, total_scores, category_scores):
             if category_result:
                 final_results.append({
                     'category_id': category_id,
-                    'score': count,  # количество ответов в этой категории
+                    'category_name': test.get_category_name(category_id),
+                    'score': count,
                     'text': category_result.text,
                     'picture': category_result.picture
                 })
@@ -432,10 +432,10 @@ async def finish_quiz(message: types.Message, state: FSMContext):
             await session.commit()
 
             # Prepare result message and media
-            if test.multy_graph_results:
+            if test.multi_graph_results:
                 result_message = settings.quiz_text.quiz_multi_result + "\n\n"
                 for result in results:
-                    result_message += f"Category {result['category_id']}: {result['score']}\n{result['text']}\n\n"
+                    result_message += f"{result['category_name']}: {result['score']}\n{result['text']}\n\n"
             else:
                 result_message = settings.quiz_text.quiz_result + f"{total_score}\n\n{results[0]['text']}"
 
@@ -505,7 +505,7 @@ async def process_answer(callback_query: types.CallbackQuery, state: FSMContext)
             data['answers'].append(score)
             
             # Update category scores if this is a multi-graph test
-            if test.multy_graph_results:
+            if test.multi_graph_results:
                 if 'category_scores' not in data:
                     data['category_scores'] = {}
                 # Используем score как идентификатор категории и считаем количество ответов

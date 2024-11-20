@@ -1,10 +1,11 @@
 # core/models/quiz.py
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 import uuid
+import json
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, ForeignKey, Boolean, CheckConstraint
+from sqlalchemy import Integer, String, ForeignKey, Boolean, CheckConstraint, JSON
 from fastapi_storages.integrations.sqlalchemy import FileType
 
 from .base import Base
@@ -31,7 +32,10 @@ class Test(Base):
     is_psycological: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # If many graphs in test result
-    multy_graph_results: Mapped[bool] = mapped_column(Boolean, default=False)  # TODO: NEW Field
+    multi_graph_results: Mapped[bool] = mapped_column(Boolean, default=False)  # TODO: NEW Field 
+    # New field to store category names
+    category_names: Mapped[Dict] = mapped_column(JSON, nullable=True, default=dict)
+
 
     description: Mapped[str] = mapped_column(String, nullable=False)
     picture = mapped_column(FileType(storage=quiz_storage))
@@ -48,6 +52,30 @@ class Test(Base):
 
     def __str__(self):
         return f"{self.name}"
+
+    def get_category_name(self, category_id: int) -> str:
+        """Get category name by ID, return default if not found"""
+        try:
+            names = self.category_names or {}
+            if isinstance(names, str):
+                names = json.loads(names)
+            return names.get(str(category_id), f"Category {category_id}")
+        except (json.JSONDecodeError, AttributeError):
+            return f"Category {category_id}"
+
+    def set_category_name(self, category_id: int, name: str) -> None:
+        """Set name for a category ID"""
+        try:
+            names = self.category_names
+            if names is None:
+                names = {}
+            if isinstance(names, str):
+                names = json.loads(names)
+            names[str(category_id)] = name
+            self.category_names = names
+        except (json.JSONDecodeError, AttributeError):
+            # В случае ошибки создаем новый словарь только с новым значением
+            self.category_names = {str(category_id): name}
 
 
 class Question(Base):
@@ -126,6 +154,7 @@ class Result(Base):
     picture = mapped_column(FileType(storage=quiz_storage))
     
     category_id: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Number of category (1-4 for example) to summ all answers with the same category
+    # TODO: Add category name
 
     min_score: Mapped[int] = mapped_column(Integer, nullable=False)
     max_score: Mapped[int] = mapped_column(Integer, nullable=False)

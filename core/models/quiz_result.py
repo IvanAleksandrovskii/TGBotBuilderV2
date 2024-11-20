@@ -30,3 +30,10 @@ class QuizResult(Base):
     
     def __str__(self):
         return f"QuizResult(id={self.id}, user_id={self.user_id}, test_id={self.test_id}, score={self.score})"
+    
+    @property
+    def category_name(self) -> str:
+        """Get category name from associated test"""
+        if self.test and self.category_id is not None:
+            return self.test.get_category_name(self.category_id)
+        return f"Category {self.category_id}" if self.category_id is not None else ""

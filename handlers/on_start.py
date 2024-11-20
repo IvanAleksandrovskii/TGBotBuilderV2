@@ -7,7 +7,6 @@ from aiogram.fsm.context import FSMContext
 
 from sqlalchemy import select
 
-from icecream import ic
 
 from core import log, settings
 from core.models import User, db_helper
@@ -18,30 +17,11 @@ from services.button_service import ButtonService
 from .utils import send_or_edit_message
 
 
-# ic.disable()
-
-
 router = Router()
 
 
 class FirstGreetingStates(StatesGroup):
     GREETING = State()
-
-
-# @alru_cache(ttl=settings.bot.max_users_cached_time_seconds, maxsize=settings.bot.max_users_cached)
-async def get_user_from_db(chat_id: int) -> User | None:
-    async for session in db_helper.session_getter():
-        try:
-            user_from_db = await session.execute(select(User).where(User.chat_id == chat_id))
-            user_from_db = user_from_db.scalar_one_or_none()
-
-            return user_from_db
-
-        except Exception as e:
-            log.exception("Error in get_user_from_db: %s", e)
-            return None
-        finally:
-            await session.close()
 
 
 async def get_start_content(chat_id: int, username: str | None):
@@ -68,7 +48,7 @@ async def get_start_content(chat_id: int, username: str | None):
             
             if not content:
                 log.warning("Content not found for marker: %s", context_marker)
-                return settings.bot_main_page_text.user_error_message, [], None, None, False
+                return settings.bot_main_page_text.user_error_message, None, None, False
 
             text = content["text"]
             media_url = content["media_urls"][0] if content["media_urls"] else None
@@ -89,7 +69,7 @@ async def get_start_content(chat_id: int, username: str | None):
 
         except Exception as e:
             log.error("Error in get_start_content: %s", e)
-            return settings.bot_main_page_text.user_error_message, [], None, None, False
+            return settings.bot_main_page_text.user_error_message, None, None, False
         finally:
             await session.close()
 

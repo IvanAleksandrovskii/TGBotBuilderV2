@@ -5,8 +5,8 @@
 from typing import Any, Type
 from fastapi import UploadFile, Request
 from sqlalchemy import select
-from wtforms import Form
-# from wtforms import TextAreaField, IntegerField
+from wtforms import Form, TextAreaField
+from wtforms.validators import Optional
 
 from core import log
 from core.admin.models.base import BaseAdminModel
@@ -19,7 +19,7 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.id,
         Test.name, 
         Test.is_psycological, 
-        Test.multy_graph_results,
+        Test.multi_graph_results,
         Test.allow_back, 
         Test.allow_play_again, 
         Test.is_active, 
@@ -31,7 +31,7 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.id, 
         Test.name, 
         Test.is_psycological, 
-        Test.multy_graph_results,
+        Test.multi_graph_results,
         Test.description, 
         Test.picture, 
         Test.allow_back, 
@@ -44,7 +44,8 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.id, 
         Test.name, 
         Test.is_psycological, 
-        Test.multy_graph_results,
+        Test.multi_graph_results,
+        Test.category_names,
         Test.allow_back, 
         Test.allow_play_again, 
         Test.is_active, 
@@ -52,14 +53,26 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.updated_at
         ]
     column_searchable_list = [Test.id, Test.name]
-    column_filters = [Test.name, Test.is_psycological, Test.allow_back, Test.allow_play_again, Test.is_active, Test.multy_graph_results]
-    form_columns = [Test.name, Test.description, Test.is_psycological, Test.multy_graph_results, Test.allow_back, Test.allow_play_again, Test.is_active, Test.picture]
+    column_filters = [Test.name, Test.is_psycological, Test.allow_back, Test.allow_play_again, Test.is_active, Test.multi_graph_results]
+    form_columns = [Test.name, Test.description, Test.is_psycological, Test.multi_graph_results, Test.category_names, Test.allow_back, Test.allow_play_again, Test.is_active, Test.picture]
     
     name = "Test"
     name_plural = "Tests"
     icon = "fa-solid fa-clipboard-question"
     category = "Quiz Management"
+    
+    async def scaffold_form(self) -> Type[Form]:
+        form_class = await super().scaffold_form()
+        
+        form_class.category_names = TextAreaField(
+            'Category Names',
+            validators=[Optional()],
+            description='Введите имена категорий в формате JSON. Пример: {"1": "Интроверсия", "2": "Экстраверсия"}'
+        )
+        
+        return form_class
 
+    
     async def scaffold_list_query(self):
         query = select(self.model).order_by(self.model.created_at.desc())
         return query
