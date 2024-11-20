@@ -158,7 +158,7 @@ async def get_content(context_marker: str, session: AsyncSession):
     if not content_data:
         log.warning(f"Content not found for marker: {context_marker}")
         content_data = {
-            "text": settings.bot_text.utils_handler_content_not_found,
+            "text": settings.bot_main_page_text.utils_handler_content_not_found,
             "media_urls": []
         }
 

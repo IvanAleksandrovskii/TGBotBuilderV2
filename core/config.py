@@ -148,6 +148,7 @@ class BotMainPageTexts(BaseModel):
     user_error_message: str = "Something went wrong. Please try again later."
     welcome_fallback_user_word: str = "пользователь"
     utils_error_message: str = "Something went wrong. Please try again later."
+    utils_handler_content_not_found: str = "Content not found."
 
 
 class UniversalPageTexts(BaseModel):

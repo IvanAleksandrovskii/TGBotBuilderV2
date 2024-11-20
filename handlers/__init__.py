@@ -4,7 +4,7 @@ from aiogram import Router
 router = Router()
 
 from .on_start import router as on_start_router
-from .admin import router as admin_router
+from .broadcast import router as admin_router
 
 from .promocode import router as promocode_router
 
@@ -30,3 +30,6 @@ router.include_router(reader_router)
 
 from .quiz import router as quiz_router
 router.include_router(quiz_router)
+
+from .direct_broadcast import router as direct_broadcast_router
+router.include_router(direct_broadcast_router)
