@@ -3,14 +3,16 @@
 import os
 
 from aiogram import Router, types, Bot
-from aiogram.types import FSInputFile
-from aiogram.types import InputMediaPhoto
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+# from aiogram.types import FSInputFile
+# from aiogram.types import InputMediaPhoto
 
-from core import log
+from core import log, settings
+from core.models import db_helper
 from services import UserService
 from services.promocode_service import PromoCodeService
 
-from .utils import send_or_edit_message
+from .utils import send_or_edit_message, get_content
 
 
 router = Router()
@@ -35,70 +37,103 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
         bot_username = (await message.bot.get_me()).username
         invite_link = f"https://t.me/{bot_username}?start={promocode.code}"
         
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        # from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-        btn = InlineKeyboardButton(
-                text="main manu",
-                url=None,
-                callback_data="back_to_start"
-            )
+        # btn = InlineKeyboardButton(
+        #         text="main manu",
+        #         url=None,
+        #         callback_data="back_to_start"
+        #     )
         
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[[btn]])
+        # keyboard = InlineKeyboardMarkup(inline_keyboard=[[btn]])
         
-        # TODO: NEW, remove and make the normal one with default media and media and text by marker
+        # # TODO: NEW, remove and make the normal one with default media and media and text by marker
         
-        user_photos = await bot.get_user_profile_photos(user.chat_id)
+        # user_photos = await bot.get_user_profile_photos(user.chat_id)
         
-        # Create directory if it doesn't exist
-        os.makedirs("media/users", exist_ok=True)
+        # # Create directory if it doesn't exist
+        # os.makedirs("media/users", exist_ok=True)
 
-        # Check if user has any photos
-        if user_photos.total_count > 0:
-            try:
-                # Get the file path of the photo
-                file = await bot.get_file(user_photos.photos[0][-1].file_id)
-                # Download the photo
-                photo_path = f"media/users/{chat_id}_photo.jpg"
-                await bot.download_file(file.file_path, photo_path)
+        # # Check if user has any photos
+        # if user_photos.total_count > 0:
+        #     try:
+        #         # Get the file path of the photo
+        #         file = await bot.get_file(user_photos.photos[0][-1].file_id)
+        #         # Download the photo
+        #         photo_path = f"media/users/{chat_id}_photo.jpg"
+        #         await bot.download_file(file.file_path, photo_path)
                 
-                # Create FSInputFile for the photo
-                input_file = FSInputFile(photo_path)
+        #         # Create FSInputFile for the photo
+        #         input_file = FSInputFile(photo_path)
                 
-                # Create InputMediaPhoto for editing
-                media = InputMediaPhoto(
-                    media=input_file,
-                    caption=f"Here's your unique invite link:\n{invite_link}\n\n"
-                           f"Share it with friends! We'll track how many people join using your link."
+        #         # Create InputMediaPhoto for editing
+        #         media = InputMediaPhoto(
+        #             media=input_file,
+        #             caption=f"Here's your unique invite link:\n{invite_link}\n\n"
+        #                    f"Share it with friends! We'll track how many people join using your link."
+        #         )
+        
+        try:
+            async with db_helper.db_session() as session:
+                text, keyboard, media = await get_content("getpromo", session)
+                
+                is_default_text = text == settings.bot_main_page_text.utils_handler_content_not_found
+
+                
+                if is_default_text:
+                    final_text = (
+                        "Ваша ссылка для приглашения:\n\n"
+                        f"{invite_link}\n\n"
+                        "Поделитесь ею с друзьями!"
+                    )
+                else:
+                    final_text = f"{text}\n\n{invite_link}"
+                
+                btn = InlineKeyboardButton(
+                    text="Главное меню",
+                    url=None,
+                    callback_data="back_to_start"
                 )
-
-                # Edit existing message with new photo and text
-                await message.message.edit_media(
-                    media=media,
-                    reply_markup=keyboard
-                )
                 
-                # Clean up the temporary file
-                if os.path.exists(photo_path):
-                    os.remove(photo_path)
+                if keyboard:
+                    keyboard.inline_keyboard.append([btn])
+                else:
+                    keyboard = InlineKeyboardMarkup(inline_keyboard=[[btn]])
                     
-            except Exception as photo_error:
-                log.exception(f"Error processing photo: {photo_error}")
-                # If photo processing fails, send message without photo
-                await send_or_edit_message(
-                    message,
-                    f"Here's your unique invite link:\n{invite_link}\n\n"
-                    f"Share it with friends! We'll track how many people join using your link.",
-                    keyboard,
-                    None
-                )
-        else:
-            await send_or_edit_message(
-                message,
-                f"Here's your unique invite link:\n{invite_link}\n\n"
-                f"Share it with friends! We'll track how many people join using your link.",
-                keyboard,
-                None
-            )
+                await send_or_edit_message(message, final_text, keyboard, media)
+        
+        except Exception as e:
+            log.exception(f"Error in get_promo_command: {e}")
+            await message.answer("Sorry, something went wrong. Please try again later.")
+            
+    #             # Edit existing message with new photo and text
+    #             await message.message.edit_media(
+    #                 media=media,
+    #                 reply_markup=keyboard
+    #             )
+                
+    #             # Clean up the temporary file
+    #             # if os.path.exists(photo_path):
+    #             #     os.remove(photo_path)
+                    
+    #         except Exception as photo_error:
+    #             # log.exception(f"Error processing photo: {photo_error}")
+    #             # If photo processing fails, send message without photo
+    #             await send_or_edit_message(
+    #                 message,
+    #                 f"Here's your unique invite link:\n{invite_link}\n\n"
+    #                 f"Share it with friends! We'll track how many people join using your link.",
+    #                 keyboard,
+    #                 None
+    #             )
+    #     else:
+    #         await send_or_edit_message(
+    #             message,
+    #             f"Here's your unique invite link:\n{invite_link}\n\n"
+    #             f"Share it with friends! We'll track how many people join using your link.",
+    #             keyboard,
+    #             None
+    #         )
             
     except Exception as e:
         log.exception(f"Error in get_promo_command: {e}")
