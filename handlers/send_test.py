@@ -10,7 +10,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import BufferedInputFile
 
 from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from async_lru import alru_cache
 
 from core import log, settings
 from core.models import db_helper
@@ -25,7 +26,6 @@ router = Router()
 
 
 # TODO: Idea add option to input for how many days the csv file sould be 
-# TODO: Add separate marker for media files used with the interface
 # TODO: Add AI Transcriptions for the tests results here
 
 
@@ -39,16 +39,33 @@ class SendTestStates(StatesGroup):
     VIEWING_USER_TESTS = State()
 
 
-async def get_send_test_media_url(session: AsyncSession) -> str:
-    text_service = TextService()
-    data = await text_service.get_text_with_media("send_test", session)
-    media_ulrs = data["media_urls"]
-    
-    if media_ulrs:
-        return media_ulrs[0]
-    
-    media_url = await text_service.get_default_media(session)
-    return media_url
+@alru_cache(maxsize=1, ttl=30)
+async def get_send_test_media_url():
+    try:
+        async with db_helper.db_session() as session:
+            text_service = TextService()
+            
+            log.debug("Fetching text with media for send_test")
+            data = await text_service.get_text_with_media("send_test", session)
+            log.debug(f"Got data: {data}")
+            
+            if not data:
+                log.debug("No data found, getting default media")
+                return await text_service.get_default_media(session)
+            
+            media_urls = data["media_urls"]
+            log.debug(f"Got media_urls: {media_urls}")
+            
+            if media_urls and len(media_urls) >= 1:
+                log.debug(f"Returning first media URL: {media_urls[0]}")
+                return media_urls[0]
+            
+            log.debug("No media URLs found, getting default media")
+            return await text_service.get_default_media(session)
+            
+    except Exception as e:
+        log.exception(f"Error in get_send_test_media_url: {e}")
+        return None
 
 
 @router.callback_query(lambda c: c.data == "export_csv_all")
@@ -76,11 +93,9 @@ async def show_export_by_test_options(callback_query: types.CallbackQuery, state
             
             keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_back_button, callback_data="back_to_sent_tests")])
 
-            text_service = TextService()
-
             text = settings.send_test.csv_choose_test_to_export
-            # content["media_urls"][0] if content and content["media_urls"] else 
-            media_url = await text_service.get_default_media(session)
+
+            media_url = await get_send_test_media_url()
 
             await send_or_edit_message(
                 callback_query.message,
@@ -294,15 +309,12 @@ async def show_available_tests(callback_query: types.CallbackQuery, state: FSMCo
     
     text_service = TextService()
     async for session in db_helper.session_getter():
-        # content = await text_service.get_text_with_media("send_test_choose_test", session)
-        # content["text"] if content else 
         text = settings.send_test.choose_another_test
         if selected_tests:
             selected_test_names = await get_test_names(selected_tests)
             text += f"\n\n" + settings.send_test.selected_tests_count + f"{len(selected_tests)}\n" + settings.send_test.selected_tests_list + f"{', '.join(selected_test_names)}"
 
-        # content["media_urls"][0] if content and content["media_urls"] else 
-        media_url = await text_service.get_default_media(session)
+        media_url = await get_send_test_media_url()
     
     await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
     await state.set_state(SendTestStates.CHOOSING_TEST)
@@ -341,13 +353,9 @@ async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext
         [types.InlineKeyboardButton(text=settings.send_test.send_psyco_tests_button, callback_data="choose_psyco_tests")],
         [types.InlineKeyboardButton(text=settings.send_test.send_tests_cancel_button, callback_data="back_to_start")]
     ]
-    text_service = TextService()
-    async for session in db_helper.session_getter():
-        # content = await text_service.get_text_with_media("send_test_choose_type", session)
-        # content["text"] if content else
-        text = settings.send_test.send_tests_choose_type
-        # content["media_urls"][0] if content and content["media_urls"] else
-        media_url = await text_service.get_default_media(session)
+
+    text = settings.send_test.send_tests_choose_type
+    media_url = await get_send_test_media_url()
     
     await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
     await state.set_state(SendTestStates.CHOOSING_TEST_TYPE)
@@ -414,12 +422,8 @@ async def show_sent_tests_page(message: types.Message, sender_id: int, page: int
             keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_by_tests_button, callback_data="export_csv_by_test")])
             keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_button, callback_data="back_to_send_test")])
 
-            text_service = TextService()
-            # content = await text_service.get_text_with_media("view_sent_tests", session)
-            # content["text"] if content else 
             text = settings.send_test.sent_tests_user_choose
-            # content["media_urls"][0] if content and content["media_urls"] else 
-            media_url = await text_service.get_default_media(session)
+            media_url = await get_send_test_media_url()
 
             await send_or_edit_message(message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
             await state.set_state(SendTestStates.VIEWING_SENT_TESTS)
@@ -546,11 +550,7 @@ async def view_user_tests(callback_query: types.CallbackQuery, username: str, st
 
             keyboard = create_navigation_keyboard(page, len(pages), username)
 
-            text_service = TextService()
-            # content = await text_service.get_text_with_media("view_user_tests", session)
-            # content["media_urls"][0] if content and content["media_urls"] else 
-            media_url = await text_service.get_default_media(session)
-
+            media_url = await get_send_test_media_url()
             await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
             await state.set_state(SendTestStates.VIEWING_USER_TESTS)
             await state.update_data(current_username=username, total_pages=len(pages))
@@ -602,18 +602,15 @@ async def confirm_test_selection(callback_query: types.CallbackQuery, state: FSM
         await callback_query.answer(settings.send_test.no_chosen_tests_to_send)
         return
     
-    text_service = TextService()
     async for session in db_helper.session_getter():
         tests = await session.execute(select(Test).where(Test.id.in_(selected_tests)))
         tests = tests.scalars().all()
         
         test_names = ", ".join([test.name for test in tests])
         
-        # content = await text_service.get_text_with_media("send_test_confirm_selection", session)
-        # content["text"] if content else 
         text = settings.send_test.tests_chosen_to_send_1 + f":\n\n{test_names}\n\n" + settings.send_test.tests_chosen_to_send_2
-        # content["media_urls"][0] if content and content["media_urls"] else 
-        media_url = await text_service.get_default_media(session)
+        
+        media_url = await get_send_test_media_url()
         
         keyboard = [
             [types.InlineKeyboardButton(text=settings.send_test.confirm_send_button, callback_data="confirm_tests")],
@@ -649,12 +646,8 @@ async def process_test_choice(callback_query: types.CallbackQuery, state: FSMCon
             test = await session.execute(select(Test).where(Test.id == test_id))
             test = test.scalar_one()
             
-            text_service = TextService()
-            # content = await text_service.get_text_with_media("send_test_description", session)
-            # content["text"] if content else 
             text = settings.send_test.send_test_description + f"\n'{test.name}':\n\n{test.description}"
-            # (content["media_urls"][0] if content and content["media_urls"] else ...)
-            media_url = test.picture if test.picture else await text_service.get_default_media(session)
+            media_url = test.picture if test.picture else await get_send_test_media_url
             
             if media_url and not media_url.startswith(('http://', 'https://')):
                 media_url = f"{settings.media.base_url}/app/{media_url}"
@@ -700,17 +693,12 @@ async def process_confirm_tests(callback_query: types.CallbackQuery, state: FSMC
         return
     
     if callback_query.data == "confirm_tests":
-        text_service = TextService()
-        async for session in db_helper.session_getter():
-            # content = await text_service.get_text_with_media("send_test_enter_receiver", session)
-            # content["text"] if content else 
-            text = settings.send_test.send_test_enter_username
-            keyboard = [
-                [types.InlineKeyboardButton(text=settings.send_test.cancel_button, callback_data="back_to_start")],
-            ]
+        text = settings.send_test.send_test_enter_username
+        keyboard = [
+            [types.InlineKeyboardButton(text=settings.send_test.cancel_button, callback_data="back_to_start")],
+        ]
 
-            # content["media_urls"][0] if content and content["media_urls"] else 
-            media_url = await text_service.get_default_media(session)
+        media_url = await get_send_test_media_url()
         
         await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
         await state.set_state(SendTestStates.ENTERING_RECEIVER)
@@ -773,17 +761,13 @@ async def process_receiver_input(message: types.Message, state: FSMContext):
                 [types.InlineKeyboardButton(text=settings.send_test.cancel_button, callback_data="back_to_start")]
             ]
             
-            text_service = TextService()
-            # content = await text_service.get_text_with_media("send_test_confirm", session)
-            #  content["text"] if content else (
             text = settings.send_test.send_test_last_confirm + f"{receiver_username}:\n\n{test_names}\n\n" + settings.send_test.send_test_last_confirm_2 + f"{receiver_status}" + settings.send_test.send_test_last_confirm_3 + "\n"
             
             if skipped_tests:
                 text += "\n" + settings.send_test.send_test_last_confirm_sent_before + f": \n{', '.join(skipped_tests)}.\n" + settings.send_test.send_test_last_confirm_sent_before_2
             text += "\n" + settings.send_test.send_test_last_confirm_accept
             
-            # content["media_urls"][0] if content and content["media_urls"] else 
-            media_url = await text_service.get_default_media(session)
+            media_url = await get_send_test_media_url()
             
             if media_url and not media_url.startswith(('http://', 'https://')):
                 media_url = f"{settings.media.base_url}/app/{media_url}"
@@ -845,13 +829,7 @@ async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMCont
     else:
         text = (settings.send_test.tests_sent_unsuccess + f"{receiver_username}.\n" + settings.send_test.tests_sent_unsuccess_2)
 
-    text_service = TextService()
-    async for session in db_helper.session_getter():
-        # content = await text_service.get_text_with_media("send_test_success", session)
-        # content["text"] if content else 
-        text = text
-        # content["media_urls"][0] if content and content["media_urls"] else 
-        media_url = await text_service.get_default_media(session)
+    media_url = await get_send_test_media_url()
 
     keyboard = [
         [types.InlineKeyboardButton(text=settings.send_test.send_test_back_to_main_menu_button, callback_data="back_to_start")]
