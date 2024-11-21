@@ -5,7 +5,7 @@
 from typing import Any, Type
 from fastapi import UploadFile, Request
 from sqlalchemy import select
-from wtforms import Form, TextAreaField
+from wtforms import Form, TextAreaField, IntegerField
 from wtforms.validators import Optional, DataRequired
 
 from core import log
@@ -17,7 +17,8 @@ from services import quiz_storage
 class TestAdmin(BaseAdminModel, model=Test):
     column_list = [
         Test.id,
-        Test.name, 
+        Test.name,
+        Test.position, 
         Test.is_psycological, 
         Test.multi_graph_results,
         Test.allow_back, 
@@ -29,7 +30,8 @@ class TestAdmin(BaseAdminModel, model=Test):
         ]
     column_details_list = [
         Test.id, 
-        Test.name, 
+        Test.name,
+        Test.position, 
         Test.is_psycological, 
         Test.multi_graph_results,
         Test.category_names,
@@ -43,7 +45,8 @@ class TestAdmin(BaseAdminModel, model=Test):
         ]
     column_sortable_list = [
         Test.id, 
-        Test.name, 
+        Test.name,
+        Test.position, 
         Test.is_psycological, 
         Test.multi_graph_results,
         Test.category_names,
@@ -55,7 +58,7 @@ class TestAdmin(BaseAdminModel, model=Test):
         ]
     column_searchable_list = [Test.id, Test.name]
     column_filters = [Test.name, Test.is_psycological, Test.allow_back, Test.allow_play_again, Test.is_active, Test.multi_graph_results]
-    form_columns = [Test.name, Test.description, Test.is_psycological, Test.multi_graph_results, Test.category_names, Test.allow_back, Test.allow_play_again, Test.is_active, Test.picture]
+    form_columns = [Test.name, Test.position, Test.description, Test.is_psycological, Test.multi_graph_results, Test.category_names, Test.allow_back, Test.allow_play_again, Test.is_active, Test.picture]
     
     name = "Test"
     name_plural = "Tests"
@@ -72,6 +75,15 @@ class TestAdmin(BaseAdminModel, model=Test):
             render_kw={
                 "rows": 10,
                 "style": "width: 50% !important; min-height: 200px !important; resize: vertical !important;"
+            }
+        )
+        
+        form_class.position = IntegerField(
+            'Position',
+            validators=[Optional()],
+            description='Position of the test in the list of tests',
+            render_kw={
+                "style": "width: 10% !important;"
             }
         )
         

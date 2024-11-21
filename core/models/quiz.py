@@ -26,33 +26,36 @@ class Test(Base):
     Represents a quiz test.
     """
     __tablename__ = "tests"
-
+    
     name: Mapped[str] = mapped_column(String, nullable=False)
-
+    
+    # Ordering for tests priority in tests db selection and execution
+    position: Mapped[int] = mapped_column(Integer, nullable=True)
+    
     is_psycological: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # If many graphs in test result
     multi_graph_results: Mapped[bool] = mapped_column(Boolean, default=False)
     # New field to store category names dictionary
     category_names: Mapped[Dict] = mapped_column(JSON, nullable=True, default=dict)
-
-
+    
+    
     description: Mapped[str] = mapped_column(String, nullable=False)
     picture = mapped_column(FileType(storage=quiz_storage))
-
+    
     allow_back: Mapped[bool] = mapped_column(Boolean, default=True)
     allow_play_again: Mapped[bool] = mapped_column(Boolean, default=True)
-
+    
     questions: Mapped[List["Question"]] = relationship(back_populates="test", cascade="all, delete-orphan")
     results: Mapped[List["Result"]] = relationship(back_populates="test", cascade="all, delete-orphan")
     quiz_results: Mapped[list["QuizResult"]] = relationship(back_populates="test")
-
+    
     def __repr__(self):
         return f"<Test(id={self.id}, name={self.name})>"
-
+    
     def __str__(self):
         return f"{self.name}"
-
+    
     def get_category_name(self, category_id: int) -> str:
         """Get category name by ID, return default if not found"""
         try:
@@ -62,7 +65,9 @@ class Test(Base):
             return names.get(str(category_id), f"Category {category_id}")
         except (json.JSONDecodeError, AttributeError):
             return f"Category {category_id}"
-
+    
+    
+    # TODO: Unimplemented
     def set_category_name(self, category_id: int, name: str) -> None:
         """Set name for a category ID"""
         try:

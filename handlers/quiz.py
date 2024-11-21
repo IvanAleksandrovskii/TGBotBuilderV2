@@ -32,7 +32,10 @@ async def show_psycho_tests(callback_query: types.CallbackQuery, state: FSMConte
     async for session in db_helper.session_getter():
         try:
 
-            tests = await session.execute(Test.active().where(Test.is_psycological == True))  # Only psycological tests 
+            tests = await session.execute(
+                Test.active().where(Test.is_psycological == True)
+                .order_by(Test.position.nulls_last(), Test.name)
+                )  # Only psycological tests 
             tests = tests.scalars().all()
 
             keyboard = []
@@ -73,7 +76,10 @@ async def show_quizzes(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()  # Clear the state before showing the list of tests
     async for session in db_helper.session_getter():
         try:
-            tests = await session.execute(Test.active().where(Test.is_psycological == False))  # Only non psycological tests 
+            tests = await session.execute(
+                Test.active().where(Test.is_psycological == False)
+                .order_by(Test.position.nulls_last(), Test.name)
+                )  # Only non psycological tests 
             tests = tests.scalars().all()
 
             keyboard = []
