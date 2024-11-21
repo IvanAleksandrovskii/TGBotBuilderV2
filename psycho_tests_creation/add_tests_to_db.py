@@ -231,12 +231,43 @@ hopeless = TestData(
 )
 
 
+sterss_condition = TestData(
+    name="Экспресс диагностика стресса",
+    description=(
+        "Тест дает возможность выявить индивидуальные характеристики реакции на стресс, а"
+        " именно, степень контроля над собой и уровень эмоциональной неустойчивости в условиях повышенной нагрузки."
+    ),
+    is_multigraph=False,
+    test_file="stress_condition.csv",
+    interpretation_file="stress_condition_interpretation.csv",
+    same_answers=True,
+    same_answers_ordering=True,
+    same_answers_score=True,
+)
+
+
+stress_resistance = TestData(
+    name="Тест на стрессоустойчивость",
+    description=(
+        "Бостонский тест на стрессоустойчивость разработан исследователями "
+        "Медицинского центра Университета Бостона для диагностики подверженности стрессу."
+    ),
+    is_multigraph=False,
+    test_file="stress_resistance.csv",
+    interpretation_file="stress_resistance_interpretation.csv",
+    same_answers=True,
+    same_answers_ordering=True,
+    same_answers_score=True,
+)
+
+
 async def main():
-    async for session in db_helper.session_getter():
+    async with db_helper.db_session() as session:
         try:
             await create_test(session, anxiety)
-            
             await create_test(session, hopeless)
+            await create_test(session, sterss_condition)
+            await create_test(session, stress_resistance)
             
             # TODO: Add other tests here
             
@@ -245,9 +276,6 @@ async def main():
         except Exception as e:
             log.error(f"Error occurred: {e}")
             await session.rollback()
-            raise
-        finally:
-            await session.close()
 
 
 if __name__ == "__main__":
