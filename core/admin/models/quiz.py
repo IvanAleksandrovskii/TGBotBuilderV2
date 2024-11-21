@@ -19,7 +19,7 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.id,
         Test.name,
         Test.position, 
-        Test.is_psycological, 
+        Test.is_psychological, 
         Test.multi_graph_results,
         Test.allow_back, 
         Test.allow_play_again, 
@@ -32,7 +32,7 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.id, 
         Test.name,
         Test.position, 
-        Test.is_psycological, 
+        Test.is_psychological, 
         Test.multi_graph_results,
         Test.category_names,
         Test.description, 
@@ -47,7 +47,7 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.id, 
         Test.name,
         Test.position, 
-        Test.is_psycological, 
+        Test.is_psychological, 
         Test.multi_graph_results,
         Test.category_names,
         Test.allow_back, 
@@ -57,8 +57,8 @@ class TestAdmin(BaseAdminModel, model=Test):
         Test.updated_at
         ]
     column_searchable_list = [Test.id, Test.name]
-    column_filters = [Test.name, Test.is_psycological, Test.allow_back, Test.allow_play_again, Test.is_active, Test.multi_graph_results]
-    form_columns = [Test.name, Test.position, Test.description, Test.is_psycological, Test.multi_graph_results, Test.category_names, Test.allow_back, Test.allow_play_again, Test.is_active, Test.picture]
+    column_filters = [Test.name, Test.is_psychological, Test.allow_back, Test.allow_play_again, Test.is_active, Test.multi_graph_results]
+    form_columns = [Test.name, Test.position, Test.description, Test.is_psychological, Test.multi_graph_results, Test.category_names, Test.allow_back, Test.allow_play_again, Test.is_active, Test.picture]
     
     name = "Test"
     name_plural = "Tests"

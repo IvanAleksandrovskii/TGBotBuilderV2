@@ -32,7 +32,7 @@ class Test(Base):
     # Ordering for tests priority in tests db selection and execution
     position: Mapped[int] = mapped_column(Integer, nullable=True)
     
-    is_psycological: Mapped[bool] = mapped_column(Boolean, default=False)  # TODO: Fix spelling
+    is_psychological: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # If many graphs in test result
     multi_graph_results: Mapped[bool] = mapped_column(Boolean, default=False)

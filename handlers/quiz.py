@@ -33,7 +33,7 @@ async def show_psycho_tests(callback_query: types.CallbackQuery, state: FSMConte
         try:
 
             tests = await session.execute(
-                Test.active().where(Test.is_psycological == True)
+                Test.active().where(Test.is_psychological == True)
                 .order_by(Test.position.nulls_last(), Test.name)
                 )  # Only psycological tests 
             tests = tests.scalars().all()
@@ -77,7 +77,7 @@ async def show_quizzes(callback_query: types.CallbackQuery, state: FSMContext):
     async for session in db_helper.session_getter():
         try:
             tests = await session.execute(
-                Test.active().where(Test.is_psycological == False)
+                Test.active().where(Test.is_psychological == False)
                 .order_by(Test.position.nulls_last(), Test.name)
                 )  # Only non psycological tests 
             tests = tests.scalars().all()
@@ -147,7 +147,7 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
                 )
                 has_passed_test = result_count.scalar() > 0
 
-            if test.is_psycological:
+            if test.is_psychological:
                 keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
                     [types.InlineKeyboardButton(text=settings.quiz_text.psycological_menu_button_for_end_quiz, callback_data="show_psycho_tests")],
                     [types.InlineKeyboardButton(text=settings.quiz_text.quiz_back_to_start, callback_data="back_to_start")]
@@ -592,7 +592,7 @@ async def finish_quiz(message: types.Message, state: FSMContext):
                     test_id=test.id,
                     score=result.get('score', 0),
                     category_id=result.get('category_id'),
-                    is_psychological=test.is_psycological,
+                    is_psychological=test.is_psychological,
                     result_text=result['text']
                 )
                 session.add(quiz_result)
@@ -607,7 +607,7 @@ async def finish_quiz(message: types.Message, state: FSMContext):
                 result_message = settings.quiz_text.quiz_result + f"{total_score}\n\n{results[0]['text']}"
 
             # Prepare keyboard based on test type
-            if test.is_psycological:
+            if test.is_psychological:
                 keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
                     [types.InlineKeyboardButton(text=settings.quiz_text.psycological_menu_button_for_end_quiz, callback_data="show_psycho_tests")],
                     [types.InlineKeyboardButton(text=settings.quiz_text.quiz_back_to_start, callback_data="back_to_start")]

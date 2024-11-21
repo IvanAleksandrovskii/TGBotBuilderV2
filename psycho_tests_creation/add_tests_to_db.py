@@ -146,7 +146,7 @@ async def create_test(session: AsyncSession, test_data: TestData) -> Test:
     new_test = Test(
         name=test_data.name,
         description=test_data.description,
-        is_psycological=True,
+        is_psychological=True,
         multi_graph_results=test_data.is_multigraph,
         allow_back=True,
         allow_play_again=True,

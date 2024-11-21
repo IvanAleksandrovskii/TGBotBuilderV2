@@ -216,13 +216,13 @@ async def get_available_tests(test_type):
             if test_type == "regular":
                 tests = await session.execute(
                     Test.active()
-                    .where(Test.is_psycological == False)
+                    .where(Test.is_psychological == False)
                     .order_by(Test.position.nulls_last(), Test.name)
                 )
             elif test_type == "psyco":
                 tests = await session.execute(
                     Test.active()
-                    .where(Test.is_psycological == True)
+                    .where(Test.is_psychological == True)
                     .order_by(Test.position.nulls_last(), Test.name)
                 )
             else:
