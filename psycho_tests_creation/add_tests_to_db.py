@@ -261,6 +261,32 @@ stress_resistance = TestData(
 )
 
 
+depression_big = TestData(
+    name="Шкала депрессии Бека",
+    description=(
+        "Шкала содержит 21 категорию симптомов и жалоб из числа наиболее часто "
+        "встречающихся у пациентов с депрессией. Каждая категория состоит из 4-5 утверждений, "
+        "соответствующих специфическим признакам депрессии. Утверждения распределены с "
+        "учетом повышения значимости вклада определяемых показателей в общую степень "
+        "тяжести депрессии."
+    ),
+    is_multigraph=False,
+    test_file="depression_big.csv",
+    interpretation_file="depression_big_interpretation.csv",
+    same_answers=True,
+    same_answers_ordering=True,
+    same_answers_score=True,
+    
+    question_annotations=[
+        QuestionAnnotation(
+            question_number=1,
+            intro_text="Выберите одно утверждение в каждой группе, которое лучше всего описывает ваше состояние за прошедшую неделю, включая сегодняшний день.",
+            # comment="Это пояснение к первому вопросу"
+        ),
+    ]
+)
+
+
 async def main():
     async with db_helper.db_session() as session:
         try:
@@ -268,6 +294,8 @@ async def main():
             await create_test(session, hopeless)
             await create_test(session, sterss_condition)
             await create_test(session, stress_resistance)
+            
+            await create_test(session, depression_big)
             
             # TODO: Add other tests here
             

@@ -309,7 +309,7 @@ async def show_available_tests(callback_query: types.CallbackQuery, state: FSMCo
     keyboard = []
     for test in tests:
         if str(test.id) not in selected_tests:
-            keyboard.append([types.InlineKeyboardButton(text=test.name, callback_data=f"choose_test_{test.id}")])
+            keyboard.append([types.InlineKeyboardButton(text=f"➕ {test.name}", callback_data=f"choose_test_{test.id}")])
     
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.send_apply_chosen_tests_button, callback_data="confirm_test_selection")])
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.send_choose_another_tests_type_button, callback_data="back_to_test_type")])
