@@ -357,8 +357,8 @@ async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext
     log.info("start_send_test handler called")
     keyboard = [
         [types.InlineKeyboardButton(text=settings.send_test.check_sent_tests_button, callback_data="view_sent_tests")],
-        [types.InlineKeyboardButton(text=settings.send_test.send_other_tests_button, callback_data="choose_regular_tests")],
         [types.InlineKeyboardButton(text=settings.send_test.send_psyco_tests_button, callback_data="choose_psyco_tests")],
+        [types.InlineKeyboardButton(text=settings.send_test.send_other_tests_button, callback_data="choose_regular_tests")],
         [types.InlineKeyboardButton(text=settings.send_test.send_tests_cancel_button, callback_data="back_to_start")]
     ]
 

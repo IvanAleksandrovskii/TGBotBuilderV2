@@ -609,7 +609,7 @@ async def finish_quiz(message: types.Message, state: FSMContext):
             # Prepare keyboard based on test type
             if test.is_psycological:
                 keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                    [types.InlineKeyboardButton(text=settings.quiz_text.psycological_menu_button_for_end_quiz, callback_data="show_psyco_tests")],
+                    [types.InlineKeyboardButton(text=settings.quiz_text.psycological_menu_button_for_end_quiz, callback_data="show_psycho_tests")],
                     [types.InlineKeyboardButton(text=settings.quiz_text.quiz_back_to_start, callback_data="back_to_start")]
                 ])
             else:
