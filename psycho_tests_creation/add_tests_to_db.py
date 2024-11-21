@@ -195,7 +195,7 @@ async def create_test(session: AsyncSession, test_data: TestData) -> Test:
 # Example test data
 anxiety = TestData(
     name="Шкала тревожности Бека",
-    description="Отметьте, насколько вас беспокоил каждый из этих симптомов в течение последней недели, включая сегодняшний день.",
+    description="Тест-самоопросник, который заполняет человек без помощи специалиста, один из инструментов ранней диагностики тревожных расстройств.",
     is_multigraph=False,
     test_file="anxiety.csv",
     interpretation_file="anxiety_interpretation.csv",
@@ -203,12 +203,11 @@ anxiety = TestData(
     same_answers_ordering=True,
     same_answers_score=True,
     
-    # Example of adding annotations for specific questions
     question_annotations=[
         QuestionAnnotation(
             question_number=1,
-            intro_text="Далее следуют вопросы об ощущении тревожности",
-            comment="Это пояснение к первому вопросу"
+            intro_text="Отметьте, насколько вас беспокоил каждый из этих симптомов в течение последней недели, включая сегодняшний день.",
+            # comment="Это пояснение к первому вопросу"
         ),
     ]
     
@@ -217,7 +216,12 @@ anxiety = TestData(
 
 hopeless = TestData(
     name="Шкала безнадёжности Бека",
-    description="DESCRIPTION",
+    description=(
+        "Шкала, состоящая из 20 вопросов, позволяющая измерить выраженность "
+        "негативного отношения к собственному предполагаемому будущему. "
+        "Позволяет косвенно определить суицидальный риск у людей, страдающих "
+        "депрессией и/или другими ментальными расстройствами."
+    ),
     is_multigraph=False,
     test_file="hopeless_bek.csv",
     interpretation_file="hopeless_bek_interpretation.csv",
