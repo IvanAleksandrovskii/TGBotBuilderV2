@@ -10,4 +10,4 @@ while ! nc -z "$PG_ADDR" "$POSTGRES_PORT"; do sleep 1; done
 alembic upgrade head
 
 # Run the app
-exec python3 main.py
+exec python3 run_main.py  # main.py

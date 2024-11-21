@@ -16,6 +16,8 @@ DEBUG = os.getenv("DEBUG", "True").lower() in ('true', '1')
 APP_RUN_HOST = str(os.getenv("APP_RUN_HOST", "0.0.0.0"))
 APP_RUN_PORT = int(os.getenv("APP_RUN_PORT", 8000))
 
+APP_RUN_WORKERS = int(os.getenv("APP_RUN_WORKERS", 1))
+
 # Database ENV variables
 POSTGRES_ADDRESS = os.getenv("POSTGRES_ADDRESS", "0.0.0.0")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "BotTapQuiz")
@@ -50,6 +52,9 @@ class RunConfig(BaseModel):
     debug: bool = DEBUG
     host: str = APP_RUN_HOST
     port: int = APP_RUN_PORT
+    
+    workers: int = APP_RUN_WORKERS
+    timeout: int = 900 # APP_RUN_TIMEOUT
 
 
 class DBConfig(BaseModel):
