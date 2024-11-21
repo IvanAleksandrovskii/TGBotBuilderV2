@@ -423,9 +423,8 @@ async def show_comment(message: types.Message, comment: str, state: FSMContext):
     async for session in db_helper.session_getter():
         try:
             questions = await get_sorted_questions(session, data['quiz_id'])
-            question = questions[data['current_question']]['question']  # получаем сам вопрос
-            
-            comment = questions[data['current_question']]['comment']  # получаем комментарий
+            question = questions[data['current_question']]['question']  # Get the question
+            comment = questions[data['current_question']]['comment']  # Get the comment
 
                         
             test = await session.execute(select(Test).where(Test.id == data['quiz_id']))
@@ -541,7 +540,11 @@ async def calculate_results(session, test, total_scores, category_scores):
                     'text': category_result.text,
                     'picture': category_result.picture
                 })
+        
+        # Sort results by score in descending order
+        final_results.sort(key=lambda x: x['score'], reverse=True)
         return final_results
+    
     else:
         # For traditional single-result tests
         results = await session.execute(
