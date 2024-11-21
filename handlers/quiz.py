@@ -21,7 +21,7 @@ router = Router()
 class QuizStates(StatesGroup):
     VIEWING_TESTS = State()
     CONFIRMING = State()
-    VIEWING_INTRO = State()  # New state for showing intro
+    VIEWING_INTRO = State()
     ANSWERING = State()
     SHOWING_COMMENT = State()
 
@@ -73,7 +73,6 @@ async def show_quizzes(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()  # Clear the state before showing the list of tests
     async for session in db_helper.session_getter():
         try:
-            # tests = await session.execute(select(Test).where(Test.is_active == True))  
             tests = await session.execute(Test.active().where(Test.is_psycological == False))  # Only non psycological tests 
             tests = tests.scalars().all()
 
@@ -202,7 +201,7 @@ async def get_sorted_questions(session, test_id):
     # Group questions by order
     questions_by_order = defaultdict(list)
     for question in questions:
-        # Создаем копию вопроса с его данными
+        # Create a copy of the question with its data
         question_data = {
             'question': question,
             'intro_text': question.intro_text,
@@ -238,7 +237,7 @@ async def confirm_start_quiz(callback_query: types.CallbackQuery, state: FSMCont
     quiz_id = callback_query.data.split("_")[-1]
     async for session in db_helper.session_getter():
         try:
-            # Получаем и сохраняем порядок вопросов при старте
+            # Get and save the order of questions at start
             sorted_questions = await get_sorted_questions(session, quiz_id)
             await state.update_data(
                 quiz_id=quiz_id, 
@@ -246,7 +245,7 @@ async def confirm_start_quiz(callback_query: types.CallbackQuery, state: FSMCont
                 answers=[], 
                 category_scores={}, 
                 intro_shown=False,
-                sorted_questions=sorted_questions  # сохраняем порядок
+                sorted_questions=sorted_questions  # Save the order
             )
             await send_question(callback_query.message, state)
         except Exception as e:
@@ -278,16 +277,16 @@ async def send_question(message: types.Message, state: FSMContext):
                 return
 
             question_data = sorted_questions[current_question]
-            question = question_data['question']  # Получаем сам объект вопроса
+            question = question_data['question']  # Get the question object
 
-            # Проверяем наличие интро текста для текущего вопроса
+            # Check if there is an intro text for the current question
             if question_data['intro_text'] and not data.get('intro_shown'):
                 keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
                     [types.InlineKeyboardButton(text=settings.quiz_text.quiz_continue_button, callback_data="show_question")]
                 ])
                 
                 text_service = TextService()
-                # Изменяем приоритет медиа
+                # Media priority
                 if question_data['picture']:
                     media_url = question_data['picture']
                 elif test.picture:
@@ -312,10 +311,10 @@ async def send_question(message: types.Message, state: FSMContext):
                 await state.set_state(QuizStates.VIEWING_INTRO)
                 return
 
-            # Если нет интро или оно уже показано, показываем вопрос
+            # If there is no intro or it has already been shown, show the question
             keyboard = []
             for i in range(1, 7):
-                answer_text = getattr(question, f'answer{i}_text')  # Используем объект вопроса для получения ответов
+                answer_text = getattr(question, f'answer{i}_text')  # Use the question object to get the answers
                 if answer_text:
                     keyboard.append([types.InlineKeyboardButton(
                         text=answer_text,
@@ -350,7 +349,7 @@ async def send_question(message: types.Message, state: FSMContext):
                 media_url
             )
 
-            data['intro_shown'] = False  # Сбрасываем флаг для следующего вопроса
+            data['intro_shown'] = False  # Drop the flag for the next question
             await state.update_data(data)
             await state.set_state(QuizStates.ANSWERING)
 
@@ -371,7 +370,7 @@ async def process_answer(callback_query: types.CallbackQuery, state: FSMContext)
             if data['answers']:
                 last_answer = data['answers'].pop()
                 # Remove from category scores if needed
-                if data.get('category_scores'):  # Проверяем наличие словаря
+                if data.get('category_scores'):  # Check if there is a dictionary
                     data['category_scores'][last_answer] = data['category_scores'].get(last_answer, 1) - 1
                     if data['category_scores'][last_answer] <= 0:
                         del data['category_scores'][last_answer]
@@ -384,7 +383,7 @@ async def process_answer(callback_query: types.CallbackQuery, state: FSMContext)
     async for session in db_helper.session_getter():
         try:
             question_data = sorted_questions[question_num]
-            question = question_data['question']  # Получаем сам объект вопроса
+            question = question_data['question']  # Get the question object
             
             test = await session.execute(select(Test).where(Test.id == data['quiz_id']))
             test = test.scalar_one()
@@ -396,7 +395,7 @@ async def process_answer(callback_query: types.CallbackQuery, state: FSMContext)
             if test.multi_graph_results:
                 if 'category_scores' not in data:
                     data['category_scores'] = {}
-                # Используем score как идентификатор категории и считаем количество ответов
+                # Use score as an identifier of the category and count the number of answers
                 data['category_scores'][score] = data['category_scores'].get(score, 0) + 1
             
             await state.update_data(data)
@@ -496,7 +495,7 @@ async def process_comment(callback_query: types.CallbackQuery, state: FSMContext
 #         results = await session.execute(
 #             select(Result).where(
 #                 Result.test_id == test.id,
-#                 Result.category_id.is_(None),  # Обычные результаты без категорий
+#                 Result.category_id.is_(None),  # Regular results without categories
 #                 Result.min_score <= total_scores,
 #                 Result.max_score >= total_scores
 #             )
