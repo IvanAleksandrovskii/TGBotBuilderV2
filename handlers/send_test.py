@@ -655,7 +655,7 @@ async def process_test_choice(callback_query: types.CallbackQuery, state: FSMCon
             test = test.scalar_one()
             
             text = settings.send_test.send_test_description + f"\n'{test.name}':\n\n{test.description}"
-            media_url = test.picture if test.picture else await get_send_test_media_url
+            media_url = test.picture if test.picture else await get_send_test_media_url()
             
             if media_url and not media_url.startswith(('http://', 'https://')):
                 media_url = f"{settings.media.base_url}/app/{media_url}"
