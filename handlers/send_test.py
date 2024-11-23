@@ -334,10 +334,10 @@ async def process_test_type_choice(callback_query: types.CallbackQuery, state: F
         await view_sent_tests(callback_query, state)
         return
 
-    if callback_query.data not in ["choose_regular_tests", "choose_psyco_tests", "confirm_test_selection"]:
-        await callback_query.answer(settings.send_test.send_tests_error_try_again)
-        await state.clear()
-        return
+    # if callback_query.data not in ["choose_regular_tests", "choose_psyco_tests", "confirm_test_selection"]:
+    #     await callback_query.answer(settings.send_test.send_tests_error_try_again)
+    #     await state.clear()
+    #     return
 
     if callback_query.data == "confirm_test_selection":
         await confirm_test_selection(callback_query, state)
@@ -474,8 +474,8 @@ async def process_sent_tests_navigation(callback_query: types.CallbackQuery, sta
         await view_sent_tests(callback_query, state)
         return
 
-    await state.update_data(current_page=current_page)
-    await show_sent_tests_page(callback_query.message, callback_query.from_user.id, current_page, state)
+    # await state.update_data(current_page=current_page)
+    # await show_sent_tests_page(callback_query.message, callback_query.from_user.id, current_page, state)
 
 
 def format_test_info(test):
@@ -585,9 +585,9 @@ async def process_user_tests_navigation(callback_query: types.CallbackQuery, sta
         await export_user_tests_csv(callback_query, username)
     elif action == "back_to_users_list":
         await view_sent_tests(callback_query, state)
-    elif action == "back_to_start":
-        # Здесь должна быть функция для возврата в главное меню
-        pass
+    # elif action == "back_to_start":
+    #     # Здесь должна быть функция для возврата в главное меню
+    #     pass
     else:
         await callback_query.answer(settings.send_test.send_test_unknown_action)
 
@@ -597,9 +597,9 @@ async def process_user_tests_navigation(callback_query: types.CallbackQuery, sta
     action = callback_query.data
     if action == "back_to_users_list":
         await view_sent_tests(callback_query, state)
-    elif action == "back_to_start":
-        # Здесь должна быть функция для возврата в главное меню
-        pass
+    # elif action == "back_to_start":
+    #     # Здесь должна быть функция для возврата в главное меню
+    #     pass
 
 
 async def confirm_test_selection(callback_query: types.CallbackQuery, state: FSMContext):
@@ -737,7 +737,7 @@ async def process_receiver_input(message: types.Message, state: FSMContext):
             
             receiver_status = settings.send_test.send_test_reciver_authenticated if receiver else settings.send_test.send_test_reciver_not_authenticated
             
-            # Проверка на уже отправленные и незавершенные тесты
+            # Check if sent and uncompleted tests already exist
             sender_id = message.from_user.id
             sent_tests = await session.execute(
                 select(SentTest).where(
@@ -864,7 +864,7 @@ async def process_send_test_callback(callback_query: types.CallbackQuery, state:
         await process_confirm_tests(callback_query, state)
     elif current_state == SendTestStates.CONFIRMING:
         await confirm_send_tests(callback_query, state)
-    else:
-        await callback_query.answer(settings.send_test.send_tests_error_try_again)
-        await state.clear()
-        await start_send_test(callback_query, state)
+    # else:
+    #     await callback_query.answer(settings.send_test.send_tests_error_try_again)
+    #     await state.clear()
+    #     await start_send_test(callback_query, state)
