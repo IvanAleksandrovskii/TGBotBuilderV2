@@ -313,7 +313,7 @@ async def show_available_tests(callback_query: types.CallbackQuery, state: FSMCo
     
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.send_apply_chosen_tests_button, callback_data="confirm_test_selection")])
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.send_choose_another_tests_type_button, callback_data="back_to_test_type")])
-    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_button, callback_data="back_to_start")])
+    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")])
     
     text_service = TextService()
     async for session in db_helper.session_getter():
@@ -345,7 +345,7 @@ async def process_test_type_choice(callback_query: types.CallbackQuery, state: F
 
     data = await state.get_data()
     selected_tests = data.get('selected_tests', [])
-    test_type = "regular" if callback_query.data == "choose_regular_tests" else "psyco"
+    test_type = "psyco"  # "regular" if callback_query.data == "choose_regular_tests" else 
     await state.update_data(test_type=test_type, selected_tests=selected_tests)
     
     await show_available_tests(callback_query, state)
@@ -358,7 +358,7 @@ async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext
     keyboard = [
         [types.InlineKeyboardButton(text=settings.send_test.check_sent_tests_button, callback_data="view_sent_tests")],
         [types.InlineKeyboardButton(text=settings.send_test.send_psyco_tests_button, callback_data="choose_psyco_tests")],
-        [types.InlineKeyboardButton(text=settings.send_test.send_other_tests_button, callback_data="choose_regular_tests")],
+        # [types.InlineKeyboardButton(text=settings.send_test.send_other_tests_button, callback_data="choose_regular_tests")],
         [types.InlineKeyboardButton(text=settings.send_test.send_tests_cancel_button, callback_data="back_to_start")]
     ]
 
@@ -518,7 +518,7 @@ def create_navigation_keyboard(current_page, total_pages, username):
 
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_user_button, callback_data=f"export_user_csv_{username}")])
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_userlist_button, callback_data="back_to_users_list")])
-    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.send_test_back_to_main_menu_button, callback_data="back_to_start")])
+    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")])
 
     return keyboard
 
@@ -585,9 +585,6 @@ async def process_user_tests_navigation(callback_query: types.CallbackQuery, sta
         await export_user_tests_csv(callback_query, username)
     elif action == "back_to_users_list":
         await view_sent_tests(callback_query, state)
-    # elif action == "back_to_start":
-    #     # Здесь должна быть функция для возврата в главное меню
-    #     pass
     else:
         await callback_query.answer(settings.send_test.send_test_unknown_action)
 
@@ -597,9 +594,6 @@ async def process_user_tests_navigation(callback_query: types.CallbackQuery, sta
     action = callback_query.data
     if action == "back_to_users_list":
         await view_sent_tests(callback_query, state)
-    # elif action == "back_to_start":
-    #     # Здесь должна быть функция для возврата в главное меню
-    #     pass
 
 
 async def confirm_test_selection(callback_query: types.CallbackQuery, state: FSMContext):
@@ -756,7 +750,7 @@ async def process_receiver_input(message: types.Message, state: FSMContext):
                 text = (settings.send_test.send_test_all_chosen_tests_uncomplete + "\n\n" + settings.send_test.send_test_all_chosen_tests_uncomplete_2)
                 keyboard = [
                     [types.InlineKeyboardButton(text=settings.send_test.send_test_return_to_test_choose_button, callback_data="back_to_test_selection")],
-                    [types.InlineKeyboardButton(text=settings.send_test.send_test_back_to_main_menu_button, callback_data="back_to_start")]
+                    [types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")]
                 ]
                 await send_or_edit_message(message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard))
                 await state.clear()
@@ -840,7 +834,7 @@ async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMCont
     media_url = await get_send_test_media_url()
 
     keyboard = [
-        [types.InlineKeyboardButton(text=settings.send_test.send_test_back_to_main_menu_button, callback_data="back_to_start")]
+        [types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")]
     ]
     
     await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
