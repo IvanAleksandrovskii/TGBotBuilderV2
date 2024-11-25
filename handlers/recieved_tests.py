@@ -20,20 +20,15 @@ from .utils import send_or_edit_message
 
 router = Router()
 
-
-class ReceivedTestStates(StatesGroup):
-    VIEWING_RECEIVED_TESTS = State()
-    VIEWING_SENDER_TESTS = State()
-    CONFIRMING = State()
-    VIEWING_INTRO = State()  # TODO: Implenent this
+class BaseQuizStates(StatesGroup):
+    VIEWING_INTRO = State()
     ANSWERING = State()
     SHOWING_COMMENT = State()
 
-# class ReceivedTestStates(StatesGroup):
-#     """States specific to received tests"""
-#     VIEWING_RECEIVED_TESTS = State()    
-#     VIEWING_SENDER_TESTS = State()
-#     CONFIRMING = State()
+class ReceivedTestStates(BaseQuizStates):
+    VIEWING_RECEIVED_TESTS = State()
+    VIEWING_SENDER_TESTS = State()
+    CONFIRMING = State()
 
 
 async def notify_sender(bot: Bot, sender_id: int, receiver_username: str, action: str, test_name: str = None):
@@ -131,9 +126,12 @@ async def show_received_tests_page(callback_query, message: types.Message, recei
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("view_sender_tests_"))
-async def view_sender_tests(callback_query: types.CallbackQuery, state: FSMContext):
-    parts = callback_query.data.split("_")
-    sender_username = "_".join(parts[3:])
+async def view_sender_tests(callback_query: types.CallbackQuery, state: FSMContext, sender_username: str | None = None):
+    
+    if not sender_username:
+        parts = callback_query.data.split("_")
+        sender_username = "_".join(parts[3:])
+    
     receiver_username = callback_query.from_user.username
     
     async for session in db_helper.session_getter():
@@ -313,7 +311,7 @@ async def confirm_reject_test(callback_query: types.CallbackQuery, state: FSMCon
             other_tests_from_sender = other_tests_from_sender.scalars().all()
             
             if other_tests_from_sender:
-                await view_sender_tests(callback_query, state)  # sent_test.sender_username
+                await view_sender_tests(callback_query, state, sent_test.sender_username) 
             else:
                 # Проверяем наличие тестов от других отправителей
                 other_tests = await session.execute(
@@ -587,8 +585,10 @@ async def start_received_test(callback_query: types.CallbackQuery, state: FSMCon
 @router.callback_query(lambda c: c.data.startswith("confirm_start_received_test_"))  # TODO: fix and make separate handling here
 async def confirm_start_received_test(callback_query: types.CallbackQuery, state: FSMContext):
     sent_test_id = callback_query.data.split("_")[-1]
+    
     await state.update_data(sent_test_id=sent_test_id, current_question=0, answers=[])
     from .quiz import send_question
+    
     await send_question(callback_query.message, state, ReceivedTestStates)
 
 

@@ -39,3 +39,7 @@ router.include_router(direct_broadcast_router)
 
 from .send_test import router as send_test_router
 router.include_router(send_test_router)
+
+
+from .ai_test_result_transcription import router as ai_test_result_transcription_router
+router.include_router(ai_test_result_transcription_router)

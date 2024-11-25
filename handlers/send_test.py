@@ -420,7 +420,7 @@ async def show_sent_tests_page(message: types.Message, sender_id: int, page: int
             navigation = []
             if page > 1:
                 navigation.append(types.InlineKeyboardButton(text="◀️", callback_data="prev_page"))
-            navigation.append(types.InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="current_page"))
+            navigation.append(types.InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="current_page"))  # TODO: Maybe show only if more then 1 page only
             if page < total_pages:
                 navigation.append(types.InlineKeyboardButton(text="▶️", callback_data="next_page"))
             if navigation:
@@ -516,6 +516,8 @@ def create_navigation_keyboard(current_page, total_pages, username):
     if navigation:
         keyboard.append(navigation)
 
+    keyboard.append([types.InlineKeyboardButton(text="Get AI Transcription", callback_data=f"get_ai_transcription_{username}")])  # TODO: NEW
+    
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_user_button, callback_data=f"export_user_csv_{username}")])
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_userlist_button, callback_data="back_to_users_list")])
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")])
@@ -585,6 +587,9 @@ async def process_user_tests_navigation(callback_query: types.CallbackQuery, sta
         await export_user_tests_csv(callback_query, username)
     elif action == "back_to_users_list":
         await view_sent_tests(callback_query, state)
+    elif action.startswith("get_ai_transcription_"):
+        from .ai_test_result_transcription import get_ai_transcription
+        await get_ai_transcription(callback_query, state)
     else:
         await callback_query.answer(settings.send_test.send_test_unknown_action)
 
