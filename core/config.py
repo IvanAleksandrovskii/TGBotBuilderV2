@@ -42,7 +42,7 @@ SQLADMIN_PASSWORD = os.getenv("SQLADMIN_PASSWORD", "password")
 
 # Media ENV variables
 MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
-BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://4754-49-228-98-24.ngrok-free.app")
+BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://15c1-49-228-98-24.ngrok-free.app")
 
 HTTP_CLIENT_TIMEOUT = int(os.getenv("HTTP_CLIENT_TIMEOUT", "300"))
 HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS = int(os.getenv("HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS", "10"))
@@ -224,7 +224,7 @@ class SendTestTexts(BaseModel):
     choose_another_test: str = "Choose a test to send:"
     selected_tests_count: str = "Tests selected:"
     selected_tests_list: str = "Selected tests:"
-    send_tests_error_try_again: str = "An error occurred. Please start over."
+    # send_tests_error_try_again: str = "An error occurred. Please start over."
     check_sent_tests_button: str = "View sent tests"
     send_psyco_tests_button: str = "Psychological tests"
     send_other_tests_button: str = "Regular tests"
@@ -280,6 +280,68 @@ class SendTestTexts(BaseModel):
     tests_sent_unsuccess_2: str = "As soon as the user authorizes in the bot, they will be prompted to take the tests. \nMake sure you sent to the correct username if the tests don't reach a user who has already authorized in the bot."
 
 
+class OnStartTexts(BaseModel):
+    start_recived_tests_button: str = "❗ View received tests"
+
+
+class ReceivedTestTexts(BaseModel):
+    send_tests_notifier: str = "User @"
+    send_tests_notifier_completed: str = "has completed the test"
+    send_tests_notifier_rejected: str = "has rejected the test"
+    # on_start_start_recived_tests_button: str = "Take tests sent to me"
+    page_number: str = "Page number"
+    tests_choose_sender: str = "Choose a sender to view received tests:"
+    tests_no_tests: str = "You have no received tests."
+    senders_page_loading_error: str = "An error occurred while loading the list of senders. Please try again."
+    choose_sent_test_button: str = "✅"
+    reject_all_from_user_button: str = "❌ Reject all tests"
+    back_to_senders_list_button: str = "🔙 Back to senders list"
+    to_main_menu_button: str = "Main menu"
+    back_button: str = "Back"
+    no_test_from_user: str = "You have no active tests from this user."
+    tests_from_username_button: str = "Tests from user @"
+    tests_loading_error: str = "An error occurred while loading tests. Please try again."
+    
+    test_not_found: str = "Test not found"
+    start_test_button: str = "✅ Start test"
+    send_saved_result_button: str = "💾 Send result"
+    reject_test_button: str = "❌ Reject test"
+    back_to_tests_list_button: str = "🔙 Back to test list"
+    start_test_confirm: str = "You are about to start the test:"
+    start_test_confirm_2: str = "Confirm the action or go back."
+    start_test_error: str = "An error occurred while preparing the test. Please try again."
+    start_test_error_test_not_found: str = "Test not found"
+    test_error_answers_processing_error: str = "An error occurred while processing the answer. Please try again."
+    test_error_comment_processing_error: str = "An error occurred while displaying the comment. Please continue the test."
+    test_end_error: str = "An error occurred while completing the test. Please contact the administrator."
+    other_tests_from_sender_button: str = "Other tests from this sender"
+    tests_from_other_senders_button: str = "Tests from other senders"
+    result_send_not_found_please_pass_test: str = "Existing result not found. Please take the test."
+    result_send_error: str = "An error occurred while preparing to send the result. Please try again."
+    send_test_result_confirm_1: str = "You are about to send the test result"
+    send_test_result_confirm_2: str = "Your score"
+    send_test_result_confirm_3: str = "Result interpretation"
+    send_test_result_confirm_4: str = "Are you sure you want to send this result?"
+    confirm_send_test_result_button: str = "Yes, send"
+    reject_send_test_result_button: str = "No, cancel"
+    send_test_result_success_sent_1: str = "The test result"
+    send_test_result_success_sent_2: str = "has been successfully sent.\n\nYour score:"
+    send_result_cancel: str = "Result sending canceled."
+    back_to_recived_tests_button: str = "Return to received tests"
+    confirm_reject_test_button: str = "Yes, reject"
+    cancel_reject_test_button: str = "No, go back"
+    reject_test_confirm: str = "Are you sure you want to reject this test?"
+    reject_test_error: str = "An error occurred while rejecting the test."
+    reject_all_tests_from_user: str = "❌ Reject all tests"
+    reject_test_from_user_canceled: str = "Test rejection canceled."
+    no_tests_from_user: str = "You have no active tests from this user."
+    error_loading_tests: str = "An error occurred while loading tests. Please try again."
+    sender_info_not_found_error: str = "Sorry, error. Could not find sender information."
+    confirm_reject_all_test_button: str = "Yes, reject all"
+    reject_all_tests_confirmation: str = "Are you sure you want to reject all tests from user"
+    reject_all_tests_error: str = "An error occurred while rejecting tests."
+    confirm_error: str = "An error occurred while preparing confirmation."
+
 
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
@@ -297,6 +359,8 @@ class Settings(BaseSettings):
     universal_page_text: UniversalPageTexts = UniversalPageTexts()
     quiz_text: QuizTexts = QuizTexts()
     send_test: SendTestTexts = SendTestTexts()
+    on_start_text: OnStartTexts = OnStartTexts()
+    revieved_tests: ReceivedTestTexts = ReceivedTestTexts()
 
 
 

@@ -9,5 +9,8 @@ while ! nc -z "$PG_ADDR" "$POSTGRES_PORT"; do sleep 1; done
 # Run migrations
 alembic upgrade head
 
+# Add psychological tests to database
+python3 psycho_tests_creation/add_tests_to_db.py
+
 # Run the app
 exec python3 run_main.py  # main.py

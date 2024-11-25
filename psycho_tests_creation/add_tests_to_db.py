@@ -93,7 +93,7 @@ class TestProcessor:
                 if self.test_data.same_answers_score:
                     # Use column headers as scores
                     answers = [(row[col].strip(), int(col)) for col in score_columns if row[col].strip()]
-                else:
+                else:  # TODO: Fix
                     # Use sequential numbers as scores
                     answers = [(row[col].strip(), i) for i, col in enumerate(score_columns) if row[col].strip()]
 
@@ -294,8 +294,9 @@ async def main():
             await create_test(session, hopeless)
             await create_test(session, sterss_condition)
             await create_test(session, stress_resistance)
-            
             await create_test(session, depression_big)
+            
+            # await create_test(session, ...)
             
             # TODO: Add other tests here
             

@@ -1,15 +1,17 @@
 # handlers/on_start.py
 
+from datetime import datetime
+
 from aiogram import Router, Bot, types
-from aiogram.filters import Command  # CommandStart
+from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
 from sqlalchemy import select
 
-
 from core import log, settings
-from core.models import User, db_helper
+from core.models import db_helper
+from core.models.sent_test import SentTest, TestStatus
 from services import UserService
 from services.promocode_service import PromoCodeService
 from services.text_service import TextService
@@ -55,16 +57,33 @@ async def get_start_content(chat_id: int, username: str | None):
 
             formatted_text = text.replace("{username}", username or settings.bot_main_page_text.welcome_fallback_user_word)
             
-            updated_entities = []
             keyboard = await button_service.create_inline_keyboard(context_marker, session)
 
             log.debug("Media URL: %s", media_url)
             log.debug("Formatted text: %s", formatted_text)
-            log.debug("Updated entities: %s", updated_entities)
 
             if not media_url:
                 media_url = await text_service.get_default_media(session)
+            
+            
+            # Check for undelivered tests
+            undelivered_tests = await session.execute(
+                select(SentTest)
+                .where(SentTest.receiver_username == username, SentTest.status.in_([TestStatus.SENT, TestStatus.DELIVERED]))
+            )
+            undelivered_tests = undelivered_tests.scalars().all()
 
+            if undelivered_tests:
+                new_keyboard = keyboard.inline_keyboard + [[types.InlineKeyboardButton(text=settings.on_start_text.start_recived_tests_button, callback_data="view_received_tests")]]
+                keyboard = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+                
+                # Notify senders
+                for test in undelivered_tests:
+                    if test.status == TestStatus.SENT:
+                        test.status = TestStatus.DELIVERED
+                        test.delivered_at = datetime.now()
+                await session.commit()
+            
             return formatted_text, keyboard, media_url, is_new_user or user.is_new_user
 
         except Exception as e:
@@ -72,41 +91,6 @@ async def get_start_content(chat_id: int, username: str | None):
             return settings.bot_main_page_text.user_error_message, None, None, False
         finally:
             await session.close()
-
-
-# @router.message(Command("start"))
-# async def start_command(message: types.Message, bot: Bot, state: FSMContext):
-#     """
-#     Обработчик команды /start с поддержкой deep linking параметров
-#     """
-#     # Получаем аргументы после команды start
-#     args = message.text.split()[1:]  # Разделяем сообщение на части и берём всё после /start
-#     ic(args)
-    
-#     bot_info = await bot.get_me()
-#     ic(bot_info)
-    
-#     ic(f"Отправитель (полная инфо): {message.from_user}")
-    
-#     if args:
-#         # Если есть параметры, берем первый
-#         start_parameter = args[0]
-#         ic(f"Параметр старта: {start_parameter}")
-#     else:
-#         # Если параметров нет
-#         ic("Команда /start без параметров")
-
-#     chat_id = int(message.chat.id)
-#     username = message.from_user.username
-
-#     text, entities, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
-    
-#     if is_new_user:
-#         await state.set_state(FirstGreetingStates.GREETING)
-#     else:
-#         await state.clear()
-    
-#     await send_or_edit_message(message, text, entities, keyboard, media_url)
 
 
 @router.message(Command("start"))
