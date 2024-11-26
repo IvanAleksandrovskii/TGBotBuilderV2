@@ -31,7 +31,7 @@ class ReceivedTestStates(BaseQuizStates):
     CONFIRMING = State()
 
 
-async def notify_sender(bot: Bot, sender_id: int, receiver_username: str, action: str, test_name: str = None):
+async def notify_sender(bot: Bot, sender_id: int, receiver_username: str, action: str, test_name: str = None):  # TODO: Add button
     try:
         if action == "completed":
             message = settings.revieved_tests.send_tests_notifier + f"{receiver_username} " + settings.revieved_tests.send_tests_notifier_completed + f" '{test_name}'."

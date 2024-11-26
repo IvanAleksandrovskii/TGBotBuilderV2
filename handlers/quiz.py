@@ -280,11 +280,7 @@ async def send_question(message: types.Message, state: FSMContext, state_group: 
             test = await session.execute(select(Test).where(Test.id == quiz_id))
             test = test.scalar_one_or_none()
 
-            if current_question >= len(sorted_questions):  # TODO: Doublecheck this
-                # from .recieved_tests import ReceivedTestStates, finish_received_test
-                # if state_group == ReceivedTestStates:
-                #     await finish_received_test(message, state)
-                # elif state_group == QuizStates:
+            if current_question >= len(sorted_questions):
                 await finish_quiz(message, state)
                 return
 
@@ -636,6 +632,6 @@ async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMC
     elif current_state == QuizStates.SHOWING_COMMENT:
         await process_comment(callback_query, state)
     else:
-        await callback_query.answer(settings.quiz_text.quiz_error)
+        await callback_query.answer(settings.quiz_text.quiz_error)  # TODO: Fix to show psycological tests
         await state.clear()
         await show_quizzes(callback_query, state)

@@ -14,6 +14,7 @@ __all__ = [
     "Result",
     "QuizResult",
     "SentTest",
+    "PsycoTestsAITranscription",
 ]
 
 
@@ -35,3 +36,5 @@ from .quiz import Test, Question, Result
 from .quiz_result import QuizResult
 
 from .sent_test import SentTest
+
+from .psycho_tests_ai_trascription import PsycoTestsAITranscription

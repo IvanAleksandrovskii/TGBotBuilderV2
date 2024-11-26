@@ -82,6 +82,7 @@ async def get_start_content(chat_id: int, username: str | None):
                     if test.status == TestStatus.SENT:
                         test.status = TestStatus.DELIVERED
                         test.delivered_at = datetime.now()
+                        test.receiver_id = chat_id
                 await session.commit()
             
             return formatted_text, keyboard, media_url, is_new_user or user.is_new_user

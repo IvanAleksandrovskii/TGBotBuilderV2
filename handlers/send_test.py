@@ -7,7 +7,7 @@ from datetime import datetime
 from aiogram import Router, types, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import BufferedInputFile
+from aiogram.types import BufferedInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 
 from sqlalchemy import desc, func, select
 
@@ -234,12 +234,22 @@ async def get_available_tests(test_type):
             await session.close()
 
 
-async def notify_receiver(bot: Bot, receiver_id, sender_username, test_names):  # TODO: ADD keyboard to this message (( ? ))
+async def notify_receiver(bot: Bot, receiver_id, sender_username, test_names):  # TODO: Double check this keyboard
     try:
         tests_str = ", ".join(test_names)
+        
+        btn = InlineKeyboardButton(
+                text=settings.on_start_text.start_recived_tests_button,
+                url=None,
+                callback_data="view_received_tests"
+            )
+        
+        keyboard = [[btn]]
+        
         await bot.send_message(
             receiver_id,
-            settings.send_test.send_test_notification_reciver + f"{sender_username}: {tests_str}. \n\n" + settings.send_test.send_test_notification_reciver_part_2 
+            settings.send_test.send_test_notification_reciver + f"{sender_username}: {tests_str}.",  # \n\n" + settings.send_test.send_test_notification_reciver_part_2
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard) 
         )
     except Exception as e:
         log.exception("Failed to notify receiver %s: %s", receiver_id, e)

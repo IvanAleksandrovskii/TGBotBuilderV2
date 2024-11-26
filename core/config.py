@@ -213,7 +213,7 @@ class SendTestTexts(BaseModel):
     csv_export_by_tests_button: str = "Export by tests"
     csv_export_user_button: str = "Export to CSV"
     send_test_notification_reciver: str = "You have received new tests from user @"
-    send_test_notification_reciver_part_2: str = "You can take them by selecting 'Take received tests' in the main menu\n -> /start"
+    # send_test_notification_reciver_part_2: str = "You can take them by selecting 'Take received tests' in the main menu\n -> /start"
     send_apply_chosen_tests_button: str = "Confirm selection"
     send_choose_another_tests_type_button: str = "Back to send test menu"  #  "Choose another test type"
     back_button: str = "Back"
