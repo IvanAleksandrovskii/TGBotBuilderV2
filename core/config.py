@@ -42,7 +42,7 @@ SQLADMIN_PASSWORD = os.getenv("SQLADMIN_PASSWORD", "password")
 
 # Media ENV variables
 MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
-BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://15c1-49-228-98-24.ngrok-free.app")
+BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://4b1a-184-22-18-75.ngrok-free.app")
 
 HTTP_CLIENT_TIMEOUT = int(os.getenv("HTTP_CLIENT_TIMEOUT", "300"))
 HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS = int(os.getenv("HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS", "10"))
@@ -226,7 +226,7 @@ class SendTestTexts(BaseModel):
     selected_tests_list: str = "Selected tests:"
     # send_tests_error_try_again: str = "An error occurred. Please start over."
     check_sent_tests_button: str = "View sent tests"
-    send_psyco_tests_button: str = "Psychological tests"
+    send_psyco_tests_button: str = "Send psychological tests"
     send_other_tests_button: str = "Regular tests"
     send_tests_cancel_button: str = "Cancel"
     send_tests_choose_type: str = "Choose an action:"
@@ -359,7 +359,7 @@ class Settings(BaseSettings):
     quiz_text: QuizTexts = QuizTexts()
     send_test: SendTestTexts = SendTestTexts()
     on_start_text: OnStartTexts = OnStartTexts()
-    revieved_tests: ReceivedTestTexts = ReceivedTestTexts()
+    received_tests: ReceivedTestTexts = ReceivedTestTexts()
 
 
 

@@ -31,7 +31,7 @@ router.include_router(reader_router)
 from .quiz import router as quiz_router
 router.include_router(quiz_router)
 
-from .recieved_tests import router as recieved_tests_router
+from .received_tests import router as recieved_tests_router
 router.include_router(recieved_tests_router)
 
 from .broadcast_direct import router as direct_broadcast_router
