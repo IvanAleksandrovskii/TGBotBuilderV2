@@ -108,12 +108,12 @@ critical_thinking_question_1 = Question(
 
 critical_thinking_question_2 = Question(
     order=2,
-    text=(
+    question_text=(
         "Какой вывод является наилучшим для суждения, начинающегося словами: «восемь человек в моём классе…»?"
-        "\n\nA) любят тефтели, значит, и мне следует их любить.",
-        "\nB) живут в южной части города, поэтому я тоже должен там жить.",
-        "\nC) из тех, кто готовился по конспекту Андрея, получили «удовлетворительно», поэтому я получу такую же оценку.",
-        "\nD) из тех, кто уже познакомился с новым директором школы, ему симпатизируют, поэтому мне он тоже понравится.",
+        "\n\nA) любят тефтели, значит, и мне следует их любить."
+        "\nB) живут в южной части города, поэтому я тоже должен там жить."
+        "\nC) из тех, кто готовился по конспекту Андрея, получили «удовлетворительно», поэтому я получу такую же оценку."
+        "\nD) из тех, кто уже познакомился с новым директором школы, ему симпатизируют, поэтому мне он тоже понравится."
     ),
     answer1_text="A",
     answer1_score=0,
@@ -127,9 +127,15 @@ critical_thinking_question_2 = Question(
 
 critical_thinking_question_3 = Question(
     order=3,
-    text="",
+    question_text=(
+        "Что из предложенного ниже НЕ является примером техники убеждения?"
+        "\n\nA) Джинсы тигровой окраски можно приобрести в вашем местном гипермаркете."
+        "\nB) Самые лучшие матери готовят с соусами «Торчин»."
+        "\nC) Голосуйте за меня, и я обещаю, что наши школы станут лучше. Мой оппонент просто хочет сократить школьный бюджет."
+        "\nD) Наши шины не только красивее, они также лучше ведут себя на дороге."
+    ),
     answer1_text="A",
-    answer1_score=0,
+    answer1_score=1,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
@@ -140,11 +146,17 @@ critical_thinking_question_3 = Question(
 
 critical_thinking_question_4 = Question(
     order=4,
-    text="",
+    question_text=(
+        "Что звучит как аргумент?"
+        "\n\nA) Мне приснилось, что я получил тройку за экзамен по биологии, а потом это случилось наяву. Чтобы в следующий раз я мог получить оценку лучше, мне должен присниться более позитивный сон."
+        "\nB) Анна хотела лучше водить машину, поэтому она пошла на уроки вождения и изучила руководство по автомобилям. Её вождение действительно улучшилось."
+        "\nC) После штормового ветра в прошлом октябре с деревьев опали все листья. Тогда-то я и узнал, что листья опадают из-за ветра."
+        "\nD) Когда Максим понял, что простудился, он начал принимать Coldrex. Через четыре дня он почувствовал себя гораздо лучше благодаря приему Coldrex."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
-    answer2_score=0,
+    answer2_score=1,
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
@@ -153,22 +165,35 @@ critical_thinking_question_4 = Question(
 
 critical_thinking_question_5 = Question(
     order=5,
-    text="",
+    question_text=(
+        "Вы пытаетесь выбрать один из трех автомобилей: двухместный спортивный автомобиль, двухдверный седан или мини-внедорожник. "
+        "Что не является приемлемым критерием для выбора?"
+        "\n\nA) Цена."
+        "\nB) Расход топлива."
+        "\nC) Давление в шинах."
+        "\nD) Объем багажника."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
-    answer3_score=0,
+    answer3_score=1,
     answer4_text="D",
     answer4_score=0,
 )
 
 critical_thinking_question_6 = Question(
     order=6,
-    text="",
+    question_text=(
+        "Какое из решений принято только на основе эмоций?"
+        "\n\nA) Вы ненавидите зиму, поэтому, хотя это слишком дорого для вас, вы выбираете отпуск на Багамах."
+        "\nB) Школа закрывается после угрозы применения бомбы."
+        "\nC) Доходы вашей компании за третий квартал оказались намного выше, чем ожидалось."
+        "\nD) Вам нужен новый миксер, поэтому вы просматриваете объявления в газете и покупаете его, когда на него появляется скидка."
+    ),
     answer1_text="A",
-    answer1_score=0,
+    answer1_score=1,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
@@ -179,7 +204,14 @@ critical_thinking_question_6 = Question(
 
 critical_thinking_question_7 = Question(
     order=7,
-    text="",
+    question_text=(
+        "В каком случае лучше сходить в библиотеку, чем провести поиск по Интернету?"
+        "\n\nA) Вы пишете отчет о недавних решениях Верховного Суда своей страны."
+        "\nB) Вы хотите узнать историю эффективности акций, которые собираетесь приобрести на фондовом рынке."
+        "\nC) Вам нужно сравнить процентные ставки нескольких банков."
+        "\nD) Вы хотите больше узнать о старой планировке вашего города."
+        
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
@@ -187,29 +219,45 @@ critical_thinking_question_7 = Question(
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
-    answer4_score=0,
+    answer4_score=1,
 )
 
 critical_thinking_question_8 = Question(
     order=8,
-    text="",
+    question_text=(
+        "Вы читаете в газете о переговорах по зарплате с участием работников общественного транспорта. Они угрожают завтра устроить "
+        "забастовку, если их требования о повышении зарплат и льгот не будут удовлетворены. Что из нижеперечисленного представляет "
+        "вывод из этого сценария?"
+        "\n\nA) Платежи по страхованию здоровья очень дорогие."
+        "\nB) В ближайшие несколько недель цена на бензин спровоцирует повышение цен на билеты."
+        "\nC) Людям, которые ездят на автобусе, следует искать возможную транспортную альтернативу"
+        "\nD) Работодателям никогда не нравится удовлетворять требования по зарплате"
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
-    answer3_score=0,
+    answer3_score=1,
     answer4_text="D",
     answer4_score=0,
 )
 
 critical_thinking_question_9 = Question(
     order=9,
-    text="",
+    question_text=(
+    "Что неверно в этом суждении: «Вы думаете, что нам нужны новые правила по контролю загрязнения воздуха?"
+    "Я считаю, что у нас и так слишком много правил. Политики только и делают, что утверждают новые "
+    "ограничения и контролируют нас всё больше. Это угнетает. Определенно, нам не нужны никакие новые правила»?"
+    "\n\nA) Говорящий не заботится об окружающей среде."
+    "\nB) Говорящий сменил тему разговора."
+    "\nC) Говорящий баллотируется на политический пост."
+    "\nD) Говорящий ничего не смыслит в проблеме загрязняющих выбросов."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
-    answer2_score=0,
+    answer2_score=1,
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
@@ -218,22 +266,34 @@ critical_thinking_question_9 = Question(
 
 critical_thinking_question_10 = Question(
     order=10,
-    text="",
+    question_text=(
+        "На что вам не следует опираться, делая оценочное суждение?"
+        "\n\nA) Интуиция."
+        "\nB) Здравый смысл."
+        "\nC) Слухи."
+        "\nD) Прошлый опыт."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
-    answer3_score=0,
+    answer3_score=1,
     answer4_text="D",
     answer4_score=0,
 )
 
 critical_thinking_question_11 = Question(
     order=11,
-    text="",
+    question_text=(
+        "Какое утверждение представляет оценочное суждение вместо факта?"
+        "\n\nA) Моя презентация была превосходна. Я уверен, что мой начальник теперь меня повысит."
+        "\nB) Моя презентация была превосходна. Все клиенты сказали мне, что им понравилось."
+        "\nC) Моя презентация была превосходна. Она заслужила премию от руководства."
+        "\nD) Моя презентация была превосходна. Это было отмечено именно так на моей аттестации."
+    ),
     answer1_text="A",
-    answer1_score=0,
+    answer1_score=1,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
@@ -244,9 +304,16 @@ critical_thinking_question_11 = Question(
 
 critical_thinking_question_12 = Question(
     order=12,
-    text="",
+    question_text=(
+        "Ваша мечта – провести отпуск в Индонезии. Проанализировав информацию, вы решили, "
+        "что для этой поездки необходимо 4000$. Каким способом лучше всего достичь этой цели?"
+        "\n\nA) Сократить дискреционные расходы (сверх жизненно необходимых) на 200$ в месяц и накопить денег."
+        "\nB) Попросить членов семьи и друзей подарить деньги на поездку."
+        "\nC) Продать свой автомобиль, чтобы финансировать поездку."
+        "\nD) Продать свою почку, чтобы хватило денег взять в отпуск еще и всю свою семью."
+    ),
     answer1_text="A",
-    answer1_score=0,
+    answer1_score=1,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
@@ -257,7 +324,13 @@ critical_thinking_question_12 = Question(
 
 critical_thinking_question_13 = Question(
     order=13,
-    text="",
+    question_text=(
+        "Что неверно в следующем суждении? Моя страна – любите ее или уезжайте отсюда!»"
+        "\n\nA) Нет ничего неверного в этом суждении."
+        "\nB) Оно подразумевает, что если вы уезжаете из страны в отпуск, вы ее не любите."
+        "\nC) Оно не говорит вам о том, как любить ее."
+        "\nD) Оно предлагает только два варианта, когда на самом деле их намного больше."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
@@ -265,25 +338,38 @@ critical_thinking_question_13 = Question(
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
-    answer4_score=0,
+    answer4_score=1,
 )
 
 critical_thinking_question_14 = Question(
     order=14,
-    text="",
+    question_text=(
+        "Какая из этих ситуаций НЕ требует решения проблемы?"
+        "\n\nA) Когда вы принесли новый компьютер домой, вы обнаружили, что в коробке нет мышки."
+        "\nB) Когда вам вернули фотографии после печати, оказалось, что они не ваши."
+        "\nC) Все в вашем коллективе хотят устроить праздник в ресторане «Встреча», но вы ели там только вчера вечером."
+        "\nD) Начальник просит вас закончить отчет к завтрашнему утру, но сегодня – день рождения вашего сына и вы обещали повести его сегодня вечером на футбол."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
-    answer3_score=0,
+    answer3_score=1,
     answer4_text="D",
     answer4_score=0,
 )
 
 critical_thinking_question_15 = Question(
     order=15,
-    text="",
+    question_text=(
+        "Какой вариант Интернет-сайта, скорее всего, предоставляет самую объективную информацию об Аврааме Линкольне?"
+        "\n\nA) www.members.aol.com/LeeV/Lincolnlover.html : домашняя страница профессора истории, написавшего книгу о президентстве Линкольна."
+        "\nB) www.southerpower.org/assassinations : сайт Конфедеративной группы (сторонники рабства во время войны Севера и Юга) "
+        "о знаменитых политических убийствах, преимущественно посвященный Линкольну (выступавшему против рабства)."
+        "\nC) www.lincolndata.edu : сайт группы сохранения исторического наследия, заархивировавшей всю переписку Линкольна."
+        "\nD) www.alincoln-library.com : президентская библиотека в Спрингфилде, Иллинойс, посвященная биографии шестнадцатого президента."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
@@ -291,16 +377,22 @@ critical_thinking_question_15 = Question(
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
-    answer4_score=0,
+    answer4_score=1,
 )
 
 critical_thinking_question_16 = Question(
     order=16,
-    text="",
+    question_text=(
+        "Что является наиболее вероятной причиной следующего: «Наша хоккейная команда была непобедимой в этом сезоне»?"
+        "\n\nA) У других команд нет новой хоккейной амуниции."
+        "\nB) У нас есть новый тренер, который усиленно работает над нашей командой."
+        "\nC) Некоторые члены нашей команды провели это лето в хоккейном лагере"
+        "\nD) Я надевал свой счастливый свитер перед каждой игрой."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
-    answer2_score=0,
+    answer2_score=1,
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
@@ -309,9 +401,15 @@ critical_thinking_question_16 = Question(
 
 critical_thinking_question_17 = Question(
     order=17,
-    text="",
+    question_text=(
+        "Что неверно в «логике» следующего утверждения: «Как вы можете верить его свидетельским показаниям? Он же – осужденный преступник!»?"
+        "\n\nA) Факт, что дающий показания человек был признан виновным в преступлении, не означает, что он лжет."
+        "\nB) Осужденный преступник не может свидетельствовать в суде."
+        "\nC) У говорящего есть предвзятость против преступников."
+        "\nD) Говорящий, очевидно, не посещал юридическую школу."
+    ),
     answer1_text="A",
-    answer1_score=0,
+    answer1_score=1,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
@@ -322,13 +420,22 @@ critical_thinking_question_17 = Question(
 
 critical_thinking_question_18 = Question(
     order=18,
-    text="",
+    question_text=(
+        "Что из нижеследующего является обоснованным суждением?"
+        "\n\nA) Я получил на экзамене «отлично». Вчера вечером я очень устал, хотя всего лишь занимался. "
+        "Чтобы и дальше получать «отлично» мне нужно перестать так напряженно заниматься."
+        "\nB) Ваш автомобиль плохо едет. Вы только что старались объяснить новому механику, "
+        "что вам нужно заменить масло. Держу пари, что он – причина ваших автомобильных проблем."
+        "\nC) Я не пылесосил уже несколько недель. У меня появилось много грязи и пыли по всему полу, а моя аллергия обострилась. "
+        "Если я хочу, чтобы в доме было чище, мне нужно чаще пылесосить."
+        "\nD) Большинство браков заканчиваются разводом, поэтому мой брак не будет счастливым."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
-    answer3_score=0,
+    answer3_score=1,
     answer4_text="D",
     answer4_score=0,
 )
@@ -345,11 +452,17 @@ critical_thinking_question_19 = Question(
         "Мы измеряли уровень хлорофилла в воде, чтобы определить, где и в каких количествах есть фитопланктон. Работалось хорошо, так как вода "
         "была прозрачной, без мути и грязи»."
     ),
-    text="",
+    question_text=(
+        "Что такое фитопланктон?"
+        "\n\nA) Другое название хлорофилла"
+        "\nB) Микроскопическое растение."
+        "\nC) Микроскопическое животное."
+        "\nD) Вид рыбы."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
-    answer2_score=0,
+    answer2_score=1,
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
@@ -358,7 +471,13 @@ critical_thinking_question_19 = Question(
 
 critical_thinking_question_20 = Question(
     order=20,
-    text="",
+    question_text=(
+        "Автор говорит, что ее исследовательская группа выясняла, привело ли увеличение количества рыбаков в зоне изучения к:"
+        "\n\nA) положительному воздействию на местную экономику."
+        "\nB) истощению рыбных ресурсов."
+        "\nC) увеличению работы для морских биологов"
+        "\nD) негативному воздействию на состояние окружающих вод."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
@@ -366,14 +485,21 @@ critical_thinking_question_20 = Question(
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
-    answer4_score=0,
+    answer4_score=1,
 )
 
 critical_thinking_question_21 = Question(
     order=21,
-    text="",
+    question_text=(
+        "Вы хотите продать свой автомобиль трехлетней давности и купить новый. Какой Интернет-сайт "
+        "скорее всего предоставит наилучшую информацию о том, как продать подержанный автомобиль?"
+        "\n\nA) www.autotrader.com : последние цены и обзоры новых и подержанных машин; советы по обоснованию цены."
+        "\nB) www.betterbusinessbureau.org : бесплатное потребительское и бизнес-образование; консультирование перед началом нового бизнеса."
+        "\nC) www.newwheels.com : исследование каждой марки и модели среди последних предложений мирового автомобильного рынка."
+        "\nD) www.carbuyingtips.com : всё, что вам нужно знать, прежде чем купить новую машину."
+    ),
     answer1_text="A",
-    answer1_score=0,
+    answer1_score=1,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
@@ -384,24 +510,36 @@ critical_thinking_question_21 = Question(
 
 critical_thinking_question_22 = Question(
     order=22,
-    text="",
+    question_text=(
+        "Какое из этих объяснений наиболее слабое?"
+        "\n\nA) Цены на бензин настолько высокие, что многие люди больше не будут ездить в дальние поездки."
+        "\nB) Завтра я не смогу надеть свою новую рубашку, потому что она сейчас в стирке."
+        "\nC) Домашняя работа Васи не была готовой к сроку, потому, что он не сдал ее вовремя."
+        "\nD) В этом году у нас нет новых учебников, потому что школьный бюджет был урезан."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
-    answer3_score=0,
+    answer3_score=1,
     answer4_text="D",
     answer4_score=0,
 )
 
 critical_thinking_question_23 = Question(
     order=23,
-    text="",
+    question_text=(
+        "Какая из этих проблем является наиболее серьезной?"
+        "\n\nA) Ваш преподаватель болен и пропустит занятия утром, когда вы собирались сдать сложный экзамен."
+        "\nB) Вы теряете копию вашего расписания и забываете подготовиться к серьезному экзамену."
+        "\nC) Вы не можете найти одну из книг, которые нужны для подготовки к серьезному экзамену."
+        "\nD) Важный экзамен оказался сложнее, чем вы могли подумать, и включает вопросы, к которым вы не готовились."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
-    answer2_score=0,
+    answer2_score=1,
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
@@ -410,22 +548,35 @@ critical_thinking_question_23 = Question(
 
 critical_thinking_question_24 = Question(
     order=24,
-    text="",
+    question_text=(
+        "Какой из этих доводов наиболее важен при оценке информации, найденной в сети Интернет?"
+        "\n\nA) Авторы, публикующиеся в сети Интернет, как правило, менее компетентны, чем публикующиеся в печати."
+        "\nB) Интернет-авторы обычно предвзяты."
+        "\nC) Любой может опубликоваться в сети Интернет; нет гарантии в том, что материал будет объективным."
+        "\nD) Печатная информация почти всегда более точна, чем Интернет-информация."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
-    answer3_score=0,
+    answer3_score=1,
     answer4_text="D",
     answer4_score=0,
 )
 
 critical_thinking_question_25 = Question(
     order=25,
-    text="",
+    question_text=(
+        "Что неверно в следующем суждении? «Американские студенты не согласны, чтобы буквенная система оценок успеваемости "
+        "заменялась на цифровую. Они опасаются, что так можно дойти до того, что у них отнимут имена и будут обращаться к ним по номерам!»"
+        "\n\nA) Вывод является слишком чрезмерным."
+        "\nB) Нет ничего неверного в данном утверждении."
+        "\nC) Студенты не должны участвовать в обсуждении системы оценивания их учебного заведения."
+        "\nD) Суждение не объясняет, почему руководство хочет избавиться от буквенных оценок."
+    ),
     answer1_text="A",
-    answer1_score=0,
+    answer1_score=1,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
@@ -436,24 +587,36 @@ critical_thinking_question_25 = Question(
 
 critical_thinking_question_26 = Question(
     order=26,
-    text="",
+    question_text=(
+        "В чем действительно состоит проблема, а не просто какое-либо ее вторичное следствие?"
+        "\n\nA) Ваш банк взыскивает за пользование кредитом 4% от каждой суммы."
+        "\nB) Ваш лимит по кредитной карте исчерпался, когда вы хотели расплатиться ею в магазине."
+        "\nC) Каждый месяц вы тратите больше денег, чем зарабатываете."
+        "\nD) В прошлом месяце пятая часть вашей зарплаты ушла только на погашение процентов по кредитам."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
     answer2_score=0,
     answer3_text="C",
-    answer3_score=0,
+    answer3_score=1,
     answer4_text="D",
     answer4_score=0,
 )
 
 critical_thinking_question_27 = Question(
     order=27,
-    text="",
+    question_text=(
+        "Какая фраза является примером гиперболы?"
+        "\n\nA) В совершенном мире не было бы войн."
+        "\nB) Этот наряд испугал бы и шкуру кошки."
+        "\nC) Вы не самый лучший повар в мире."
+        "\nD) Он ездит почти также быстро, как пилоты Формулы 1."
+    ),
     answer1_text="A",
     answer1_score=0,
     answer2_text="B",
-    answer2_score=0,
+    answer2_score=1,
     answer3_text="C",
     answer3_score=0,
     answer4_text="D",
@@ -484,7 +647,13 @@ async def add_critical_thinking_test(session: AsyncSession):
             session.add(result)
 
         critical_thinking_questions = [
-            critical_thinking_question_1,
+            critical_thinking_question_1, critical_thinking_question_2, critical_thinking_question_3, critical_thinking_question_4,
+            critical_thinking_question_5, critical_thinking_question_6, critical_thinking_question_7, critical_thinking_question_8,
+            critical_thinking_question_9, critical_thinking_question_10, critical_thinking_question_11, critical_thinking_question_12,
+            critical_thinking_question_13, critical_thinking_question_14, critical_thinking_question_15, critical_thinking_question_16,
+            critical_thinking_question_17, critical_thinking_question_18, critical_thinking_question_19, critical_thinking_question_20,
+            critical_thinking_question_21, critical_thinking_question_22, critical_thinking_question_23, critical_thinking_question_24,
+            critical_thinking_question_25, critical_thinking_question_26, critical_thinking_question_27
         ]
         
         for question in critical_thinking_questions:
