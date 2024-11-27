@@ -629,7 +629,7 @@ async def add_critical_thinking_test(session: AsyncSession):
         is_existing = await session.execute(select(Test).where(Test.name == critical_thinking.name))
         is_existing = is_existing.scalar_one_or_none()
         if is_existing:
-            log.info("Test already exists, skipping")
+            log.info("Critical thinking test already exists, skipping")
             return
         
         session.add(critical_thinking)

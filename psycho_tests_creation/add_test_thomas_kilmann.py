@@ -45,12 +45,164 @@ kilmann_test = Test(
 )
 
 
-# kilmann_test_result_1 = Result(
-#     category_id = 0,
-#     min_score=0,
-#     max_score=0,
-#     text="",
-# )
+result_resistance_1 = Result(
+    category_id = 1,
+    min_score=0,
+    max_score=3,
+    text=(
+        "Недостаточное соперничество проявляется в "
+        "нерешительности и низкой активности, самоустранении от решения проблем; склонности к обсуждению других, личным нападкам."
+    ),
+)
+
+
+result_resistance_2 = Result(
+    category_id = 1,
+    min_score=4,
+    max_score=8,
+    text=(
+        "Хорошо развиты способности использовать преимущества своей позиции, "
+        "отстаиванать свое мнение и представление, а также фиксировать свою позицию и настаивать на ней."
+    ),
+)
+
+
+result_resistance_3 = Result(
+    category_id = 1,
+    min_score=9,
+    max_score=13,  # Should be 12, just to be sure all cases covered in case of mistake leaves 13 for now
+    text=(
+        "Чрезмерное соперничество ведет к потере обратной связи, снижению обучаемости. "
+        "Проявляется в ошибках, отвлечении внимания, разговорах за спиной и периодической вспыльчивости."
+    ),
+)
+
+
+result_cooperation_1 = Result(
+    category_id = 2,
+    min_score=0,
+    max_score=3,
+    text=(
+        "Недостаточное владение сотрудничеством может привести к использованию быстрых шаблонных решений, бесправию, потере инновационности."
+    ),
+)
+
+
+result_cooperation_2 = Result(
+    category_id = 2,
+    min_score=4,
+    max_score=8,
+    text=(
+        "Хорошо развито восприятие ситуации без угрозы, эффективное слушание, "
+        "аналитический подход к выявлению корневых причин проблем."
+    )
+)
+
+
+result_cooperation_3 = Result(
+    category_id = 2,
+    min_score=9,
+    max_score=13,  # Should be 12, just to be sure all cases covered in case of mistake leaves 13 for now
+    text=(
+        "Чрезмерное сотрудничество грозит затягиванием решения тривиальных "
+        "вопросов, размыванием ответственности, риском быть используемым и перегрузкой работой."
+    )
+)
+
+
+result_compromise_1 = Result(
+    category_id=3,
+    min_score=0,
+    max_score=3,
+    text=(
+        "Недостаточное владение компромиссом ведет к конфронтации, постоянным конфликтам и неэффективным переговорам."
+    )
+)
+
+
+result_compromise_2 = Result(
+    category_id=3,
+    min_score=4,
+    max_score=8,
+    text=(
+        "Хорошо развиты коммуникативные навыки, умение поддерживать открытый диалог, "
+        "находить взаимовыгодные решения, уступать и оценивать значимость всех аспектов проблемы."
+    )
+)
+
+
+result_compromise_3 = Result(
+    category_id=3,
+    min_score=9,
+    max_score=13,  # Should be 12, just to be sure all cases covered in case of mistake leaves 13 for now
+    text=(
+        "Чрезмерный компромисс ведет к потере стратегических целей, снижению доверия и цинизму. "
+        "Уступки создают иллюзию благополучия, не решая сути конфликта."
+    )
+)
+
+
+result_avoidance_1 = Result(
+    category_id=4,
+    min_score=0,
+    max_score=3,
+    text=(
+        "Недостаточное использование избегания порождает враждебность и обиду. "
+        "Работа становится подавляющей из-за неумения расставлять приоритеты и делегировать полномочия."
+    )
+)
+
+
+result_avoidance_2 = Result(
+    category_id=4,
+    min_score=4,
+    max_score=8,
+    text=(
+        "Хорошо развиты навыка прогнозирования выхода из конфликта, уклонения от вопросов, "
+        "определения ситуаций для дипломатии, чувства времени и умения оставлять вопросы нерешёнными."
+    )
+)
+
+
+result_avoidance_3 = Result(
+    category_id=4,
+    min_score=9,
+    max_score=13,  # Should be 12, just to be sure all cases covered in case of mistake leaves 13 for now
+    text=(
+        "Чрезмерное избегание снижает вовлечённость: человек откладывает задачи, проявляет замкнутость, становится критичным и саркастичным."
+    )
+)
+
+
+result_pliability_1 = Result(
+    category_id=5,
+    min_score=0,
+    max_score=3,
+    text=(
+        "Слабое приспособление приводит к потере взаимопонимания, апатии, намёкам и двусмысленным "
+        "высказываниям, что снижает моральные качества и мешает достижению результата."
+    )
+)
+
+
+result_pliability_2 = Result(
+    category_id=5,
+    min_score=4,
+    max_score=8,
+    text=(
+        "Хорошо развиты умения жертвовать, быть самоотверженным, подчиняться и уступать."
+    )
+)
+
+
+result_pliability_3 = Result(
+    category_id=5,
+    min_score=9,
+    max_score=13,  # Should be 12, just to be sure all cases covered in case of mistake leaves 13 for now
+    text=(
+        "Чрезмерное приспособление снижает влияние и вклад, ведёт к тревоге, страху перемен и стремлению сохранить всё неизменным."
+    )
+)
 
 
 kilmann_question_1 = Question(
@@ -417,3 +569,60 @@ kilmann_question_30 = Question(
     answer2_text="B",
     answer2_score=2,
 )
+
+
+kilman_test_results = [
+    result_resistance_1, result_resistance_2, result_resistance_3,
+    result_cooperation_1, result_cooperation_2, result_cooperation_3,
+    result_compromise_1, result_compromise_2, result_compromise_3,
+    result_avoidance_1, result_avoidance_2, result_avoidance_3,
+    result_pliability_1, result_pliability_2, result_pliability_3,
+]
+
+
+kilman_test_questions = [
+    kilmann_question_1, kilmann_question_2, kilmann_question_3, kilmann_question_4,
+    kilmann_question_5, kilmann_question_6, kilmann_question_7, kilmann_question_8,
+    kilmann_question_9, kilmann_question_10, kilmann_question_11, kilmann_question_12,
+    kilmann_question_13, kilmann_question_14, kilmann_question_15, kilmann_question_16,
+    kilmann_question_17, kilmann_question_18, kilmann_question_19, kilmann_question_20,
+    kilmann_question_21, kilmann_question_22, kilmann_question_23, kilmann_question_24,
+    kilmann_question_25, kilmann_question_26, kilmann_question_27, kilmann_question_28,
+    kilmann_question_29, kilmann_question_30
+]
+
+
+async def add_kilmann_test(session: AsyncSession):
+    try:
+        is_exsisting = await session.execute(select(Test).where(Test.name == kilmann_test.name))
+        is_exsisting = is_exsisting.scalar_one_or_none()
+        
+        if is_exsisting:
+            log.info(f"Test {kilmann_test.name} already exists")
+            return
+        
+        session.add(kilmann_test)
+        await session.flush()
+        
+        for result in kilman_test_results:
+            result.test_id = kilmann_test.id
+            session.add(result)
+        
+        for question in kilman_test_questions:
+            question.test_id = kilmann_test.id
+            session.add(question)
+        
+        await session.commit()
+        log.info(f"Test {kilmann_test.name} added")
+        
+    except Exception as e:
+        log.error(f"Error while checking if test {kilmann_test.name} exists: {e}")
+
+
+async def main():
+    async with db_helper.db_session() as session:
+        await add_kilmann_test(session)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
