@@ -1,6 +1,6 @@
 # services/button_service.py
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from core.logger import log
@@ -9,7 +9,7 @@ from core.models.button import Button
 
 class ButtonService:
     @staticmethod
-    async def get_buttons_by_marker(context_marker: str, session: Session) -> list[Button]:
+    async def get_buttons_by_marker(context_marker: str, session: AsyncSession) -> list[Button]:
         try:
             result = await session.execute(
                 Button.active()
@@ -22,7 +22,7 @@ class ButtonService:
             return []
 
     @staticmethod
-    async def get_button_by_id(button_id: str, session: Session) -> Button | None:
+    async def get_button_by_id(button_id: str, session: AsyncSession) -> Button | None:
         try:
             result = await session.execute(
                 Button.active().where(Button.id == button_id)
@@ -33,9 +33,8 @@ class ButtonService:
             return None
 
     @staticmethod
-    async def create_inline_keyboard(context_marker: str, session: Session) -> InlineKeyboardMarkup:
+    async def create_inline_keyboard(context_marker: str, session: AsyncSession) -> InlineKeyboardMarkup:
         buttons = await ButtonService.get_buttons_by_marker(context_marker, session)
-        # log.info(f"Retrieved {len(buttons)} buttons for marker {context_marker}")
         
         keyboard = []
         current_row = []
@@ -51,19 +50,15 @@ class ButtonService:
             if button.is_half_width:
                 current_row.append(btn)
                 if len(current_row) == 2:  # Max 2 buttons in a row
-                    # log.info(f"Adding half-width row: {[b.text for b in current_row]}")
                     keyboard.append(current_row)
                     current_row = []
             else:
                 if current_row:
-                    # log.info(f"Adding incomplete half-width row: {[b.text for b in current_row]}")
                     keyboard.append(current_row)
                     current_row = []
-                # log.info(f"Adding full-width button: {button.text}")
                 keyboard.append([btn])
 
         if current_row:
-            # log.info(f"Adding final incomplete row: {[b.text for b in current_row]}")
             keyboard.append(current_row)
 
         log.info("Final keyboard structure: %s", keyboard)
