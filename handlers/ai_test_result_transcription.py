@@ -4,7 +4,7 @@ from typing import List
 
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext  # from aiogram.fsm.state import State, StatesGroup
-from sqlalchemy import select  # func
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import log
@@ -18,6 +18,7 @@ from handlers.utils import send_or_edit_message
 router = Router()
 
 
+# TODO: Leave only latest result for each test at the moment of AI generation
 @router.callback_query(lambda c: c.data.startswith("get_ai_transcription_"))
 async def get_ai_transcription(callback_query: types.CallbackQuery, state: FSMContext):
     parts = callback_query.data.split("_")
@@ -27,11 +28,42 @@ async def get_ai_transcription(callback_query: types.CallbackQuery, state: FSMCo
     
     async with db_helper.db_session() as session:
         try:
+            # tests = await session.execute(
+            #     select(SentTest)
+            #     .where(SentTest.sender_id == sender_id, 
+            #            SentTest.receiver_username == username,
+            #            SentTest.status == TestStatus.COMPLETED)
+            #     .order_by(SentTest.completed_at.desc())
+            # )
+            
+            # Subquery to get the latest completed_at for each test_id
+            latest_test_subquery = (
+                select(
+                    SentTest.test_id, 
+                    func.max(SentTest.completed_at).label('latest_completed_at')
+                )
+                .where(
+                    SentTest.sender_id == sender_id, 
+                    SentTest.receiver_username == username,
+                    SentTest.status == TestStatus.COMPLETED
+                )
+                .group_by(SentTest.test_id)
+                .subquery()
+            )
+
+            # Main query to get the latest test for each test_id
             tests = await session.execute(
                 select(SentTest)
-                .where(SentTest.sender_id == sender_id, 
-                       SentTest.receiver_username == username,
-                       SentTest.status == TestStatus.COMPLETED)
+                .join(
+                    latest_test_subquery, 
+                    (SentTest.test_id == latest_test_subquery.c.test_id) & 
+                    (SentTest.completed_at == latest_test_subquery.c.latest_completed_at)
+                )
+                .where(
+                    SentTest.sender_id == sender_id, 
+                    SentTest.receiver_username == username,
+                    SentTest.status == TestStatus.COMPLETED
+                )
                 .order_by(SentTest.completed_at.desc())
             )
             tests = tests.scalars().all()
