@@ -12,7 +12,7 @@ load_dotenv(".env")
 
 
 # App ENV variables
-DEBUG = os.getenv("DEBUG", "True").lower() in ('true', '1')
+DEBUG = os.getenv("DEBUG", "False").lower() in ('true', '1')
 APP_RUN_HOST = str(os.getenv("APP_RUN_HOST", "0.0.0.0"))
 APP_RUN_PORT = int(os.getenv("APP_RUN_PORT", 8000))
 
@@ -27,7 +27,7 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
 POSTGRES_POOL_SIZE = int(os.getenv("POSTGRES_POOL_SIZE", 10))
 POSTGRES_MAX_OVERFLOW = int(os.getenv("POSTGRES_MAX_OVERFLOW", 20))
 
-POSTGRES_ECHO = os.getenv("POSTGRES_ECHO", "True").lower() in ('true', '1')
+POSTGRES_ECHO = os.getenv("POSTGRES_ECHO", "False").lower() in ('true', '1')
 
 # CORS ENV variables
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", ["*"])
@@ -205,7 +205,7 @@ class QuizTexts(BaseModel):
     quiz_list_menu_button_for_end_quiz: str = "◀️ К списку тестов"
     psycological_menu_button_for_end_quiz: str = "◀️ К списку тестов"
     quizes_list_menu: str = "Выберите тест для прохождения: "  # will be used if no quiz_list text is provided
-    psycological_rests_list_menu: str = "Ыберите тест для прохождения: "
+    psycological_rests_list_menu: str = "Выберите тест для прохождения: "
     quiz_not_found: str = "Тест не найден"
     quiz_start_approve: str = "✅ Начать тест"
     user_not_found: str = "Пользователь не найден"

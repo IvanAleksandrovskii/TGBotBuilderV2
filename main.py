@@ -108,7 +108,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     
     log.info("Application shutdown complete")
     
-    client_manager.dispose_all_clients()
+    await client_manager.dispose_all_clients()
 
 main_app = FastAPI(
     lifespan=lifespan,

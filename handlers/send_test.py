@@ -25,9 +25,7 @@ from services.text_service import TextService
 router = Router()
 
 
-# TODO: Add a bot link to the message for the case reciever user is not logged in the bot
 # TODO: Idea add option to input for how many days the csv file sould be 
-# TODO: Add AI Transcriptions for the tests results here
 
 
 class SendTestStates(StatesGroup):
@@ -370,7 +368,7 @@ async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext
         [types.InlineKeyboardButton(text=settings.send_test.check_sent_tests_button, callback_data="view_sent_tests")],
         [types.InlineKeyboardButton(text=settings.send_test.send_psyco_tests_button, callback_data="choose_psyco_tests")],
         # [types.InlineKeyboardButton(text=settings.send_test.send_other_tests_button, callback_data="choose_regular_tests")],
-        [types.InlineKeyboardButton(text=settings.send_test.send_tests_cancel_button, callback_data="back_to_start")]
+        [types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")]
     ]
 
     text = settings.send_test.send_tests_choose_type
