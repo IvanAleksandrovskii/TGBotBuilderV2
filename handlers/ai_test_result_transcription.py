@@ -109,7 +109,7 @@ async def get_ai_transcription(callback_query: types.CallbackQuery, state: FSMCo
                     [types.InlineKeyboardButton(text="Back", callback_data=f"user_tests_page_1_{username}")]
                 ])
             
-            await send_or_edit_message(callback_query.message, f"AI Transcription for @{username}:\n\n{transcription}", keyboard, None)  # TODO: Move to config
+            await send_or_edit_message(callback_query.message, f"ИИ расшифровка для пользователя @{username}:\n\n{transcription}", keyboard, None)  # TODO: Move to config
 
         except Exception as e:
             log.exception(e)

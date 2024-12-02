@@ -342,10 +342,10 @@ async def cancel_reject_test(callback_query: types.CallbackQuery, state: FSMCont
 
 
 
-@router.callback_query(lambda c: c.data and c.data.startswith("cancel_send_result_"))
-async def cancel_send_result(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.answer(settings.received_tests.send_result_cancel)
-    await start_received_test(callback_query, state)
+# @router.callback_query(lambda c: c.data and c.data.startswith("cancel_send_result_"))
+# async def cancel_send_result(callback_query: types.CallbackQuery, state: FSMContext):
+#     await callback_query.answer(settings.received_tests.send_result_cancel)
+#     await start_received_test(callback_query, state)
 
 
 # TODO: For sending existing result of the test with multigraph results add sorting from high score to low score as it's made for quiz router (handler)

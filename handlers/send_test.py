@@ -527,7 +527,7 @@ def create_navigation_keyboard(current_page, total_pages, username):
     if navigation:
         keyboard.append(navigation)
 
-    keyboard.append([types.InlineKeyboardButton(text="Get AI Transcription", callback_data=f"get_ai_transcription_{username}")])  # TODO: NEW
+    keyboard.append([types.InlineKeyboardButton(text="Получить ИИ расшифровку", callback_data=f"get_ai_transcription_{username}")])  # TODO: NEW
     
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_user_button, callback_data=f"export_user_csv_{username}")])
     keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_userlist_button, callback_data="back_to_users_list")])
