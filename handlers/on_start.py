@@ -22,6 +22,7 @@ from .utils import send_or_edit_message
 router = Router()
 
 
+# TODO: Add sent tests deletion if tests are not existing anymore
 class FirstGreetingStates(StatesGroup):
     GREETING = State()
 

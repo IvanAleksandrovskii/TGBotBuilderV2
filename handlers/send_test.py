@@ -25,6 +25,7 @@ from services.text_service import TextService
 router = Router()
 
 
+# TODO: Add a bot link to the message for the case reciever user is not logged in the bot
 # TODO: Idea add option to input for how many days the csv file sould be 
 # TODO: Add AI Transcriptions for the tests results here
 

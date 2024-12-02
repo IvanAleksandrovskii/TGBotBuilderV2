@@ -232,17 +232,18 @@ async def get_sorted_questions(session, test_id):
 
 
 # @router.callback_query(QuizStates.VIEWING_INTRO)
-async def process_intro(callback_query: types.CallbackQuery, state: FSMContext):
+async def process_intro(callback_query: types.CallbackQuery, state: FSMContext, state_group: StatesGroup):
     if callback_query.data == "show_question":
         data = await state.get_data()
         data['intro_shown'] = True
         await state.update_data(data)
-        await send_question(callback_query.message, state, QuizStates)
+        await send_question(callback_query.message, state, state_group)
 
 
 # @router.callback_query(lambda c: c.data and c.data.startswith("confirm_start_"))
-async def confirm_start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
-    quiz_id = callback_query.data.split("_")[-1]
+async def confirm_start_quiz(callback_query: types.CallbackQuery, state: FSMContext, state_group: StatesGroup, quiz_id: str = None):
+    if not quiz_id:  # If called from callback
+        quiz_id = callback_query.data.split("_")[-1]
     async for session in db_helper.session_getter():
         try:
             # Get and save the order of questions at start
@@ -255,7 +256,7 @@ async def confirm_start_quiz(callback_query: types.CallbackQuery, state: FSMCont
                 intro_shown=False,
                 sorted_questions=sorted_questions  # Save the order
             )
-            await send_question(callback_query.message, state, QuizStates)
+            await send_question(callback_query.message, state, state_group)
         except Exception as e:
             log.exception(e)
         finally:
@@ -263,10 +264,10 @@ async def confirm_start_quiz(callback_query: types.CallbackQuery, state: FSMCont
 
 
 # @router.callback_query(lambda c: c.data and c.data.startswith("start_questions_"))
-async def start_questions(message: types.Message, state: FSMContext, quiz_id: str = None):
+async def start_questions(message: types.Message, state: FSMContext, state_group: StatesGroup, quiz_id: str = None):
     if not quiz_id:  # If called from callback
         quiz_id = message.data.split("_")[-1]
-    await send_question(message if isinstance(message, types.Message) else message.message, state, QuizStates)
+    await send_question(message if isinstance(message, types.Message) else message.message, state, state_group)
 
 
 async def send_question(message: types.Message, state: FSMContext, state_group: StatesGroup):
@@ -467,12 +468,11 @@ async def show_comment(message: types.Message, comment: str, state: FSMContext, 
 
 
 # @router.callback_query(QuizStates.SHOWING_COMMENT)
-async def process_comment(callback_query: types.CallbackQuery, state: FSMContext):
-    # if callback_query.data == "continue_quiz":
+async def process_comment(callback_query: types.CallbackQuery, state: FSMContext, state_group: StatesGroup):
     data = await state.get_data()
     data['current_question'] += 1
     await state.update_data(data)
-    await send_question(callback_query.message, state, QuizStates)
+    await send_question(callback_query.message, state, state_group)
 
 
 async def calculate_results(session, test, total_scores, category_scores):
@@ -603,35 +603,38 @@ async def finish_quiz(message: types.Message, state: FSMContext):
 
 @router.callback_query(lambda c: c.data and c.data.startswith((
     "show_quizzes", "start_quiz_", "confirm_start_", "start_questions_", 
-    "answer_", "quiz_back", "continue_quiz", "show_question"
-    )))
+    "answer_", "quiz_back", "continue_quiz", "show_question")))
 async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMContext):
     current_state = await state.get_state()
     if current_state is None:
-        await show_quizzes(callback_query, state)  # TODO: Fix to show psycological tests
+        await show_psycho_tests(callback_query, state)  # TODO: Showing psycological tests now, DOUBLE CHECK (( ! ))
     
     elif current_state == QuizStates.VIEWING_TESTS:
         if callback_query.data.startswith("start_quiz_"):
             await start_quiz(callback_query, state)
-        else:
-            await show_quizzes(callback_query, state)
+        # else:
+        #     await show_quizzes(callback_query, state)  # TODO: Double check (( ! ))
     
     elif current_state == QuizStates.VIEWING_INTRO:
-        await process_intro(callback_query, state)
+        await process_intro(callback_query, state, QuizStates)
     
     elif current_state == QuizStates.CONFIRMING:
         if callback_query.data.startswith("confirm_start_"):
-            await confirm_start_quiz(callback_query, state)
-        else:
-            await show_quizzes(callback_query, state)
+            await confirm_start_quiz(callback_query, state, QuizStates)
+        # else:
+        #     await show_quizzes(callback_query, state)  # TODO: Double check (( ! ))
+    
     elif current_state == QuizStates.VIEWING_INTRO:
         if callback_query.data.startswith("start_questions_"):
-            await start_questions(callback_query, state)
+            await start_questions(callback_query, state, QuizStates)
+    
     elif current_state == QuizStates.ANSWERING:
         await process_answer(callback_query, state, QuizStates)
+    
     elif current_state == QuizStates.SHOWING_COMMENT:
-        await process_comment(callback_query, state)
-    else:
-        await callback_query.answer(settings.quiz_text.quiz_error)  # TODO: Fix to show psycological tests
-        await state.clear()
-        await show_quizzes(callback_query, state)
+        await process_comment(callback_query, state, QuizStates)
+    
+    # else:
+        # await callback_query.answer(settings.quiz_text.quiz_error)  # TODO: Fix to show psycological tests
+    #     await state.clear()
+    #     await show_quizzes(callback_query, state)

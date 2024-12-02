@@ -1,6 +1,6 @@
 # handlers/promocode.py
 
-import os
+# import os
 
 from aiogram import Router, types, Bot
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -19,6 +19,8 @@ router = Router()
 
 
 # TODO: Make everything configurable
+# TODO: Add showing how many referrals the user has
+
 @router.callback_query(lambda c: c.data == "getpromo")
 async def get_promo_command(message: types.CallbackQuery, bot: Bot):
     """Handler for /getpromo command that generates a promocode for the user"""

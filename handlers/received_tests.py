@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from aiogram import Router, types, Bot
+from aiogram.types import CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
@@ -10,13 +11,13 @@ from sqlalchemy import select, func, or_
 
 from core import log, settings
 from core.models import db_helper
-from core.models import Test, QuizResult, User, SentTest
+from core.models import Test, QuizResult, User, SentTest, Result
 from core.models.sent_test import TestStatus
 from services.text_service import TextService
 from services.user_services import UserService
 
 from .utils import send_or_edit_message
-# from .quiz import get_sorted_questions, calculate_results
+from .quiz import get_sorted_questions
 
 
 router = Router()
@@ -347,6 +348,7 @@ async def cancel_send_result(callback_query: types.CallbackQuery, state: FSMCont
     await start_received_test(callback_query, state)
 
 
+# TODO: For sending existing result of the test with multigraph results add sorting from high score to low score as it's made for quiz router (handler)
 async def get_latest_category_results(session, user_id: str, test_id: str):
     """
     Get the latest results for each category of a test for a specific user.
@@ -381,11 +383,14 @@ async def get_latest_category_results(session, user_id: str, test_id: str):
         if result:
             latest_results.append(result)
     
+    # Sort results by score in descending order # TODO: Doublecheck
+    latest_results.sort(key=lambda x: x.score, reverse=True)
+    
     return latest_results
 
 
-@router.callback_query(lambda c: c.data and c.data.startswith("send_existing_result_"))  # TODO: Fix, add confirm_send_result
-async def send_existing_result(callback_query: types.CallbackQuery, state: FSMContext):
+@router.callback_query(lambda c: c.data and c.data.startswith("send_existing_result_"))  # TODO: Fix, add confirm_send_result 
+async def send_existing_result(callback_query: types.CallbackQuery, state: FSMContext):  # also add sorting for multigraph results
     sent_test_id = callback_query.data.split("_")[-1]
     async for session in db_helper.session_getter():
         try:
@@ -534,11 +539,11 @@ async def start_received_test(callback_query: types.CallbackQuery, state: FSMCon
             if latest_result:
                 if not latest_result.score is not None:  # TODO: Double check (( ! ))
                     keyboard = [
-                        [types.InlineKeyboardButton(text=settings.received_tests.start_test_button, callback_data=f"confirm_start_received_test_{sent_test_id}")],
+                        [types.InlineKeyboardButton(text=settings.received_tests.start_test_button, callback_data=f"confirm_run_received_test_{test.id}")],  # sent_test_id
                     ]
                 elif test.allow_play_again and latest_result.score is not None:
                     keyboard = [
-                        [types.InlineKeyboardButton(text=settings.received_tests.start_test_button, callback_data=f"confirm_start_received_test_{sent_test_id}")],
+                        [types.InlineKeyboardButton(text=settings.received_tests.start_test_button, callback_data=f"confirm_run_received_test_{test.id}")],  # sent_test_id
                         [types.InlineKeyboardButton(text=(settings.received_tests.send_saved_result_button + f": {latest_result.score}"), callback_data=f"send_existing_result_{sent_test_id}")]
                     ]  
                 elif not test.allow_play_again and latest_result.score is not None:
@@ -547,11 +552,11 @@ async def start_received_test(callback_query: types.CallbackQuery, state: FSMCon
                     ]
                 else:
                     keyboard = [
-                        [types.InlineKeyboardButton(text=settings.received_tests.start_test_button, callback_data=f"confirm_start_received_test_{sent_test_id}")],
+                        [types.InlineKeyboardButton(text=settings.received_tests.start_test_button, callback_data=f"confirm_run_received_test_{test.id}")],  # sent_test_id
                     ]
             else:
                 keyboard = [
-                    [types.InlineKeyboardButton(text=settings.received_tests.start_test_button, callback_data=f"confirm_start_received_test_{sent_test_id}")],
+                    [types.InlineKeyboardButton(text=settings.received_tests.start_test_button, callback_data=f"confirm_run_received_test_{test.id}")],  # sent_test_id
                 ]
 
             keyboard.append([types.InlineKeyboardButton(text=settings.received_tests.reject_test_button, callback_data=f"reject_test_{sent_test_id}")])
@@ -582,411 +587,448 @@ async def start_received_test(callback_query: types.CallbackQuery, state: FSMCon
             await session.close()
 
 
-# @router.callback_query(lambda c: c.data.startswith("confirm_start_received_test_"))  # TODO: fix and make separate handling here
-# async def confirm_start_received_test(callback_query: types.CallbackQuery, state: FSMContext):
-#     quiz_id = callback_query.data.split("_")[-1]
-#     async for session in db_helper.session_getter():
-#         try:
-#             # Get and save the order of questions at start
-#             sorted_questions = await get_sorted_questions(session, quiz_id)
-#             await state.update_data(
-#                 quiz_id=quiz_id, 
-#                 current_question=0, 
-#                 answers=[], 
-#                 category_scores={}, 
-#                 intro_shown=False,
-#                 sorted_questions=sorted_questions  # Save the order
-#             )
-#             await send_question(callback_query.message, state, ReceivedTestStates)
-#         except Exception as e:
-#             log.exception(e)
-#         finally:
-#             await session.close()
+async def process_intro(callback_query: types.CallbackQuery, state: FSMContext, state_group: StatesGroup):
+    if callback_query.data == "show_received_question":
+        data = await state.get_data()
+        data['intro_shown'] = True
+        await state.update_data(data)
+        await send_question(callback_query.message, state, state_group)
 
 
-# async def process_intro(callback_query: types.CallbackQuery, state: FSMContext):
-#     if callback_query.data == "show_question":
-#         data = await state.get_data()
-#         data['intro_shown'] = True
-#         await state.update_data(data)
-#         await send_question(callback_query.message, state, ReceivedTestStates)
+async def process_comment(callback_query: types.CallbackQuery, state: FSMContext, state_group: StatesGroup):
+    data = await state.get_data()
+    data['current_question'] += 1
+    await state.update_data(data)
+    await send_question(callback_query.message, state, state_group)
 
 
-
-# async def send_question(message: types.Message, state: FSMContext, state_group: StatesGroup):
-#     data = await state.get_data()
-#     quiz_id = data['quiz_id']
-#     current_question = data['current_question']
-#     sorted_questions = data['sorted_questions']
-
-#     async for session in db_helper.session_getter():
-#         try:
-#             test = await session.execute(select(Test).where(Test.id == quiz_id))
-#             test = test.scalar_one_or_none()
-
-#             if current_question >= len(sorted_questions):
-#                 await finish_received_test(message, state)
-#                 return
-
-#             question_data = sorted_questions[current_question]
-#             question = question_data['question']  # Get the question object
-
-#             # Check if there is an intro text for the current question
-#             if question_data['intro_text'] and not data.get('intro_shown'):
-#                 keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-#                     [types.InlineKeyboardButton(text=settings.quiz_text.quiz_continue_button, callback_data="show_question")]
-#                 ])
-                
-#                 text_service = TextService()
-#                 # Media priority
-#                 if question_data['picture']:
-#                     media_url = question_data['picture']
-#                 elif test.picture:
-#                     media_url = test.picture
-#                 else:
-#                     media_url = await text_service.get_default_media(session)
-                
-#                 if media_url and not media_url.startswith(('http://', 'https://')):
-#                     media_url = f"{settings.media.base_url}/app/{media_url}"
-                
-#                 intro_text = question_data['intro_text'].replace('\\n', '\n')
-                
-#                 await send_or_edit_message(
-#                     message,
-#                     intro_text,
-#                     keyboard,
-#                     media_url
-#                 )
-                
-#                 data['intro_shown'] = True
-#                 await state.update_data(data)
-#                 await state.set_state(state_group.VIEWING_INTRO)
-#                 return
-
-#             # If there is no intro or it has already been shown, show the question
-#             keyboard = []
-#             for i in range(1, 7):
-#                 answer_text = getattr(question, f'answer{i}_text')  # Use the question object to get the answers
-#                 if answer_text:
-#                     keyboard.append([types.InlineKeyboardButton(
-#                         text=answer_text,
-#                         callback_data=f"answer_{current_question}_{i}"
-#                     )])
-
-#             if test.allow_back and current_question > 0:
-#                 keyboard.append([types.InlineKeyboardButton(text=settings.quiz_text.quiz_question_previous_button, callback_data="quiz_back")])
-
-#             reply_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
-
-#             text_service = TextService()
-            
-#             if question_data['picture']:
-#                 media_url = question_data['picture']
-#             elif test.picture:
-#                 media_url = test.picture
-#             else:
-#                 media_url = await text_service.get_default_media(session)
-                
-#             if media_url and not media_url.startswith(('http://', 'https://')):
-#                 media_url = f"{settings.media.base_url}/app/{media_url}"
-
-#             log.info("Generated media URL for question: %s", media_url) 
-
-#             question_text = settings.quiz_text.question_text_begging_1 + f"{current_question + 1}" + settings.quiz_text.question_text_begging_2 + f"{len(sorted_questions)}:\n\n{question.question_text.replace('\\n', '\n')}"
-
-#             await send_or_edit_message(
-#                 message,
-#                 question_text,
-#                 reply_markup,
-#                 media_url
-#             )
-
-#             data['intro_shown'] = False  # Drop the flag for the next question
-#             await state.update_data(data)
-#             await state.set_state(state_group.ANSWERING)
-
-#         except Exception as e:
-#             log.exception(e)
-#         finally:
-#             await session.close()
-
-
-# @router.callback_query(ReceivedTestStates.ANSWERING)  # TODO: fix and make separate handling here
-# async def process_received_test_answer(callback_query: types.CallbackQuery, state: FSMContext, state_group: StatesGroup):
-#     data = await state.get_data()
-#     sorted_questions = data['sorted_questions']
+async def process_answer(callback_query: types.CallbackQuery, state: FSMContext, state_group: StatesGroup):
+    data = await state.get_data()
+    sorted_questions = data['sorted_questions']
     
-#     if callback_query.data == "quiz_back":
-#         if data['current_question'] > 0:
-#             data['current_question'] -= 1
-#             if data['answers']:
-#                 last_answer = data['answers'].pop()
-#                 # Remove from category scores if needed
-#                 if data.get('category_scores'):  # Check if there is a dictionary
-#                     data['category_scores'][last_answer] = data['category_scores'].get(last_answer, 1) - 1
-#                     if data['category_scores'][last_answer] <= 0:
-#                         del data['category_scores'][last_answer]
-#             await state.update_data(data)
-#             await send_question(callback_query.message, state, state_group)
-#         return
+    if callback_query.data == "quiz_back":
+        if data['current_question'] > 0:
+            data['current_question'] -= 1
+            if data['answers']:
+                last_answer = data['answers'].pop()
+                # Remove from category scores if needed
+                if data.get('category_scores'):  # Check if there is a dictionary
+                    data['category_scores'][last_answer] = data['category_scores'].get(last_answer, 1) - 1
+                    if data['category_scores'][last_answer] <= 0:
+                        del data['category_scores'][last_answer]
+            await state.update_data(data)
+            await send_question(callback_query.message, state, state_group)
+        return
 
-#     question_num, answer_num = map(int, callback_query.data.split("_")[1:])
+    question_num, answer_num = map(int, callback_query.data.split("_")[1:])
     
-#     async for session in db_helper.session_getter():
-#         try:
-#             question_data = sorted_questions[question_num]
-#             question = question_data['question']  # Get the question object
+    async for session in db_helper.session_getter():
+        try:
+            question_data = sorted_questions[question_num]
+            question = question_data['question']  # Get the question object
             
-#             test = await session.execute(select(Test).where(Test.id == data['quiz_id']))
-#             test = test.scalar_one()
+            test = await session.execute(select(Test).where(Test.id == data['quiz_id']))
+            test = test.scalar_one()
             
-#             score = getattr(question, f'answer{answer_num}_score')
-#             data['answers'].append(score)
+            score = getattr(question, f'answer{answer_num}_score')
+            data['answers'].append(score)
             
-#             # Update category scores if this is a multi-graph test
-#             if test.multi_graph_results:
-#                 if 'category_scores' not in data:
-#                     data['category_scores'] = {}
-#                 # Use score as an identifier of the category and count the number of answers
-#                 data['category_scores'][score] = data['category_scores'].get(score, 0) + 1
+            # Update category scores if this is a multi-graph test
+            if test.multi_graph_results:
+                if 'category_scores' not in data:
+                    data['category_scores'] = {}
+                # Use score as an identifier of the category and count the number of answers
+                data['category_scores'][score] = data['category_scores'].get(score, 0) + 1
             
-#             await state.update_data(data)
+            await state.update_data(data)
             
-#             if question_data['comment']:
-#                 await show_comment(callback_query.message, question_data['comment'], state, state_group)
-#             else:
-#                 data['current_question'] += 1
-#                 await state.update_data(data)
-#                 await send_question(callback_query.message, state, state_group)
+            if question_data['comment']:
+                await show_comment(callback_query.message, question_data['comment'], state, state_group)
+            else:
+                data['current_question'] += 1
+                await state.update_data(data)
+                await send_question(callback_query.message, state, state_group)
 
-#         except Exception as e:
-#             log.exception(e)
-#         finally:
-#             await session.close()
+        except Exception as e:
+            log.exception(e)
+        finally:
+            await session.close()
 
 
-# @router.callback_query(ReceivedTestStates.SHOWING_COMMENT)  # TODO: fix and make separate handling here
-# async def show_comment(message: types.Message, comment: str, state: FSMContext, state_group: StatesGroup):
-#     keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-#         [types.InlineKeyboardButton(text=settings.quiz_text.quiz_continue_button, callback_data="continue_quiz")]
-#     ])
+async def show_comment(message: types.Message, comment: str, state: FSMContext, state_group: StatesGroup):
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+        [types.InlineKeyboardButton(text=settings.quiz_text.quiz_continue_button, callback_data="continue_quiz")]
+    ])
     
-#     data = await state.get_data()
-#     async for session in db_helper.session_getter():
-#         try:
-#             questions = await get_sorted_questions(session, data['quiz_id'])
-#             question = questions[data['current_question']]['question']  # Get the question
-#             comment = questions[data['current_question']]['comment']  # Get the comment
+    data = await state.get_data()
+    async for session in db_helper.session_getter():
+        try:
+            questions = await get_sorted_questions(session, data['quiz_id'])
+            question = questions[data['current_question']]['question']  # Get the question
+            comment = questions[data['current_question']]['comment']  # Get the comment
 
                         
-#             test = await session.execute(select(Test).where(Test.id == data['quiz_id']))
-#             test = test.scalar_one()
+            test = await session.execute(select(Test).where(Test.id == data['quiz_id']))
+            test = test.scalar_one()
             
-#             text_service = TextService()
+            text_service = TextService()
             
-#             # Priority: question -> test -> default media
-#             if question.picture:
-#                 media_url = question.picture
-#             elif test.picture:
-#                 media_url = test.picture
-#             else:
-#                 media_url = await text_service.get_default_media(session)
+            # Priority: question -> test -> default media
+            if question.picture:
+                media_url = question.picture
+            elif test.picture:
+                media_url = test.picture
+            else:
+                media_url = await text_service.get_default_media(session)
             
-#             if media_url and not media_url.startswith(('http://', 'https://')):
-#                 media_url = f"{settings.media.base_url}/app/{media_url}"
+            if media_url and not media_url.startswith(('http://', 'https://')):
+                media_url = f"{settings.media.base_url}/app/{media_url}"
             
-#             comment_text = settings.quiz_text.question_comment_header + f"\n\n{comment.replace('\\n', '\n')}"
+            comment_text = settings.quiz_text.question_comment_header + f"\n\n{comment.replace('\\n', '\n')}"
             
-#             await send_or_edit_message(
-#                 message,
-#                 comment_text,
-#                 keyboard,
-#                 media_url
-#             )
-#         except Exception as e:
-#             log.exception(e)
-#         finally:
-#             await session.close()
+            await send_or_edit_message(
+                message,
+                comment_text,
+                keyboard,
+                media_url
+            )
+        except Exception as e:
+            log.exception(e)
+        finally:
+            await session.close()
     
-#     await state.set_state(state_group.SHOWING_COMMENT)
+    await state.set_state(state_group.SHOWING_COMMENT)
 
 
-# async def process_comment(callback_query: types.CallbackQuery, state: FSMContext):
-#     data = await state.get_data()
-#     data['current_question'] += 1
-#     await state.update_data(data)
-#     await send_question(callback_query.message, state, ReceivedTestStates)
+async def start_questions(message: types.Message, state: FSMContext, state_group: StatesGroup, quiz_id: str = None):
+    if not quiz_id:  # If called from callback
+        quiz_id = message.data.split("_")[-1]
+    await send_question(message if isinstance(message, types.Message) else message.message, state, state_group)
 
 
-# async def finish_received_test(message: types.Message, state: FSMContext):
-#     data = await state.get_data()
-#     quiz_id = data['quiz_id']
-#     sent_test_id = data['sent_test_id']
-#     total_score = sum(data['answers'])
-#     category_scores = data.get('category_scores', {})
+# @router.callback_query(lambda c: c.data.startswith("confirm_run_received_test_"))
+async def confirm_start_received_test(callback_query: CallbackQuery, state: FSMContext, state_group: StatesGroup, quiz_id: str = None):
+    if not quiz_id:  # If called from callback
+        quiz_id = callback_query.data.split("_")[-1]
+    async for session in db_helper.session_getter():
+        try:
+            # Get and save the order of questions at start
+            sorted_questions = await get_sorted_questions(session, quiz_id)
+            await state.update_data(
+                quiz_id=quiz_id, 
+                current_question=0, 
+                answers=[], 
+                category_scores={}, 
+                intro_shown=False,
+                sorted_questions=sorted_questions  # Save the order
+            )
+            await send_question(callback_query.message, state, state_group)
+        except Exception as e:
+            log.exception(e)
+        finally:
+            await session.close()
 
-#     async for session in db_helper.session_getter():
-#         try:
-#             # Get test, sent test, and user information
-#             test = await session.execute(select(Test).where(Test.id == quiz_id))
-#             test = test.scalar_one()
 
-#             sent_test = await session.execute(select(SentTest).where(SentTest.id == sent_test_id))
-#             sent_test = sent_test.scalar_one()
+async def send_question(message: types.Message, state: FSMContext, state_group: StatesGroup):
+    data = await state.get_data()
+    quiz_id = data['quiz_id']
+    current_question = data['current_question']
+    sorted_questions = data['sorted_questions']
 
-#             user = await session.execute(select(User).where(User.chat_id == message.chat.id))
-#             user = user.scalar_one()
+    async for session in db_helper.session_getter():
+        try:
+            test = await session.execute(select(Test).where(Test.id == quiz_id))
+            test = test.scalar_one_or_none()
 
-#             # Calculate and save results
-#             results = await calculate_results(session, test, total_score, category_scores)
-#             result_text = ""
+            if current_question >= len(sorted_questions):
+                await finish_received_test(message, state)
+                return
+
+            question_data = sorted_questions[current_question]
+            question = question_data['question']  # Get the question object
+
+            # Check if there is an intro text for the current question
+            if question_data['intro_text'] and not data.get('intro_shown'):
+                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                    [types.InlineKeyboardButton(text=settings.quiz_text.quiz_continue_button, callback_data="show_received_question")]
+                ])
+                
+                text_service = TextService()
+                # Media priority
+                if question_data['picture']:
+                    media_url = question_data['picture']
+                elif test.picture:
+                    media_url = test.picture
+                else:
+                    media_url = await text_service.get_default_media(session)
+                
+                if media_url and not media_url.startswith(('http://', 'https://')):
+                    media_url = f"{settings.media.base_url}/app/{media_url}"
+                
+                intro_text = question_data['intro_text'].replace('\\n', '\n')
+                
+                await send_or_edit_message(
+                    message,
+                    intro_text,
+                    keyboard,
+                    media_url
+                )
+                
+                data['intro_shown'] = True
+                await state.update_data(data)
+                await state.set_state(state_group.VIEWING_INTRO)
+                return
+
+            # If there is no intro or it has already been shown, show the question
+            keyboard = []
+            for i in range(1, 7):
+                answer_text = getattr(question, f'answer{i}_text')  # Use the question object to get the answers
+                if answer_text:
+                    keyboard.append([types.InlineKeyboardButton(
+                        text=answer_text,
+                        callback_data=f"answ_{current_question}_{i}"
+                    )])
+
+            if test.allow_back and current_question > 0:
+                keyboard.append([types.InlineKeyboardButton(text=settings.quiz_text.quiz_question_previous_button, callback_data="quiz_back")])
+
+            reply_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+            text_service = TextService()
             
-#             # Save results for each category/overall
-#             for result in results:
-#                 quiz_result = QuizResult(
-#                     user_id=user.id,
-#                     test_id=test.id,
-#                     score=result.get('score', 0),
-#                     category_id=result.get('category_id'),
-#                     is_psychological=test.is_psychological,
-#                     result_text=result['text'],
-#                     category_name=result.get('category_name')
-#                 )
-#                 session.add(quiz_result)
+            if question_data['picture']:
+                media_url = question_data['picture']
+            elif test.picture:
+                media_url = test.picture
+            else:
+                media_url = await text_service.get_default_media(session)
+                
+            if media_url and not media_url.startswith(('http://', 'https://')):
+                media_url = f"{settings.media.base_url}/app/{media_url}"
 
-#             # Update sent test status and results
-#             sent_test.status = TestStatus.COMPLETED
-#             sent_test.completed_at = datetime.now()
-#             sent_test.result_score = total_score
+            log.info("Generated media URL for question: %s", media_url) 
 
-#             # Prepare result message based on test type
-#             if test.multi_graph_results:
-#                 result_text = ""  # settings.quiz_text.quiz_multi_result + "\n\n"
-#                 for result in results:
-#                     result_text += f"{result['category_name']}: {result['score']}\n{result['text']}\n\n"
-#             else:
-#                 result_text = f"{settings.quiz_text.quiz_result}{total_score}\n\n{results[0]['text']}"
+            question_text = settings.quiz_text.question_text_begging_1 + f"{current_question + 1}" + settings.quiz_text.question_text_begging_2 + f"{len(sorted_questions)}:\n\n{question.question_text.replace('\\n', '\n')}"
 
-#             sent_test.result_text = result_text
-#             await session.commit()
+            await send_or_edit_message(
+                message,
+                question_text,
+                reply_markup,
+                media_url
+            )
 
-#             # Notify sender about test completion
-#             await notify_sender(message.bot, sent_test.sender_id, user.username, "completed", test.name)
+            data['intro_shown'] = False  # Drop the flag for the next question
+            await state.update_data(data)
+            await state.set_state(state_group.ANSWERING)
 
-#             # Check for remaining tests from the same sender
-#             remaining_tests = await session.execute(
-#                 select(SentTest)
-#                 .where(SentTest.receiver_username == user.username,
-#                       SentTest.sender_username == sent_test.sender_username,
-#                       SentTest.status.in_([TestStatus.DELIVERED, TestStatus.SENT]))
-#             )
-#             remaining_tests = remaining_tests.scalars().all()
-
-#             # Check for tests from other senders
-#             other_tests = await session.execute(
-#                 select(SentTest)
-#                 .where(SentTest.receiver_username == user.username,
-#                       SentTest.sender_username != sent_test.sender_username,
-#                       SentTest.status.in_([TestStatus.DELIVERED, TestStatus.SENT]))
-#             )
-#             other_tests = other_tests.scalars().all()
-
-#             # Build appropriate keyboard based on remaining tests
-#             keyboard = []
-#             if remaining_tests:
-#                 keyboard.append([types.InlineKeyboardButton(
-#                     text=settings.received_tests.other_tests_from_sender_button,
-#                     callback_data=f"view_sender_tests_{sent_test.sender_username}"
-#                 )])
-#             if other_tests:
-#                 keyboard.append([types.InlineKeyboardButton(
-#                     text=settings.received_tests.tests_from_other_senders_button,
-#                     callback_data="view_received_tests"
-#                 )])
-#             keyboard.append([types.InlineKeyboardButton(
-#                 text=settings.received_tests.to_main_menu_button,
-#                 callback_data="back_to_start"
-#             )])
-
-#             # Get appropriate media URL
-#             text_service = TextService()
-#             if results[0].get('picture'):
-#                 media_url = results[0]['picture']
-#             elif test.picture:
-#                 media_url = test.picture
-#             else:
-#                 media_url = await text_service.get_default_media(session)
-
-#             if media_url and not media_url.startswith(('http://', 'https://')):
-#                 media_url = f"{settings.media.base_url}/app/{media_url}"
-
-#             # Send final message with results
-#             await send_or_edit_message(
-#                 message,
-#                 result_text,
-#                 types.InlineKeyboardMarkup(inline_keyboard=keyboard),
-#                 media_url
-#             )
-
-#         except Exception as e:
-#             log.exception(e)
-#             await message.answer(settings.received_tests.test_end_error)
-#         finally:
-#             await session.close()
-#             await state.clear()
+        except Exception as e:
+            log.exception(e)
+        finally:
+            await session.close()
 
 
-# @router.callback_query(lambda c: c.data and c.data.startswith((
-#     "view_sender_tests_", "reject_test_", "view_received_tests", "reject_all_tests_",
-#     "confirm_reject_test_", "confirm_reject_all_", "cancel_reject_test_", "confirm_start_received_test_"
-#     )))
-# async def process_received_test_callback(callback_query: types.CallbackQuery, state: FSMContext):
-#     current_state = await state.get_state()
-#     if current_state is None:
-#         await view_received_tests(callback_query, state)
-#     if current_state == ReceivedTestStates.VIEWING_RECEIVED_TESTS:
-#         if callback_query.data.startswith("view_sender_tests_"):
-#             await view_sender_tests(callback_query, state)
+async def calculate_results(session, test, total_scores, category_scores):
+    """Calculate results based on test type and scoring method."""
+    if test.multi_graph_results:
+        final_results = []
+        # Get all distinct category IDs
+        all_categories = await session.execute(
+            select(Result.category_id).distinct()
+            .where(Result.test_id == test.id)
+            .where(Result.category_id.isnot(None))
+        )
+        all_categories = [cat[0] for cat in all_categories.fetchall()]
+        
+        # Process each category including 0 score 
+        for category_id in all_categories:
+            count = category_scores.get(category_id, 0)  # If category not found, set score to 0
+            results = await session.execute(
+                select(Result).where(
+                    Result.test_id == test.id,
+                    Result.category_id == category_id,
+                    Result.min_score <= count,
+                    Result.max_score >= count
+                )
+            )
+            category_result = results.scalar_one_or_none()
+            if category_result:
+                final_results.append({
+                    'category_id': category_id,
+                    'category_name': test.get_category_name(category_id),
+                    'score': count,
+                    'text': category_result.text,
+                    'picture': category_result.picture
+                })
+        
+        # Sort results by score in descending order
+        final_results.sort(key=lambda x: x['score'], reverse=True)
+        return final_results
+    
+    else:
+        # For traditional single-result tests
+        results = await session.execute(
+            select(Result).where(
+                Result.test_id == test.id,
+                Result.category_id.is_(None),  # Regular results without categories for regular non multi-graph tests
+                Result.min_score <= total_scores,
+                Result.max_score >= total_scores
+            )
+        )
+        result = results.scalar_one_or_none()
+        return [{
+            'score': total_scores,
+            'text': result.text if result else settings.quiz_text.quiz_result_error_undefined,
+            'picture': result.picture if result else None
+        }]
+
+
+async def finish_received_test(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    quiz_id = data['quiz_id']
+    sent_test_id = data['sent_test_id']
+    total_score = sum(data['answers'])
+    category_scores = data.get('category_scores', {})
+
+    async for session in db_helper.session_getter():
+        try:
+            # Get test, sent test, and user information
+            test = await session.execute(select(Test).where(Test.id == quiz_id))
+            test = test.scalar_one()
+
+            sent_test = await session.execute(select(SentTest).where(SentTest.id == sent_test_id))
+            sent_test = sent_test.scalar_one()
+
+            user = await session.execute(select(User).where(User.chat_id == message.chat.id))
+            user = user.scalar_one()
+
+            # Calculate and save results
+            results = await calculate_results(session, test, total_score, category_scores)
+            result_text = ""
             
-#         elif callback_query.data.startswith("reject_test_"):
-#             await reject_test(callback_query, state)
-        
-#         elif callback_query.data.startswith("view_received_tests"):
-#             await view_received_tests(callback_query, state)
-        
-#         elif callback_query.data.startswith("reject_all_tests_"):
-#             await reject_all_tests(callback_query, state)
-        
-#         elif callback_query.data.startswith("confirm_reject_test_"):
-#             await confirm_reject_test(callback_query, state)
-        
-#         elif callback_query.data.startswith("confirm_reject_all_"):
-#             await confirm_reject_all_tests(callback_query, state)
-        
-#         elif callback_query.data.startswith("cancel_reject_test_"):
-#             await cancel_reject_test(callback_query, state)
-        
-#     elif callback_query.data.startswith("confirm_start_received_test_"):
-#         await confirm_start_received_test(callback_query, state)
-        
-#     elif current_state == ReceivedTestStates.VIEWING_TESTS:
-#         if callback_query.data.startswith("start_quiz_"):
-#             await start_received_test(callback_query, state)
-#         else:
-#             await view_received_tests(callback_query, state)
+            # Save results for each category/overall
+            for result in results:
+                quiz_result = QuizResult(
+                    user_id=user.id,
+                    test_id=test.id,
+                    score=result.get('score', 0),
+                    category_id=result.get('category_id'),
+                    is_psychological=test.is_psychological,
+                    result_text=result['text'],
+                    # category_name=result.get('category_name')
+                )
+                session.add(quiz_result)
+
+            # Update sent test status and results
+            sent_test.status = TestStatus.COMPLETED
+            sent_test.completed_at = datetime.now()
+            sent_test.result_score = str(total_score)
+
+            # Prepare result message based on test type
+            if test.multi_graph_results:
+                result_text = ""  # settings.quiz_text.quiz_multi_result + "\n\n"
+                for result in results:
+                    result_text += f"{result['category_name']}: {result['score']}\n{result['text']}\n\n"
+            else:
+                result_text = f"{settings.quiz_text.quiz_result}{total_score}\n\n{results[0]['text']}"
+
+            sent_test.result_text = result_text
+            await session.commit()
+
+            # Notify sender about test completion
+            await notify_sender(message.bot, sent_test.sender_id, user.username, "completed", test.name)
+
+            # Check for remaining tests from the same sender
+            remaining_tests = await session.execute(
+                select(SentTest)
+                .where(SentTest.receiver_username == user.username,
+                      SentTest.sender_username == sent_test.sender_username,
+                      SentTest.status.in_([TestStatus.DELIVERED, TestStatus.SENT]))
+            )
+            remaining_tests = remaining_tests.scalars().all()
+
+            # Check for tests from other senders
+            other_tests = await session.execute(
+                select(SentTest)
+                .where(SentTest.receiver_username == user.username,
+                      SentTest.sender_username != sent_test.sender_username,
+                      SentTest.status.in_([TestStatus.DELIVERED, TestStatus.SENT]))
+            )
+            other_tests = other_tests.scalars().all()
+
+            # Build appropriate keyboard based on remaining tests
+            keyboard = []
+            if remaining_tests:
+                keyboard.append([types.InlineKeyboardButton(
+                    text=settings.received_tests.other_tests_from_sender_button,
+                    callback_data=f"view_sender_tests_{sent_test.sender_username}"
+                )])
+            if other_tests:
+                keyboard.append([types.InlineKeyboardButton(
+                    text=settings.received_tests.tests_from_other_senders_button,
+                    callback_data="view_received_tests"
+                )])
+            keyboard.append([types.InlineKeyboardButton(
+                text=settings.received_tests.to_main_menu_button,
+                callback_data="back_to_start"
+            )])
+
+            # Get appropriate media URL
+            text_service = TextService()
+            if results[0].get('picture'):
+                media_url = results[0]['picture']
+            elif test.picture:
+                media_url = test.picture
+            else:
+                media_url = await text_service.get_default_media(session)
+
+            if media_url and not media_url.startswith(('http://', 'https://')):
+                media_url = f"{settings.media.base_url}/app/{media_url}"
+
+            # Send final message with results
+            await send_or_edit_message(
+                message,
+                result_text,
+                types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+                media_url
+            )
+
+        except Exception as e:
+            log.exception(e)
+            await message.answer(settings.received_tests.test_end_error)
+        finally:
+            await session.close()
+            await state.clear()
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith((
+    "start_received_test_", "show_received_question",
+    "answ_", "confirm_run_received_test_")))  # "quiz_back", "continue_quiz", "show_question"
+async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        pass
     
-#     elif current_state == ReceivedTestStates.VIEWING_INTRO:
-#         await process_intro(callback_query, state)
+    # elif current_state == ReceivedTestStates.VIEWING_TESTS:
+    #     if callback_query.data.startswith("start_received_test_"):
+    #         await start_received_test(callback_query, state, ReceivedTestStates)
+        # else:
+        #     await show_quizzes(callback_query, state)  # TODO: Double check (( ! ))
     
-#     elif current_state == ReceivedTestStates.CONFIRMING:
-#         if callback_query.data.startswith("confirm_start_"):
-#             await confirm_start_received_test(callback_query, state)
-#         else:
-#             await show_received_tests_page(callback_query, state)
-#     # elif current_state == ReceivedTestStates.VIEWING_INTRO:
-#     #     if callback_query.data.startswith("start_questions_"):
-#     #         await start_questions(callback_query, state)
-#     elif current_state == ReceivedTestStates.ANSWERING:
-#         await process_received_test_answer(callback_query, state, ReceivedTestStates)
-#     elif current_state == ReceivedTestStates.SHOWING_COMMENT:
-#         await process_comment(callback_query, state)
+    elif current_state == ReceivedTestStates.VIEWING_INTRO:
+        await process_intro(callback_query, state, ReceivedTestStates)
+    
+    elif current_state == ReceivedTestStates.CONFIRMING:
+        if callback_query.data.startswith("confirm_run_received_test_"):
+            await confirm_start_received_test(callback_query, state, ReceivedTestStates)
+        # else:
+        #     await show_quizzes(callback_query, state)  # TODO: Double check (( ! ))
+    
+    elif current_state == ReceivedTestStates.VIEWING_INTRO:
+        if callback_query.data.startswith("show_received_question"):
+            await start_questions(callback_query, state, ReceivedTestStates)
+    
+    elif current_state == ReceivedTestStates.ANSWERING:
+        await process_answer(callback_query, state, ReceivedTestStates)
+    
+    elif current_state == ReceivedTestStates.SHOWING_COMMENT:
+        await process_comment(callback_query, state, ReceivedTestStates)

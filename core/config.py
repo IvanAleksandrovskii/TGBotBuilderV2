@@ -41,8 +41,8 @@ SQLADMIN_USERNAME = os.getenv("SQLADMIN_USERNAME", "admin")
 SQLADMIN_PASSWORD = os.getenv("SQLADMIN_PASSWORD", "password")
 
 # Media ENV variables
-MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4'])  # 'avi', 'mov' 
-BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://4b1a-184-22-18-75.ngrok-free.app")
+MEDIA_FILES_ALLOWED_EXTENSIONS = os.getenv("MEDIA_FILES_ALLOWED_EXTENSIONS", ['.jpg', '.jpeg', '.png', '.gif', '.mp4', '.avi', '.mov', '.pdf']) 
+BASE_SERVER_URL = os.getenv("BASE_SERVER_URL", "https://9a42-184-22-18-75.ngrok-free.app")
 
 HTTP_CLIENT_TIMEOUT = int(os.getenv("HTTP_CLIENT_TIMEOUT", "300"))
 HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS = int(os.getenv("HTTP_CLIENTS_MAX_KEEPALIVE_CONNECTIONS", "10"))
@@ -86,8 +86,8 @@ class BotConfig(BaseModel):
     token: str = BOT_TOKEN
     
     # TODO: Move to conf vars
-    max_users_cached_time_seconds: int = 300
-    max_users_cached: int = 1000 
+    # max_users_cached_time_seconds: int = 300
+    # max_users_cached: int = 1000 
 
 
 class SQLAdminConfig(BaseModel):
@@ -197,7 +197,7 @@ class QuizTexts(BaseModel):
     question_comment_header: str = "Comment on the question:"
     quiz_result_error_undefined: str = "Unable to determine the result."
     quiz_result: str =  "Test completed!\n\nYour score: "
-    quiz_error: str = "Sorry, an error occurred. Please try starting again."
+    # quiz_error: str = "Sorry, an error occurred. Please try starting again."
     
     quiz_multi_result: str = "Test completed!\n\nYour scores: " 
 
@@ -213,7 +213,6 @@ class SendTestTexts(BaseModel):
     csv_export_by_tests_button: str = "Export by tests"
     csv_export_user_button: str = "Export to CSV"
     send_test_notification_reciver: str = "You have received new tests from user @"
-    # send_test_notification_reciver_part_2: str = "You can take them by selecting 'Take received tests' in the main menu\n -> /start"
     send_apply_chosen_tests_button: str = "Confirm selection"
     send_choose_another_tests_type_button: str = "Back to send test menu"  #  "Choose another test type"
     back_button: str = "Back"
@@ -224,7 +223,6 @@ class SendTestTexts(BaseModel):
     choose_another_test: str = "Choose a test to send:"
     selected_tests_count: str = "Tests selected:"
     selected_tests_list: str = "Selected tests:"
-    # send_tests_error_try_again: str = "An error occurred. Please start over."
     check_sent_tests_button: str = "View sent tests"
     send_psyco_tests_button: str = "Send psychological tests"
     send_other_tests_button: str = "Regular tests"

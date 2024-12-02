@@ -31,5 +31,5 @@ class SentTest(Base):
     delivered_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
-    result_score = Column(String, nullable=True)  # May contain a score or a dict of scores with category keys
+    result_score = Column(String, nullable=True)  # Should be a number, keep it as a string for now to follow the written code
     result_text = Column(String, nullable=True)
