@@ -125,15 +125,15 @@ async def start_command(message: types.Message, bot: Bot, state: FSMContext):
             if success:
                 log.info(f"Successfully registered promocode usage for user {chat_id}")
                 # Optionally notify about successful referral
-                await message.answer("Welcome! You've joined using a referral link!")
+                # await message.answer("Welcome! You've joined using a referral link!")
             else:
-                log.warning(f"Failed to register promocode usage for user {chat_id}")
+                log.info(f"Failed to register promocode usage for user {chat_id}, might be already registered")
         except Exception as e:
             log.exception(f"Error processing promocode: {e}")
     elif promocode and not is_new_user:
         log.info(f"Existing user {chat_id} tried to use promocode {promocode}")
-        await message.answer("Promocodes are only for new users!")
-        return
+        # await message.answer("Promocodes are only for new users!")
+        # return
 
     # Set state and send message
     if is_new_user:

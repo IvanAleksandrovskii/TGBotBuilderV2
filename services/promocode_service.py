@@ -52,7 +52,7 @@ class PromoCodeService:
     @staticmethod
     async def register_promo_usage(promocode: str, registered_user_id: UUID) -> bool:
         """Records when a user registers using a promocode"""
-        async for session in db_helper.session_getter():
+        async with db_helper.db_session() as session:
             try:
                 # Find the promocode
                 result = await session.execute(
@@ -63,7 +63,18 @@ class PromoCodeService:
                 promo = result.scalar_one_or_none()
                 if not promo:
                     return False
-
+                
+                # TODO: Doublecheck for case of one or none violating situations
+                result = await session.execute(
+                    select(PromoRegistration)
+                    .where(PromoRegistration.registered_user_id == registered_user_id)
+                    )
+                
+                is_already_registered = result.scalar_one_or_none()
+                
+                if is_already_registered:
+                    return False
+                    
                 # Record the usage
                 registration = PromoRegistration(
                     promocode_id=promo.id,
@@ -76,8 +87,7 @@ class PromoCodeService:
                 log.exception(f"Error in register_promo_usage: {e}")
                 await session.rollback()
                 return False
-            finally:
-                await session.close()
+
 
     # TODO: Not implemented
     @staticmethod

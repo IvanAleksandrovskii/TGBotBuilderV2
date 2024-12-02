@@ -4,11 +4,13 @@
 
 from aiogram import Router, types, Bot
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from sqlalchemy import func, select
 # from aiogram.types import FSInputFile
 # from aiogram.types import InputMediaPhoto
 
 from core import log, settings
 from core.models import db_helper
+from core.models.promocode import PromoRegistration
 from services import UserService
 from services.promocode_service import PromoCodeService
 
@@ -89,7 +91,14 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
                         "Поделитесь ею с друзьями!"
                     )
                 else:
-                    final_text = f"{text}\n\n{invite_link}"
+                    final_text = f"{text}\n\n{invite_link}\n\n"
+                
+                result = await session.execute(
+                    select(func.count()).select_from(PromoRegistration).where(PromoRegistration.promocode_id == promocode.id)
+                )
+                user_count = result.scalar_one()
+                
+                final_text += f"Пользователей присодинилось по ссылке: {user_count}"
                 
                 btn = InlineKeyboardButton(
                     text="Главное меню",
