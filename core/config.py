@@ -275,8 +275,10 @@ class SendTestTexts(BaseModel):
     tests_sent_success: str = "Tests successfully sent to user @"
     tests_sent_success_2: str = "and they have been notified."
     tests_sent_unsuccess: str = "Tests sent to user @"
-    tests_sent_unsuccess_2: str = "As soon as the user authorizes in the bot, they will be prompted to take the tests. \nMake sure you sent to the correct username if the tests don't reach a user who has already authorized in the bot."
-
+    tests_sent_unsuccess_2: str = ("As soon as the user authorizes in the bot, they will be prompted to take the tests. "
+        "\nMake sure you sent to the correct username if the tests don't reach a user who has already authorized in the bot."
+        "\nHere is the link to share: \n\n"
+    )
 
 class OnStartTexts(BaseModel):
     start_recived_tests_button: str = "❗ View received tests"

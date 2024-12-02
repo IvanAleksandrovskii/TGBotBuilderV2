@@ -846,6 +846,23 @@ async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMCont
         text = settings.send_test.tests_sent_success + f"{receiver_username} " + settings.send_test.tests_sent_success_2
     else:
         text = (settings.send_test.tests_sent_unsuccess + f"{receiver_username}.\n" + settings.send_test.tests_sent_unsuccess_2)
+        
+        from services.user_services import UserService
+        from services.promocode_service import PromoCodeService
+         # Get user from database
+        user = await UserService().get_user(chat_id=callback_query.from_user.id)
+        if not user:
+            await callback_query.answer("You need to start the bot first with /start")
+            return
+
+        # Generate promocode
+        promocode = await PromoCodeService.create_promocode(user.id)
+
+        bot_username = (await callback_query.bot.get_me()).username
+        invite_link = f"https://t.me/{bot_username}?start={promocode.code}"
+        
+        text += f"{invite_link}"
+        
 
     media_url = await get_send_test_media_url()
 

@@ -390,7 +390,7 @@ async def get_latest_category_results(session, user_id: str, test_id: str):
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("send_existing_result_"))  # TODO: Fix, add confirm_send_result 
-async def send_existing_result(callback_query: types.CallbackQuery, state: FSMContext):  # also add sorting for multigraph results
+async def send_existing_result(callback_query: types.CallbackQuery, state: FSMContext):
     sent_test_id = callback_query.data.split("_")[-1]
     async for session in db_helper.session_getter():
         try:
