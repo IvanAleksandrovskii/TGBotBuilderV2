@@ -310,7 +310,7 @@ class SendTestTexts(BaseModel):
     csv_export_all_button: str = "💾 Экспортировать все данные в CSV"
     csv_export_by_tests_button: str = "💾 Экспортировать по тестам"
     csv_export_user_button: str = "💾 Экспортировать в CSV"
-    send_test_notification_reciver: str = "Ыам отправлены новые тесты от пользователя @"
+    send_test_notification_reciver: str = "Вам отправлены новые тесты от пользователя @"
     send_apply_chosen_tests_button: str = "✅ Подтвердить выбор"
     send_choose_another_tests_type_button: str = "⬅️ Назад"  #  "Choose another test type"
     back_button: str = "⬅️ Назад"

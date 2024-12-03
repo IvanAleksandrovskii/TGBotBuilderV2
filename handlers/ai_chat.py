@@ -30,7 +30,7 @@ async def start_ai_chat(callback_query: types.CallbackQuery, state: FSMContext):
             media_url = content["media_urls"][0] if content and content["media_urls"] else None  # TODO: Make it work the same like every other place
 
             keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                [types.InlineKeyboardButton(text="End Chat", callback_data="back_to_start")]
+                [types.InlineKeyboardButton(text="Завершить", callback_data="back_to_start")]
             ])
 
             await send_or_edit_message(callback_query.message, text, keyboard, media_url)

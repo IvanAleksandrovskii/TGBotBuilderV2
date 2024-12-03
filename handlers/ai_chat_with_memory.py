@@ -62,11 +62,11 @@ async def start_ai_chat_with_memory(callback_query: types.CallbackQuery, state: 
             await state.set_data({"chat_history": []})
             
             content = await text_service.get_text_with_media("ai_chat_with_memory", session)
-            text = content["text"] if content else "Welcome to AI Chat with Memory! Send me a message and I'll respond."  # TODO: Move to config
+            text = content["text"] if content else "Добро пожаловать! Как я могу вам сегодня помочь?."  # TODO: Move to config
             media_url = content["media_urls"][0] if content and content["media_urls"] else None
             
             keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                [types.InlineKeyboardButton(text="End Memory Chat", callback_data="back_to_start")]  # TODO: Move to config
+                [types.InlineKeyboardButton(text="Завершить чат", callback_data="back_to_start")]  # TODO: Move to config
             ])  
             await send_or_edit_message(callback_query.message, text, keyboard, media_url)
             await state.set_state(AIChatMemoryStates.CHATTING_WITH_MEMORY)
