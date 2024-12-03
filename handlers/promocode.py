@@ -88,7 +88,7 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
                     final_text = (
                         "Ваша ссылка для приглашения:\n\n"
                         f"{invite_link}\n\n"
-                        "Поделитесь ею с друзьями!"
+                        "Поделитесь ею с друзьями!\n\n"
                     )
                 else:
                     final_text = f"{text}\n\n{invite_link}\n\n"
