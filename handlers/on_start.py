@@ -147,7 +147,7 @@ async def start_command(message: types.Message, bot: Bot, state: FSMContext):
 @router.callback_query(lambda c: c.data == "end_first_greeting")
 async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMContext):
     
-    await callback_query.answer("Going to Bot")  # TODO: Move to config
+    await callback_query.answer("Главное меню")  # TODO: Move to config
     
     chat_id = int(callback_query.from_user.id)
     username = callback_query.from_user.username
