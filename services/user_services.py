@@ -110,7 +110,7 @@ class UserService:
                     log.info(f"Marked user {chat_id} as not new")
                     
                     # Clear cache for updated user
-                    UserService.get_user.cache_clear()
+                    # UserService.get_user.cache_clear()
 
                     return True
                 
