@@ -163,7 +163,7 @@ async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMCont
 @router.callback_query(lambda c: c.data == "back_to_start")
 async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
     
-    await callback_query.answer("Back to start")  # TODO: Move to config
+    await callback_query.answer("Главное меню")  # TODO: Move to config
     
     await state.clear()
     chat_id = int(callback_query.from_user.id)
