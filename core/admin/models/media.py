@@ -1,6 +1,8 @@
 # core/admin/models/media.py
 
-from fastapi import UploadFile
+from typing import Any
+
+from fastapi import UploadFile, Request
 
 from .base import BaseAdminModel
 from core.models import Media
@@ -22,20 +24,3 @@ class MediaAdmin(BaseAdminModel, model=Media):
     icon = "fa-solid fa-image"
 
     category = "Important Data"
-
-
-    async def on_model_change(self, data, model, is_created, session):
-        file = data.get('file')
-        if isinstance(file, UploadFile):
-            try:
-                filename = await main_storage.put(file)
-                model.file = filename
-            except Exception as e:
-                log.error(f"Error uploading file: {e}")
-                raise ValueError("Error uploading file")
-
-    async def after_model_delete(self, model, session):
-        try:
-            await main_storage.delete(model.file)
-        except Exception as e:
-            log.error(f"Error deleting file: {e}")
