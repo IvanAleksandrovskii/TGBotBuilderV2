@@ -5,7 +5,7 @@ import uuid
 import json
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, ForeignKey, Boolean, CheckConstraint, JSON
+from sqlalchemy import Integer, String, ForeignKey, Boolean, CheckConstraint, JSON, Text
 from fastapi_storages.integrations.sqlalchemy import FileType
 
 from .base import Base
@@ -40,7 +40,7 @@ class Test(Base):
     category_names: Mapped[Dict] = mapped_column(JSON, nullable=True, default=dict)
     
     
-    description: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
     picture = mapped_column(FileType(storage=quiz_storage))
     
     allow_back: Mapped[bool] = mapped_column(Boolean, default=True)

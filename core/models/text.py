@@ -1,6 +1,6 @@
 # core/models/text.py
 
-from sqlalchemy import String, Boolean
+from sqlalchemy import String, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -15,7 +15,7 @@ class Text(Base):
     # How I will call this text
     context_marker: Mapped[str] = mapped_column(String, nullable=False, index=True, unique=True)
 
-    body: Mapped[str] = mapped_column(String, nullable=False)  
+    body: Mapped[str] = mapped_column(Text, nullable=False)  
 
     is_default_media: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 

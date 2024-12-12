@@ -68,6 +68,15 @@ class TestAdmin(BaseAdminModel, model=Test):
     async def scaffold_form(self) -> Type[Form]:
         form_class = await super().scaffold_form()
         
+        form_class.description = TextAreaField(
+            'Description',
+            description='Введите описание теста',
+            render_kw={
+                "rows": 10,
+                "style": "width: 90% !important; min-height: 200px !important; resize: vertical !important;"
+            }
+        )
+        
         form_class.category_names = TextAreaField(
             'Category Names',
             validators=[Optional()],
