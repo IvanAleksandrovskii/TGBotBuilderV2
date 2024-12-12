@@ -4,6 +4,8 @@ from typing import List
 
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext  # from aiogram.fsm.state import State, StatesGroup
+from aiogram.enums import ChatAction
+
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,16 +28,10 @@ async def get_ai_transcription(callback_query: types.CallbackQuery, state: FSMCo
     
     sender_id = callback_query.from_user.id
     
+    await callback_query.bot.send_chat_action(callback_query.message.chat.id, ChatAction.TYPING)
+    
     async with db_helper.db_session() as session:
         try:
-            # tests = await session.execute(
-            #     select(SentTest)
-            #     .where(SentTest.sender_id == sender_id, 
-            #            SentTest.receiver_username == username,
-            #            SentTest.status == TestStatus.COMPLETED)
-            #     .order_by(SentTest.completed_at.desc())
-            # )
-            
             # Subquery to get the latest completed_at for each test_id
             latest_test_subquery = (
                 select(
