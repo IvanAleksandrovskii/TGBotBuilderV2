@@ -5,12 +5,13 @@ import uuid
 import json
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, ForeignKey, Boolean, CheckConstraint, JSON, Text
+from sqlalchemy import Integer, String, ForeignKey, Boolean, CheckConstraint, JSON, Text, event
 from fastapi_storages.integrations.sqlalchemy import FileType
 
 from .base import Base
 from .quiz_result import QuizResult
 from services import quiz_storage
+from core import log
 
 
 """
@@ -65,22 +66,6 @@ class Test(Base):
             return names.get(str(category_id), f"Category {category_id}")
         except (json.JSONDecodeError, AttributeError):
             return f"Category {category_id}"
-    
-    
-    # TODO: Unimplemented
-    def set_category_name(self, category_id: int, name: str) -> None:
-        """Set name for a category ID"""
-        try:
-            names = self.category_names
-            if names is None:
-                names = {}
-            if isinstance(names, str):
-                names = json.loads(names)
-            names[str(category_id)] = name
-            self.category_names = names
-        except (json.JSONDecodeError, AttributeError):
-            # In case of an error, create a new dictionary only with the new value
-            self.category_names = {str(category_id): name}
 
 
 class Question(Base):
@@ -171,3 +156,81 @@ class Result(Base):
     
     def __str__(self):
         return f"{self.test_id} - {self.min_score} - {self.max_score}"
+
+
+@event.listens_for(Test, 'before_update')
+def before_test_update(mapper, connection, target):
+    if hasattr(target, '_picture_to_delete') and target._picture_to_delete:
+        try:
+            quiz_storage.delete(target._picture_to_delete)
+        except Exception as e:
+            log.error(f"Error deleting old file {target._picture_to_delete}: {str(e)}")
+        delattr(target, "_picture_to_delete")
+
+
+@event.listens_for(Test.picture, 'set')
+def on_test_file_set(target, value, oldvalue, initiator):
+    if oldvalue and oldvalue != value and str(oldvalue) != str(value):
+        target._picture_to_delete = oldvalue
+
+
+@event.listens_for(Test, 'after_delete')
+def after_test_delete(mapper, connection, target):
+    picture_to_delete = getattr(target, "picture", None)
+    if picture_to_delete:
+        try:
+            quiz_storage.delete(picture_to_delete)
+        except Exception as e:
+            log.error(f"Error deleting file {picture_to_delete}: {str(e)}")
+
+
+@event.listens_for(Question, 'before_update')
+def before_questiom_update(mapper, connection, target):
+    if hasattr(target, '_picture_to_delete') and target._picture_to_delete:
+        try:
+            quiz_storage.delete(target._picture_to_delete)
+        except Exception as e:
+            log.error(f"Error deleting old file {target._picture_to_delete}: {str(e)}")
+        delattr(target, "_picture_to_delete")
+
+
+@event.listens_for(Question.picture, 'set')
+def on_question_file_set(target, value, oldvalue, initiator):
+    if oldvalue and oldvalue != value:
+        target._picture_to_delete = oldvalue
+
+
+@event.listens_for(Question, 'after_delete')
+def after_question_delete(mapper, connection, target):
+    picture_to_delete = getattr(target, "picture", None)
+    if picture_to_delete:
+        try:
+            quiz_storage.delete(picture_to_delete)
+        except Exception as e:
+            log.error(f"Error deleting file {picture_to_delete}: {str(e)}")
+
+
+@event.listens_for(Result, 'before_update')
+def before_result_update(mapper, connection, target):
+    if hasattr(target, '_picture_to_delete') and target._picture_to_delete:
+        try:
+            quiz_storage.delete(target._picture_to_delete)
+        except Exception as e:
+            log.error(f"Error deleting old file {target._picture_to_delete}: {str(e)}")
+        delattr(target, "_picture_to_delete")
+
+
+@event.listens_for(Result.picture, 'set')
+def on_result_file_set(target, value, oldvalue, initiator):
+    if oldvalue and oldvalue != value:
+        target._picture_to_delete = oldvalue
+
+
+@event.listens_for(Result, 'after_delete')
+def after_result_delete(mapper, connection, target):
+    picture_to_delete = getattr(target, "picture", None)
+    if picture_to_delete:
+        try:
+            quiz_storage.delete(picture_to_delete)
+        except Exception as e:
+            log.error(f"Error deleting file {picture_to_delete}: {str(e)}")

@@ -1,17 +1,12 @@
 # core/admin/models/quiz.py
 
-# core/admin/models/quiz.py
-
-from typing import Any, Type
-from fastapi import UploadFile, Request
+from typing import Type
 from sqlalchemy import select
 from wtforms import Form, TextAreaField, IntegerField
 from wtforms.validators import Optional, DataRequired
 
-from core import log
 from core.admin.models.base import BaseAdminModel
 from core.models import Test, Question, Result
-from services import quiz_storage
 
 
 class TestAdmin(BaseAdminModel, model=Test):
@@ -102,31 +97,6 @@ class TestAdmin(BaseAdminModel, model=Test):
     async def scaffold_list_query(self):
         query = select(self.model).order_by(self.model.created_at.desc())
         return query
-    
-    async def after_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
-        try:
-            action = "Created" if is_created else "Updated"
-            log.info(f"{action} test: {model.name}")
-        except Exception as e:
-            log.error(f"Error in after_model_change for test: {e}")
-
-        # Process logo upload
-        picture = data.get('picture')
-        if picture and isinstance(picture, UploadFile):
-            try:
-                contents = await picture.read()
-                file_path = await quiz_storage.save(picture.filename, contents)
-                model.picture = file_path
-                log.info(f"Picture uploaded for Test: {model.name}")
-            except Exception as e:
-                log.error(f"Error uploading picture for Test {model.name}: {str(e)}")
-
-    async def after_model_delete(self, model, session):
-        try:
-            await quiz_storage.delete(model.picture)
-        except Exception as e:
-            log.error(f"Error deleting file: {e}")
-
 
 
 class QuestionAdmin(BaseAdminModel, model=Question):
@@ -149,31 +119,6 @@ class QuestionAdmin(BaseAdminModel, model=Question):
     async def scaffold_form(self) -> Type[Form]:
         form_class = await super().scaffold_form()
         return form_class
-    
-    async def after_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
-        try:
-            action = "Created" if is_created else "Updated"
-            log.info(f"{action} Question: {model.name}")
-        except Exception as e:
-            log.error(f"Error in after_model_change for Question: {e}")
-
-        # Process logo upload
-        picture = data.get('picture')
-        if picture and isinstance(picture, UploadFile):
-            try:
-                contents = await picture.read()
-                file_path = await quiz_storage.save(picture.filename, contents)
-                model.picture = file_path
-                log.info(f"Picture uploaded for Question: {model.name}")
-            except Exception as e:
-                log.error(f"Error uploading picture for Question {model.name}: {str(e)}")
-
-
-    async def after_model_delete(self, model, session):
-        try:
-            await quiz_storage.delete(model.picture)
-        except Exception as e:
-            log.error(f"Error deleting file: {e}")
 
 
 class ResultAdmin(BaseAdminModel, model=Result):
@@ -204,29 +149,4 @@ class ResultAdmin(BaseAdminModel, model=Result):
             }
         )
         return form_class
-
-    async def after_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
-        try:
-            action = "Created" if is_created else "Updated"
-            log.info(f"{action} Result: {model.name}")
-        except Exception as e:
-            log.error(f"Error in after_model_change for Result: {e}")
-
-        # Process logo upload
-        picture = data.get('picture')
-        if picture and isinstance(picture, UploadFile):
-            try:
-                contents = await picture.read()
-                file_path = await quiz_storage.save(picture.filename, contents)
-                model.picture = file_path
-                log.info(f"Picture uploaded for Result: {model.name}")
-            except Exception as e:
-                log.error(f"Error uploading picture for Result {model.name}: {str(e)}")
-
-
-    async def after_model_delete(self, model, session):
-        try:
-            await quiz_storage.delete(model.picture)
-        except Exception as e:
-            log.error(f"Error deleting file: {e}")
 

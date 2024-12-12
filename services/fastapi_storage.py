@@ -15,24 +15,26 @@ class CustomFileSystemStorage(FileSystemStorage):
         self.allowed_extensions = allowed_extensions or []
         super().__init__(self.root_path)
 
-    async def put(self, file: UploadFile) -> str:
-        if not self._check_extension(file.filename):
-            raise ValueError(f"File extension not allowed. Allowed extensions: {', '.join(self.allowed_extensions)}")
+    # async def put(self, file: UploadFile) -> str:
+    #     if not self._check_extension(file.filename):
+    #         raise ValueError(f"File extension not allowed. Allowed extensions: {', '.join(self.allowed_extensions)}")
 
-        os.makedirs(self.root_path, exist_ok=True)
-        full_path = os.path.join(self.root_path, file.filename)
+    #     os.makedirs(self.root_path, exist_ok=True)
+    #     full_path = os.path.join(self.root_path, file.filename)
 
-        content = await file.read()
-        with open(full_path, "wb") as f:
-            f.write(content)
+    #     content = await file.read()
+    #     with open(full_path, "wb") as f:
+    #         f.write(content)
 
-        return file.filename
+    #     return file.filename
 
     def delete(self, name: str) -> None:
         
-        # TODO: Doublecheck (( ! ))
         if name.startswith("media/"):
             name = name[6:]
+        
+        if name.startswith("quiz/"):
+            name = name[5:]
         
         full_path = os.path.join(self.root_path, name)
         if os.path.exists(full_path):
