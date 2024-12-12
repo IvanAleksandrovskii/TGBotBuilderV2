@@ -3,7 +3,6 @@
 from typing import List
 
 from aiogram import Router, types
-from aiogram.fsm.context import FSMContext  # from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ChatAction
 
 from sqlalchemy import select, func
@@ -11,25 +10,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import log
 from core.models import db_helper, SentTest
-from core.models.psycho_tests_ai_trascription import PsycoTestsAITranscription  # , User, Test
+from core.models.psycho_tests_ai_trascription import PsycoTestsAITranscription
 from core.models.sent_test import TestStatus
-from services.ai_services import get_ai_response  # from services.text_service import TextService
+from services.ai_services import get_ai_response
 from handlers.utils import send_or_edit_message
 
 
 router = Router()
 
 
-# TODO: Leave only latest result for each test at the moment of AI generation
 @router.callback_query(lambda c: c.data.startswith("get_ai_transcription_"))
-async def get_ai_transcription(callback_query: types.CallbackQuery, state: FSMContext):
+async def get_ai_transcription(callback_query: types.CallbackQuery):
     parts = callback_query.data.split("_")
     username = "_".join(parts[3:])
     
     sender_id = callback_query.from_user.id
-    
+        
     await callback_query.bot.send_chat_action(callback_query.message.chat.id, ChatAction.TYPING)
-    
+        
     async with db_helper.db_session() as session:
         try:
             # Subquery to get the latest completed_at for each test_id
@@ -65,7 +63,7 @@ async def get_ai_transcription(callback_query: types.CallbackQuery, state: FSMCo
             tests = tests.scalars().all()
 
             if not tests:
-                await callback_query.answer("Пользователь еще не прошел писхологические тесты.")
+                await callback_query.answer("Пользователь еще не прошел писхологические тесты.")  # TODO: Move to config
                 return
 
             # Check if transcription already exists
@@ -90,20 +88,26 @@ async def get_ai_transcription(callback_query: types.CallbackQuery, state: FSMCo
                 transcription = await get_ai_psychological_transcrpit(session, tests)
                 log.info(f"New transcription generated for {tests_ids}, text: {transcription}")
                 
-                # Save new transcription
-                new_transcription = PsycoTestsAITranscription(
-                    sender_chat_id=sender_id,
-                    reciver_chat_id=tests[0].receiver_id,
-                    tests_ids=tests_ids,
-                    transcription=transcription
-                )
-                session.add(new_transcription)
-                await session.commit()
+                if transcription is not None:
+                    # Save new transcription
+                    new_transcription = PsycoTestsAITranscription(
+                        sender_chat_id=sender_id,
+                        reciver_chat_id=tests[0].receiver_id,
+                        tests_ids=tests_ids,
+                        transcription=transcription
+                    )
+                    session.add(new_transcription)
+                    await session.commit()
                 
             keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
                     # [types.InlineKeyboardButton(text="Back", callback_data=f"view_sent_psyco_tests")]
                     [types.InlineKeyboardButton(text="Back", callback_data=f"user_tests_page_1_{username}")]
                 ])
+            
+            if transcription is None:
+                keyboard.inline_keyboard.insert(0, [types.InlineKeyboardButton(text="Попробовать еще раз", callback_data=f"get_ai_transcription_{username}")])
+                await send_or_edit_message(callback_query.message, "Не удалось получить ответ от ИИ. Пожалуйста, попробуйте позже.", keyboard, None)  # TODO: Move to config 
+                return
             
             await send_or_edit_message(callback_query.message, f"ИИ расшифровка для пользователя @{username}:\n\n{transcription}", keyboard, None)  # TODO: Move to config
 
@@ -135,6 +139,6 @@ async def get_ai_psychological_transcrpit(session: AsyncSession, tests_results: 
     
     if ai_response.ai_model is None:
         log.error("AI models are not responding")
-        return "An error occurred while getting a response from AI, please try again later."
+        return None
     
     return ai_response.content

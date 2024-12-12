@@ -131,20 +131,20 @@ async def export_sent_tests_csv(callback_query: types.CallbackQuery, sender_id: 
             writer = csv.writer(output)
             
             # Записываем заголовки
-            writer.writerow(['sender_username', 'test_name', 'receiver_username', 'status', 'delivered_at', 'completed_at', 'result_score', 'result_text', 'created_at'])
+            writer.writerow(['Отправитель', 'Получатель', 'Тест', 'Статус', 'Отравлен', 'Доствален', 'Завершен', 'Баллы', 'Результат'])
             
             # Записываем данные
             for test in sent_tests:
                 writer.writerow([
                     test.sender_username,
-                    test.test_name,
                     test.receiver_username,
+                    test.test_name,
                     test.status.value,
+                    test.created_at.isoformat(),
                     test.delivered_at.isoformat() if test.delivered_at else '',
                     test.completed_at.isoformat() if test.completed_at else '',
                     test.result_score,
-                    test.result_text,
-                    test.created_at.isoformat()
+                    test.result_text
                 ])
             
             output_bytes = output.getvalue().encode('utf-8')
@@ -179,7 +179,7 @@ async def export_user_tests_csv(callback_query: types.CallbackQuery, username: s
             writer = csv.writer(output)
             
             # Записываем заголовки
-            writer.writerow(['test_name', 'status', 'created_at', 'delivered_at', 'completed_at', 'result_score', 'result_text'])
+            writer.writerow(['Тест', 'Статус', 'Отаравлен', 'Доставлен', 'Завершен', 'Баллы', 'Результат'])
             
             # Записываем данные
             for test in sent_tests:
@@ -598,7 +598,7 @@ async def process_user_tests_navigation(callback_query: types.CallbackQuery, sta
         await view_sent_tests(callback_query, state)
     elif action.startswith("get_ai_transcription_"):
         from .ai_test_result_transcription import get_ai_transcription
-        await get_ai_transcription(callback_query, state)
+        await get_ai_transcription(callback_query)
     else:
         await callback_query.answer(settings.send_test.send_test_unknown_action)
 
@@ -662,7 +662,7 @@ async def process_test_choice(callback_query: types.CallbackQuery, state: FSMCon
             test = await session.execute(select(Test).where(Test.id == test_id))
             test = test.scalar_one()
             
-            text = settings.send_test.send_test_description + f"\n'{test.name}':\n\n{test.description}"
+            text = settings.send_test.send_test_description + f"\n'<b>{test.name}</b>':\n\n{test.description}"
             media_url = test.picture if test.picture else await get_send_test_media_url()
             
             if media_url and not media_url.startswith(('http://', 'https://')):
