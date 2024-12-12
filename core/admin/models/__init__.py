@@ -13,6 +13,8 @@ from .ai_provider import AIProviderAdmin
 
 from .quiz import TestAdmin, QuestionAdmin, ResultAdmin
 
+from .sent_test import SentTestAdmin
+
 # Register admin views
 def setup_admin(admin):
     admin.add_view(UserAdmin)
@@ -27,3 +29,4 @@ def setup_admin(admin):
     admin.add_view(TestAdmin)
     admin.add_view(QuestionAdmin)
     admin.add_view(ResultAdmin)
+    admin.add_view(SentTestAdmin)
