@@ -37,9 +37,9 @@ async def query_ai_provider(model: AIProvider, message: str) -> Optional[str]:
     # Debug logging
     log.debug(f"Querying AI provider: {model.name}")
     log.debug(f"API URL: {model.api_url}")
-    log.debug(f"API Key (first 5 chars): {model.api_key[:5]}...")
-    log.debug(f"Headers: {model.get_headers()}")
-    log.debug(f"Payload: {model.get_request_payload(message)}")
+    # log.debug(f"API Key (first 5 chars): {model.api_key[:5]}...")
+    # log.debug(f"Headers: {model.get_headers()}")
+    # log.debug(f"Payload: {model.get_request_payload(message)}")
 
     for attempt in range(retries):
         try:
@@ -47,7 +47,11 @@ async def query_ai_provider(model: AIProvider, message: str) -> Optional[str]:
                 model.api_url,
                 json=model.get_request_payload(message),
                 headers=model.get_headers(),
-                timeout=30.0
+                timeout=30.0,
+                # Add these lines to control compression
+                extensions={
+                    'decompress_response': True  # Explicitly handle response decompression
+                }
             )
             response.raise_for_status()
             parsed_response = await model.parse_response(response.json())
@@ -79,7 +83,7 @@ async def get_ai_response(db: AsyncSession, message: str, specific_model: Option
             return Response(request_content=message, content=response, ai_model=model.name)
         return Response(content="No response from specified AI model.", ai_model=None, request_content=message)
 
-    models_query = select(AIProvider).order_by(AIProvider.priority)
+    models_query = AIProvider.active().order_by(AIProvider.priority)
     result = await db.execute(models_query)
     ai_models = result.scalars().all()
 
@@ -90,19 +94,3 @@ async def get_ai_response(db: AsyncSession, message: str, specific_model: Option
             return Response(request_content=message, content=response, ai_model=model.name)
 
     return Response(content="No successful response from any AI models.", ai_model=None, request_content=message)
-
-# Set logging level to DEBUG for more detailed logs
-# logging.getLogger('services.ai_services').setLevel(logging.DEBUG)
-
-
-# async def get_ai_models(db: AsyncSession) -> List[str]:
-#     """
-#     Get a list of AI model names from the database.
-
-#     :param db: AsyncSession for database operations
-#     :return: List of AI model names (AIProvider.name)
-#     """
-#     models_query = select(AIProvider).order_by(AIProvider.priority)
-#     result = await db.execute(models_query)
-#     ai_models = result.scalars().all()
-#     return [model.name for model in ai_models]
