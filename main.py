@@ -29,6 +29,8 @@ from core.models import client_manager
 from handlers import router as main_router
 
 
+# TODO: Make nginx to balance the load and let to start with multiple gunicorn worlers to pass the Telegram API limits
+
 class BotWebhookManager:
     def __init__(self):
         self.bot = None
@@ -98,6 +100,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         router=main_router
     )
     await bot_manager.start_webhook()
+    
+    await client_manager.start()
     
     yield
     
@@ -174,7 +178,7 @@ main_app.add_middleware(
     allow_headers=["*"],
 )
 
-# TODO: This is fix for sqladmin with https
+# This is fix for sqladmin with https
 @main_app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
