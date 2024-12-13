@@ -615,7 +615,7 @@ async def confirm_test_selection(callback_query: types.CallbackQuery, state: FSM
     selected_tests = data.get('selected_tests', [])
     
     if not selected_tests:
-        await callback_query.answer(settings.send_test.no_chosen_tests_to_send)
+        await callback_query.answer(settings.send_test.no_chosen_tests_to_send, show_alert=True)
         return
     
     async for session in db_helper.session_getter():
