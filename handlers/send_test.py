@@ -310,7 +310,12 @@ async def get_test_names(test_ids):
 
 async def show_available_tests(callback_query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    test_type = data['test_type']
+    
+    try:
+        test_type = data['test_type']
+    except:
+        test_type = "psyco"
+    
     selected_tests = data.get('selected_tests', [])
     
     tests = await get_available_tests(test_type)
@@ -718,6 +723,11 @@ async def process_confirm_tests(callback_query: types.CallbackQuery, state: FSMC
         
         await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
         await state.set_state(SendTestStates.ENTERING_RECEIVER)
+
+
+@router.callback_query(lambda c: c.data == "back_to_test_selection")
+async def process_receiver_input(callback_query: types.CallbackQuery, state: FSMContext):
+    await show_available_tests(callback_query, state)
 
 
 @router.message(SendTestStates.ENTERING_RECEIVER)
