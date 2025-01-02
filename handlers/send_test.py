@@ -27,7 +27,6 @@ router = Router()
 
 # TODO: Idea add option to input for how many days the csv file sould be 
 
-
 class SendTestStates(StatesGroup):
     CHOOSING_TEST_TYPE = State()
     CHOOSING_TEST = State()
@@ -239,7 +238,7 @@ async def get_available_tests(test_type):
             await session.close()
 
 
-async def notify_receiver(bot: Bot, receiver_id, sender_username, test_names):  # TODO: Double check this keyboard
+async def notify_receiver(bot: Bot, receiver_id, sender_username, test_names):
     try:
         tests_str = ", ".join(test_names)
         

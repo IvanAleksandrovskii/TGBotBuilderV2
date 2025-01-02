@@ -72,7 +72,7 @@ async def get_ai_transcription(callback_query: types.CallbackQuery):
                 tests = tests.scalars().all()
 
                 if not tests:
-                    await callback_query.answer("Пользователь еще не прошел писхологические тесты.")  # TODO: Move to config
+                    await callback_query.message.answer("Пользователь еще не прошел писхологические тесты.")  # TODO: Move to config
                     return
 
                 # Check if transcription already exists
