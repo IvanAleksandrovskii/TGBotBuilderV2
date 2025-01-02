@@ -25,6 +25,7 @@ class DataBaseHelper:
         )
 
     async def dispose(self) -> None:
+        log.info("Closing database connection")
         await self.engine.dispose()
 
     async def session_getter(self) -> AsyncSession:  # type: ignore 

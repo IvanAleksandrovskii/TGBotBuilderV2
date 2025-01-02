@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession, async_sessionmaker
 
-from core import settings
+from core import settings, log
 
 
 class AsyncDataBaseHelper:
@@ -20,6 +20,7 @@ class AsyncDataBaseHelper:
         )
 
     async def dispose(self):
+        log.info("Disposing SQLAlchemy engine for admin...")
         await self.engine.dispose()
 
     @asynccontextmanager

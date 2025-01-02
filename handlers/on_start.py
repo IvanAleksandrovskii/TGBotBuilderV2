@@ -96,7 +96,7 @@ async def get_start_content(chat_id: int, username: str | None):
 
 
 @router.message(Command("start"))
-async def start_command(message: types.Message, bot: Bot, state: FSMContext):
+async def start_command(message: types.Message, state: FSMContext):
     """Handler for /start command with promocode support"""
     args = message.text.split()[1:]
     chat_id = int(message.chat.id)

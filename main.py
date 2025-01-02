@@ -29,7 +29,7 @@ from core.models import client_manager
 from handlers import router as main_router
 
 
-# TODO: Make nginx to balance the load and let to start with multiple gunicorn worlers to pass the Telegram API limits
+# TODO: Make possible to start up with multiple workers
 
 class BotWebhookManager:
     def __init__(self):
@@ -65,6 +65,7 @@ class BotWebhookManager:
         
     async def stop_webhook(self):
         """Remove webhook and cleanup"""
+        log.info("Stopping webhook...")
         if self.bot:
             await self.bot.delete_webhook()
             await self.bot.session.close()
@@ -107,12 +108,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     
     log.info("Shutting down the FastAPI application...")
     await bot_manager.stop_webhook()
+    
     await db_helper.dispose()
     await async_sqladmin_db_helper.dispose()
     
-    log.info("Application shutdown complete")
-    
     await client_manager.dispose_all_clients()
+    log.info("Application shutdown complete")
 
 main_app = FastAPI(
     lifespan=lifespan,

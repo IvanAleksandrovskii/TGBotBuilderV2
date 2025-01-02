@@ -18,6 +18,7 @@ class UniversalPageStates(StatesGroup):
 
 @router.callback_query(lambda c: c.data and c.data.startswith("show_page_"))
 async def show_universal_page(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
 
     await state.clear()  # Clear the state before showing a new page
     
@@ -40,8 +41,11 @@ async def show_universal_page(callback_query: types.CallbackQuery, state: FSMCon
         finally:
             await session.close()
 
+
 @router.callback_query(UniversalPageStates.VIEWING_UNIVERSAL_PAGE)
 async def process_page_action(callback_query: types.CallbackQuery, state: FSMContext, bot: Bot):
+    await callback_query.answer()
+    
     action = callback_query.data
     log.info("Processing page action: %s", action)
 
@@ -94,9 +98,9 @@ async def process_page_action(callback_query: types.CallbackQuery, state: FSMCon
     elif action == "dice":
         from .dice import dice
         await state.clear()
-        await dice(callback_query, state, bot)
+        await dice(callback_query, bot)
         
     elif action == "getpromo":
         from .promocode import get_promo_command
         await state.clear()
-        await get_promo_command(callback_query, bot)
+        await get_promo_command(callback_query)

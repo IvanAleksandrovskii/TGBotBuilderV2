@@ -20,25 +20,26 @@ from .utils import send_or_edit_message, get_content
 router = Router()
 
 
-# TODO: Make everything configurable
-# TODO: Add showing how many referrals the user has
-
+# TODO: Move all texts to config file
 @router.callback_query(lambda c: c.data == "getpromo")
-async def get_promo_command(message: types.CallbackQuery, bot: Bot):
+async def get_promo_command(callback_query: types.CallbackQuery):
     """Handler for /getpromo command that generates a promocode for the user"""
+    
+    await callback_query.answer()
+    
     try:
-        chat_id = message.from_user.id
+        chat_id = callback_query.from_user.id
         
         # Get user from database
         user = await UserService().get_user(chat_id)
         if not user:
-            await message.answer("You need to start the bot first with /start")
+            await callback_query.answer("You need to start the bot first with /start")
             return
 
         # Generate promocode
         promocode = await PromoCodeService.create_promocode(user.id)
 
-        bot_username = (await message.bot.get_me()).username
+        bot_username = (await callback_query.bot.get_me()).username
         invite_link = f"https://t.me/{bot_username}?start={promocode.code}"
         
         # from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -111,11 +112,11 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
                 else:
                     keyboard = InlineKeyboardMarkup(inline_keyboard=[[btn]])
                     
-                await send_or_edit_message(message, final_text, keyboard, media)
+                await send_or_edit_message(callback_query, final_text, keyboard, media)
         
         except Exception as e:
             log.exception(f"Error in get_promo_command: {e}")
-            await message.answer("Sorry, something went wrong. Please try again later.")
+            await callback_query.answer("Sorry, something went wrong. Please try again later.")
             
     #             # Edit existing message with new photo and text
     #             await message.message.edit_media(
@@ -148,4 +149,4 @@ async def get_promo_command(message: types.CallbackQuery, bot: Bot):
             
     except Exception as e:
         log.exception(f"Error in get_promo_command: {e}")
-        await message.answer("Sorry, something went wrong. Please try again later.")
+        await callback_query.answer("Sorry, something went wrong. Please try again later.")

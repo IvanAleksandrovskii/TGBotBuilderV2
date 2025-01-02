@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import log, settings
 
-# from core.models.user import User
 from services.button_service import ButtonService
 from services.text_service import TextService
 
@@ -54,77 +53,6 @@ async def send_or_edit_message(message: types.Message | types.CallbackQuery, tex
         except Exception as final_error:
             log.critical(f"Failed to send error message: {final_error}")
 
-# async def send_or_edit_message(message: types.Message | types.CallbackQuery, text: str, keyboard=None, media_url: str = None):
-#     log.info(f"text: {text} \n keyboard: {keyboard} \n media_url: {media_url}")
-#     try:
-#         if isinstance(message, types.CallbackQuery):
-#             message = message.message
-
-#         if media_url:
-#             try:
-#                 if message.photo or message.video or message.animation:
-#                     media = get_input_media(media_url, text)
-#                     await message.edit_media(media=media, reply_markup=keyboard)
-#                 else:
-#                     # Пытаемся удалить предыдущее сообщение перед отправкой нового
-#                     try:
-#                         await message.delete()
-#                     except Exception as del_error:
-#                         log.error(f"Error deleting message: {del_error}")
-#                     await message.answer_photo(photo=media_url, caption=text, reply_markup=keyboard)
-#             except TelegramBadRequest as e:
-#                 if "message is not modified" in str(e).lower():
-#                     log.debug("Message was not modified as the content didn't change")
-#                 else:
-#                     log.error(f"Error editing message with media: {e}")
-#                     # Удаляем неотредактированное сообщение
-#                     try:
-#                         await message.delete()
-#                     except Exception as del_error:
-#                         log.error(f"Error deleting message: {del_error}")
-#                     await message.answer(text=text, reply_markup=keyboard)
-#             except Exception as e:
-#                 log.error(f"Error sending media: {e}")
-#                 # Удаляем сообщение при любой другой ошибке
-#                 try:
-#                     await message.delete()
-#                 except Exception as del_error:
-#                     log.error(f"Error deleting message: {del_error}")
-#                 await message.answer(text=text, reply_markup=keyboard)
-#         else:
-#             try:
-#                 await message.edit_text(text=text, reply_markup=keyboard)
-#             except TelegramBadRequest as e:
-#                 if "message is not modified" in str(e).lower():
-#                     log.debug("Message was not modified as the content didn't change")
-#                 else:
-#                     log.error(f"Error editing message: {e}")
-#                     # Удаляем неотредактированное сообщение
-#                     try:
-#                         await message.delete()
-#                     except Exception as del_error:
-#                         log.error(f"Error deleting message: {del_error}")
-#                     await message.answer(text=text, reply_markup=keyboard)
-#             except Exception as e:
-#                 log.error(f"Error in send_or_edit_message: {e}")
-#                 # Удаляем сообщение при любой другой ошибке
-#                 try:
-#                     await message.delete()
-#                 except Exception as del_error:
-#                     log.error(f"Error deleting message: {del_error}")
-#                 await message.answer(text=text, reply_markup=keyboard)
-#     except Exception as e:
-#         log.error(f"Unexpected error in send_or_edit_message: {e}")
-#         try:
-#             # При критической ошибке тоже пытаемся удалить сообщение
-#             try:
-#                 await message.delete()
-#             except Exception as del_error:
-#                 log.error(f"Error deleting message: {del_error}")
-#             await message.answer(settings.bot_main_page_text.utils_error_message)
-#         except Exception as final_error:
-#             log.critical(f"Failed to send error message: {final_error}")
-
 
 def get_input_media(media_url: str, caption: str):
     file_ext = media_url.split('.')[-1].lower()
@@ -134,20 +62,6 @@ def get_input_media(media_url: str, caption: str):
         return InputMediaAnimation(media=media_url, caption=caption)
     else:
         return InputMediaVideo(media=media_url, caption=caption)
-
-
-# async def send_new_message(message: types.Message, text: str, entities: list[types.MessageEntity], keyboard=None, media_url: str = None):
-#     file_ext = media_url.split('.')[-1].lower() if media_url else None
-    
-#     if file_ext == 'gif':
-#         await message.answer_animation(animation=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
-#     elif file_ext in ['jpg', 'jpeg', 'png']:
-#         await message.answer_photo(photo=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
-#     elif file_ext in ['mp4', 'avi', 'mov']:
-#         await message.answer_video(video=media_url, caption=text, caption_entities=entities, reply_markup=keyboard)
-#     else:
-#         # If no media is found or it is not supported, send the text 
-#         await message.answer(text=text, entities=entities, reply_markup=keyboard)
 
 
 async def get_content(context_marker: str, session: AsyncSession):

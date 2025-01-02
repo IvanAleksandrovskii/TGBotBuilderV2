@@ -1,0 +1,4 @@
+# === NOTE ===
+# This file is a marker for the script to know if it has already been initialized.
+# To perform a new setup, delete this file before building the container or running the script.
+# === END NOTE ===

@@ -48,6 +48,7 @@ async def notify_sender(bot: Bot, sender_id: int, receiver_username: str, action
 
 @router.callback_query(lambda c: c.data == "view_received_tests")
 async def view_received_tests(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
     receiver_id = callback_query.from_user.id
     page = 1
     await state.update_data(current_page=page)
@@ -55,7 +56,7 @@ async def view_received_tests(callback_query: types.CallbackQuery, state: FSMCon
 
 
 @router.callback_query(lambda c: c.data == "current_page")  # TODO: Double check (( ! ))
-async def current_page(callback_query: types.CallbackQuery, state: FSMContext):
+async def current_page(callback_query: types.CallbackQuery):
     await callback_query.answer(settings.received_tests.page_number)
 
 
@@ -128,6 +129,7 @@ async def show_received_tests_page(callback_query, message: types.Message, recei
 
 @router.callback_query(lambda c: c.data and c.data.startswith("view_sender_tests_"))
 async def view_sender_tests(callback_query: types.CallbackQuery, state: FSMContext, sender_username: str | None = None):
+    await callback_query.answer()
     
     if not sender_username:
         parts = callback_query.data.split("_")
@@ -191,7 +193,8 @@ async def view_sender_tests(callback_query: types.CallbackQuery, state: FSMConte
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("reject_all_tests_"))
-async def reject_all_tests(callback_query: types.CallbackQuery, state: FSMContext): 
+async def reject_all_tests(callback_query: types.CallbackQuery): 
+    await callback_query.answer()
     parts = callback_query.data.split("_")
     sender_username = "_".join(parts[3:])
     
@@ -226,6 +229,7 @@ async def reject_all_tests(callback_query: types.CallbackQuery, state: FSMContex
 
 @router.callback_query(lambda c: c.data and c.data.startswith("confirm_reject_all_"))
 async def confirm_reject_all_tests(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
     parts = callback_query.data.split("_")
     sender_username = "_".join(parts[3:])
     async for session in db_helper.session_getter():
@@ -265,7 +269,8 @@ async def confirm_reject_all_tests(callback_query: types.CallbackQuery, state: F
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("reject_test_"))
-async def reject_test(callback_query: types.CallbackQuery, state: FSMContext):
+async def reject_test(callback_query: types.CallbackQuery):
+    await callback_query.answer()
     sent_test_id = callback_query.data.split("_")[-1]
     
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
@@ -292,6 +297,7 @@ async def reject_test(callback_query: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(lambda c: c.data and c.data.startswith("confirm_reject_test_"))
 async def confirm_reject_test(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
     sent_test_id = callback_query.data.split("_")[-1]
     async for session in db_helper.session_getter():
         try:
@@ -341,14 +347,6 @@ async def cancel_reject_test(callback_query: types.CallbackQuery, state: FSMCont
     await start_received_test(callback_query, state)
 
 
-
-# @router.callback_query(lambda c: c.data and c.data.startswith("cancel_send_result_"))
-# async def cancel_send_result(callback_query: types.CallbackQuery, state: FSMContext):
-#     await callback_query.answer(settings.received_tests.send_result_cancel)
-#     await start_received_test(callback_query, state)
-
-
-# TODO: For sending existing result of the test with multigraph results add sorting from high score to low score as it's made for quiz router (handler)
 async def get_latest_category_results(session, user_id: str, test_id: str):
     """
     Get the latest results for each category of a test for a specific user.
@@ -389,8 +387,9 @@ async def get_latest_category_results(session, user_id: str, test_id: str):
     return latest_results
 
 
-@router.callback_query(lambda c: c.data and c.data.startswith("send_existing_result_"))  # TODO: Fix, add confirm_send_result 
+@router.callback_query(lambda c: c.data and c.data.startswith("send_existing_result_"))
 async def send_existing_result(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
     sent_test_id = callback_query.data.split("_")[-1]
     async for session in db_helper.session_getter():
         try:
@@ -505,6 +504,7 @@ async def send_existing_result(callback_query: types.CallbackQuery, state: FSMCo
 
 @router.callback_query(lambda c: c.data and c.data.startswith("start_received_test_"))
 async def start_received_test(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
     sent_test_id = callback_query.data.split("_")[-1]
     
     async for session in db_helper.session_getter():
@@ -1004,6 +1004,8 @@ async def finish_received_test(message: types.Message, state: FSMContext):
     "start_received_test_", "show_received_question",
     "answ_", "confirm_run_received_test_")))  # "quiz_back", "continue_quiz", "show_question"
 async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     current_state = await state.get_state()
     if current_state is None:
         pass

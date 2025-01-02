@@ -39,8 +39,8 @@ services:
       - SQLADMIN_PASSWORD=${SQLADMIN_PASSWORD:-password}  # UNSECURE, update it
 
       # (( ! ))
-      # - BOT_TOKEN=${BOT_TOKEN:-7794442779:AAEEE88vacxN...}  # Fill with the bot token or make a .env file with BOT_TOKEN=...
-      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://7a56-184-22-18-75.ngrok-free.app}
+      # - BOT_TOKEN=${BOT_TOKEN:-7638664164:AA...}  # Fill with the bot token or make a .env file with BOT_TOKEN=...
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://2cca-184-22-8-75.ngrok-free.app}
 
     command: /app/start.sh
     volumes: 

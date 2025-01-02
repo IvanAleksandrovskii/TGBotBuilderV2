@@ -55,16 +55,18 @@ def split_text_into_chunks(text: str, max_chunk_size: int) -> list[str]:
     return chunks
 
 
-@router.message(Command("read"))
+# @router.message(Command("read"))
 @router.callback_query(lambda c: c.data and c.data.startswith("read_"))
-async def start_reading(message: types.Message | types.CallbackQuery, state: FSMContext):
-    if isinstance(message, types.Message):
-        context_marker = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else None
-    else:
-        context_marker = message.data.split("_", 1)[1] if len(message.data.split("_")) > 1 else None
+async def start_reading(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
+    # if isinstance(callback_query, types.Message):
+    #     context_marker = callback_query.text.split(maxsplit=1)[1] if len(callback_query.text.split()) > 1 else None
+    # else:
+    context_marker = callback_query.data.split("_", 1)[1] if len(callback_query.data.split("_")) > 1 else None
     
     if not context_marker:
-        await send_or_edit_message(message, settings.bot_reader_text.reader_command_error, None)
+        await send_or_edit_message(callback_query, settings.bot_reader_text.reader_command_error, None)
         return
     
     async for session in db_helper.session_getter():
@@ -75,7 +77,7 @@ async def start_reading(message: types.Message | types.CallbackQuery, state: FSM
             content = await text_service.get_text_with_media(context_marker, session)
             if not content or not content["text"]:
                 await send_or_edit_message(
-                    message, 
+                    callback_query, 
                     settings.bot_reader_text.reader_text_not_found + f"'{context_marker}'", 
                     None
                 )
@@ -99,7 +101,7 @@ async def start_reading(message: types.Message | types.CallbackQuery, state: FSM
             )
             await state.set_state(LargeTextStates.READING)
             
-            await send_chunk(message, chunks[0], keyboard, media_url)
+            await send_chunk(callback_query, chunks[0], keyboard, media_url)
         except Exception as e:
             log.error(f"Error in start_reading: {e}")
         finally:
@@ -108,6 +110,8 @@ async def start_reading(message: types.Message | types.CallbackQuery, state: FSM
 
 @router.callback_query(LargeTextStates.READING)
 async def process_reading(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     data = await state.get_data()
     chunks = data.get("chunks", [])
     current_chunk = data.get("current_chunk", 0)

@@ -4,7 +4,7 @@ import csv
 import io
 from datetime import datetime
 
-from aiogram import Router, types, Bot
+from aiogram import Router, types, Bot, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import BufferedInputFile, InlineKeyboardMarkup, InlineKeyboardButton
@@ -69,12 +69,16 @@ async def get_send_test_media_url():
 
 @router.callback_query(lambda c: c.data == "export_csv_all")
 async def export_all_sent_tests_csv(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     sender_id = callback_query.from_user.id
     await export_sent_tests_csv(callback_query, sender_id, all_tests=True)
 
 
 @router.callback_query(lambda c: c.data == "export_csv_by_test")
 async def show_export_by_test_options(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     sender_id = callback_query.from_user.id
     async for session in db_helper.session_getter():
         try:
@@ -112,6 +116,8 @@ async def show_export_by_test_options(callback_query: types.CallbackQuery, state
 
 @router.callback_query(lambda c: c.data.startswith("export_csv_test_"))
 async def export_sent_tests_by_test_csv(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     sender_id = callback_query.from_user.id
     test_id = callback_query.data.split("_")[-1]
     await export_sent_tests_csv(callback_query, sender_id, test_id=test_id)
@@ -344,6 +350,8 @@ async def show_available_tests(callback_query: types.CallbackQuery, state: FSMCo
 
 @router.callback_query(SendTestStates.CHOOSING_TEST_TYPE)
 async def process_test_type_choice(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     if callback_query.data == "view_sent_tests":
         await view_sent_tests(callback_query, state)
         return
@@ -367,6 +375,8 @@ async def process_test_type_choice(callback_query: types.CallbackQuery, state: F
 
 @router.callback_query(lambda c: c.data == "send_test")
 async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     await state.clear()
     log.info("start_send_test handler called")
     keyboard = [
@@ -385,6 +395,8 @@ async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext
 
 @router.callback_query(lambda c: c.data == "view_sent_tests")
 async def view_sent_tests(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     sender_id = callback_query.from_user.id
     page = 1
     await state.update_data(current_page=page)
@@ -459,6 +471,8 @@ async def show_sent_tests_page(message: types.Message, sender_id: int, page: int
 
 @router.callback_query(SendTestStates.VIEWING_SENT_TESTS)
 async def process_sent_tests_navigation(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     action = callback_query.data
     data = await state.get_data()
     current_page = data.get('current_page', 1)
@@ -612,6 +626,8 @@ async def process_user_tests_navigation(callback_query: types.CallbackQuery, sta
 
 @router.callback_query(SendTestStates.VIEWING_USER_TESTS)
 async def process_user_tests_navigation(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     action = callback_query.data
     if action == "back_to_users_list":
         await view_sent_tests(callback_query, state)
@@ -646,6 +662,8 @@ async def confirm_test_selection(callback_query: types.CallbackQuery, state: FSM
 
 @router.callback_query(SendTestStates.CHOOSING_TEST)
 async def process_test_choice(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     if callback_query.data == "back_to_test_type":
         await start_send_test(callback_query, state)
         return
@@ -697,6 +715,8 @@ async def process_test_choice(callback_query: types.CallbackQuery, state: FSMCon
 
 @router.callback_query(lambda c: c.data and c.data.startswith("add_test_"))
 async def add_test(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     test_id = callback_query.data.split("_")[-1]
     data = await state.get_data()
     selected_tests = data.get('selected_tests', [])
@@ -711,6 +731,8 @@ async def add_test(callback_query: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(SendTestStates.CONFIRMING_TESTS)
 async def process_confirm_tests(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     if callback_query.data == "back_to_test_selection":
         await show_available_tests(callback_query, state)
         return
@@ -729,10 +751,12 @@ async def process_confirm_tests(callback_query: types.CallbackQuery, state: FSMC
 
 @router.callback_query(lambda c: c.data == "back_to_test_selection")
 async def process_receiver_input(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     await show_available_tests(callback_query, state)
 
 
-@router.message(SendTestStates.ENTERING_RECEIVER)
+@router.message(SendTestStates.ENTERING_RECEIVER, F.text)
 async def process_receiver_input(message: types.Message, state: FSMContext):
     receiver_username = message.text.strip().lstrip('@')
     data = await state.get_data()
@@ -814,6 +838,8 @@ async def process_receiver_input(message: types.Message, state: FSMContext):
 
 @router.callback_query(SendTestStates.CONFIRMING)
 async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     if callback_query.data != "confirm_send_tests":
         await callback_query.answer(settings.send_test.send_test_confirm_error)
         return
@@ -886,6 +912,8 @@ async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMCont
 
 @router.callback_query(lambda c: c.data and c.data.startswith(("choose_", "confirm_", "back_to_")))
 async def process_send_test_callback(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     current_state = await state.get_state()
 
     if current_state == SendTestStates.CHOOSING_TEST_TYPE:

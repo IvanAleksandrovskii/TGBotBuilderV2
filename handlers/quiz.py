@@ -30,6 +30,7 @@ class QuizStates(BaseQuizStates):
 
 @router.callback_query(lambda c: c.data == "show_psycho_tests")
 async def show_psycho_tests(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
     await state.clear()  # Clear the state before showing the list of psycological tests
     async for session in db_helper.session_getter():
         try:
@@ -75,6 +76,7 @@ async def show_psycho_tests(callback_query: types.CallbackQuery, state: FSMConte
 
 @router.callback_query(lambda c: c.data == "show_quizzes")
 async def show_quizzes(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
     await state.clear()  # Clear the state before showing the list of tests
     async for session in db_helper.session_getter():
         try:
@@ -605,6 +607,7 @@ async def finish_quiz(message: types.Message, state: FSMContext):
     "show_quizzes", "start_quiz_", "confirm_start_", "start_questions_", 
     "answer_", "quiz_back", "continue_quiz", "show_question")))
 async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
     current_state = await state.get_state()
     if current_state is None:
         await show_psycho_tests(callback_query, state)  # TODO: Showing psycological tests now, DOUBLE CHECK (( ! ))

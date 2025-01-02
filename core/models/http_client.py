@@ -6,8 +6,7 @@ from typing import List
 import httpx
 from asyncio import Lock
 
-from core import log
-from core import settings
+from core import log, settings
 
 
 class UberClient:
@@ -110,6 +109,7 @@ class ClientManager:
 
     async def dispose_all_clients(self) -> None:
         """Dispose all clients."""
+        log.info("Disposing all http clients...")
         self.is_shutting_down = True
         if self.cleanup_task:
             self.cleanup_task.cancel()
