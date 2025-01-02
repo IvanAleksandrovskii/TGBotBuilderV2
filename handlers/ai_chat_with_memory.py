@@ -3,6 +3,7 @@
 from typing import List, Dict
 
 from aiogram import Router, types
+from aiogram.utils.chat_action import ChatActionSender
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ChatAction
@@ -56,8 +57,9 @@ async def update_chat_history(state: FSMContext, role: str, content: str):
 
 @router.callback_query(lambda c: c.data == "ai_chat_with_memory")
 async def start_ai_chat_with_memory(callback_query: types.CallbackQuery, state: FSMContext):
-    text_service = TextService()
+    await callback_query.answer()
     
+    text_service = TextService()
     async for session in db_helper.session_getter():
         try:
             # Clear the chat history when starting a new chat
@@ -82,45 +84,51 @@ async def start_ai_chat_with_memory(callback_query: types.CallbackQuery, state: 
 @router.message(AIChatMemoryStates.CHATTING_WITH_MEMORY)
 async def handle_memory_chat(message: types.Message, state: FSMContext):
     
-    await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
-    
-    user_message = message.text
-    
-    # Add the user's message to the conversation history
-    await update_chat_history(state, "user", user_message)
-    
-    # Get the chat history
-    chat_history = await get_conversation_history(state)
-    
-    async for session in db_helper.session_getter():
-        try:
-            # Make the context from the chat history
-            context = "\n".join([
-                f"{'Assistant' if msg.role == 'assistant' else 'User'}: {msg.content}"
-                for msg in chat_history
-            ])
-            
-            # Get the AI response with the context
-            result = await get_ai_response(
-                session, 
-                f"Previous conversation:\n{context}\n\nUser: {user_message}"
-            )
-            
-            if result and result.content:
-                ai_response = result.content
-                # Add the AI response to the chat history
-                await update_chat_history(state, "assistant", ai_response)
-            else:
-                ai_response = "Извините, я не могу ответить сейчас. Пожалуйста, попробуйте еще раз позже."
-            
-            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                [types.InlineKeyboardButton(text="Завершить чат", callback_data="back_to_start")]  # TODO: Move to config
-            ])
-            
-            await message.reply(ai_response, reply_markup=keyboard)
-            
-        except Exception as e:
-            log.error(f"Error in handle_memory_chat: {e}")
-            await message.reply("An error occurred. Please try again.")
-        finally:
-            await session.close()
+    # await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
+    sender = ChatActionSender(
+        bot=message.bot,
+        chat_id=message.chat.id,
+        action=ChatAction.TYPING
+    )
+    async with sender:
+        
+        user_message = message.text
+        
+        # Add the user's message to the conversation history
+        await update_chat_history(state, "user", user_message)
+        
+        # Get the chat history
+        chat_history = await get_conversation_history(state)
+        
+        async for session in db_helper.session_getter():
+            try:
+                # Make the context from the chat history
+                context = "\n".join([
+                    f"{'Assistant' if msg.role == 'assistant' else 'User'}: {msg.content}"
+                    for msg in chat_history
+                ])
+                
+                # Get the AI response with the context
+                result = await get_ai_response(
+                    session, 
+                    f"Previous conversation:\n{context}\n\nUser: {user_message}"
+                )
+                
+                if result and result.content:
+                    ai_response = result.content
+                    # Add the AI response to the chat history
+                    await update_chat_history(state, "assistant", ai_response)
+                else:
+                    ai_response = "Извините, я не могу ответить сейчас. Пожалуйста, попробуйте еще раз позже."
+                
+                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                    [types.InlineKeyboardButton(text="Завершить чат", callback_data="back_to_start")]  # TODO: Move to config
+                ])
+                
+                await message.reply(ai_response, reply_markup=keyboard)
+                
+            except Exception as e:
+                log.error(f"Error in handle_memory_chat: {e}")
+                await message.reply("An error occurred. Please try again.")
+            finally:
+                await session.close()

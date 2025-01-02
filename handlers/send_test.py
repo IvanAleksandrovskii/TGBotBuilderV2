@@ -587,6 +587,8 @@ async def view_user_tests(callback_query: types.CallbackQuery, username: str, st
 
 @router.callback_query(SendTestStates.VIEWING_USER_TESTS)
 async def process_user_tests_navigation(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    
     action = callback_query.data
     if action.startswith("user_tests_page_"):
         parts = action.split("_")
