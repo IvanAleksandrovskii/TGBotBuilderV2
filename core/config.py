@@ -12,7 +12,7 @@ load_dotenv(".env")
 
 
 # App ENV variables
-DEBUG = os.getenv("DEBUG", "False").lower() in ('true', '1')
+DEBUG = os.getenv("DEBUG", "True").lower() in ('true', '1')  # TODO: make False
 APP_RUN_HOST = str(os.getenv("APP_RUN_HOST", "0.0.0.0"))
 APP_RUN_PORT = int(os.getenv("APP_RUN_PORT", 8000))
 

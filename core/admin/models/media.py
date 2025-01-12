@@ -1,13 +1,7 @@
 # core/admin/models/media.py
 
-from typing import Any
-
-from fastapi import UploadFile, Request
-
 from .base import BaseAdminModel
 from core.models import Media
-from core import log
-from services import main_storage
 
 
 class MediaAdmin(BaseAdminModel, model=Media):

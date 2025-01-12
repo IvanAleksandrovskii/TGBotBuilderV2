@@ -43,3 +43,6 @@ router.include_router(send_test_router)
 
 from .ai_test_result_transcription import router as ai_test_result_transcription_router
 router.include_router(ai_test_result_transcription_router)
+
+from .test_packs import router as send_tests_pack_router
+router.include_router(send_tests_pack_router)

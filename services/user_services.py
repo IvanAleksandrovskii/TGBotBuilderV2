@@ -1,9 +1,9 @@
 # services/user_service.py
 
 from sqlalchemy import select, update
-from async_lru import alru_cache
+# from async_lru import alru_cache
 
-from core import log, settings
+from core import log  # , settings
 from core.models import User, db_helper
 
 

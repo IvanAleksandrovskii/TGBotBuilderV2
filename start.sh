@@ -26,4 +26,5 @@ else
 fi
 
 # Run the app
-exec python3 run_main.py  # main.py
+# exec python3 run_main.py  
+exec python3 main.py

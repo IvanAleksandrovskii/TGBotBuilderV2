@@ -25,6 +25,7 @@ async def current_page_number(callback_query: types.CallbackQuery, state: FSMCon
     await callback_query.answer(settings.bot_reader_text.reader_page_number_button_ansewer)
     return
 
+
 def split_text_into_chunks(text: str, max_chunk_size: int) -> list[str]:
     """Split text into chunks respecting HTML markup and size limits."""
     chunks = []
@@ -257,6 +258,7 @@ def create_navigation_keyboard(
     ])
     
     return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+
 
 async def process_custom_action(
     callback_query: types.CallbackQuery,
