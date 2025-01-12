@@ -13,3 +13,6 @@ router.include_router(packs_list_router)
 
 from .check_results import router as check_results_router
 router.include_router(check_results_router)
+
+from .solve_the_pack import router as solve_the_pack_router
+router.include_router(solve_the_pack_router)

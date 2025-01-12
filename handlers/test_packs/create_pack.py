@@ -168,7 +168,6 @@ async def choosing_tests(callback_query: types.CallbackQuery, state: FSMContext)
         button_apply = InlineKeyboardButton(text="✅ Apply", callback_data="test_pack_save")
         keyboard.inline_keyboard.append([button_apply])
     
-    
     if len(tests) == 0:
         text += "\n\nNo more tests found."
     

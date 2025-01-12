@@ -31,7 +31,7 @@ async def get_gefault_media() -> str:
 
 @router.callback_query(F.data == "send_tests_pack")
 @router.message(Command("send_tests_pack"))
-async def send_tests_pack(call: types.Message|types.CallbackQuery, state: FSMContext) -> None:
+async def tests_pack_menu(call: types.Message|types.CallbackQuery, state: FSMContext) -> None:
     if isinstance(call, types.CallbackQuery):
         await call.answer("Command called")
     
