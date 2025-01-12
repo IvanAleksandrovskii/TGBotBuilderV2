@@ -10,12 +10,11 @@ from .quiz_result import QuizResultAdmin
 from .promocode import PromocodeAdmin, PromoRegistrationAdmin
 
 from .ai_provider import AIProviderAdmin
-
 from .quiz import TestAdmin, QuestionAdmin, ResultAdmin
-
 from .sent_test import SentTestAdmin
-
 from .ai_transcripts import AITranscriptsAdmin
+
+from .test_pack import TestPackAdmin
 
 # Register admin views
 def setup_admin(admin):
@@ -32,5 +31,5 @@ def setup_admin(admin):
     admin.add_view(QuestionAdmin)
     admin.add_view(ResultAdmin)
     admin.add_view(SentTestAdmin)
-    
     admin.add_view(AITranscriptsAdmin)
+    admin.add_view(TestPackAdmin)

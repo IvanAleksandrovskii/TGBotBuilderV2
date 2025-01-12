@@ -119,7 +119,7 @@ async def start_command(message: types.Message, state: FSMContext):
 
     # Handle promocode if provided and user is new
     if promocode and is_new_user:
-        log.info(f"Processing promocode {promocode} for new user {chat_id}")
+        log.debug(f"Processing promocode {promocode} for new user {chat_id}")
         try:
             success = await PromoCodeService.register_promo_usage(promocode, user.id)
             if success:
@@ -131,7 +131,7 @@ async def start_command(message: types.Message, state: FSMContext):
         except Exception as e:
             log.exception(f"Error processing promocode: {e}")
     elif promocode and not is_new_user:
-        log.info(f"Existing user {chat_id} tried to use promocode {promocode}")
+        log.debug(f"Existing user {chat_id} tried to use promocode {promocode}")
         # await message.answer("Promocodes are only for new users!")
         # return
 

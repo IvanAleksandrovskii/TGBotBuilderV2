@@ -13,7 +13,7 @@ from .send_tests_pack import get_gefault_media
 from core import log
 from core.models import db_helper
 from core.models.quiz import Test
-
+from core.models.test_pack import TestPack
 
 router = Router()
 
@@ -107,11 +107,36 @@ async def choosing_tests(callback_query: types.CallbackQuery, state: FSMContext)
         await state.clear()
         if "tests" not in state_data:
             await callback_query.answer("Please, select at least one test.")
-        
+            return
+            
         selected_tests = state_data["tests"]
         selected_tests_objects = [test for test in all_tests if str(test.id) in selected_tests]
         
-        text = f"Tests selected: \n{', '.join([test.name for test in selected_tests_objects])}\n\n"
+        # Создаём и сохраняем пак тестов
+        async with db_helper.db_session() as session:
+            try:
+                # Создаём новый пак
+                test_pack = TestPack(
+                    name=state_data["pack_name"],
+                    creator_id=callback_query.from_user.id,
+                    creator_username=callback_query.from_user.username,
+                    tests=selected_tests_objects
+                )
+                
+                # Добавляем в сессию и сохраняем
+                session.add(test_pack)
+                await session.commit()
+                
+                text = (
+                    f"✅ Test pack '{test_pack.name}' successfully created!\n"
+                    f"Test pack ID: {test_pack.id}\n\n"
+                    f"Tests included: \n{', '.join([test.name for test in selected_tests_objects])}"
+                )
+                
+            except Exception as e:
+                log.exception(f"Error saving test pack: {e}")
+                text = "❌ Error saving test pack. Please try again."
+                await session.rollback()
         
         keyboard.inline_keyboard.append([InlineKeyboardButton(text="Back", callback_data="send_tests_pack")])
         keyboard.inline_keyboard.append([InlineKeyboardButton(text="Main Menu", callback_data="back_to_start")])
