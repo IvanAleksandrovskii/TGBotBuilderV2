@@ -12,7 +12,7 @@ from core import log, settings
 from core.models import db_helper
 from services.ai_services import get_ai_response
 from services.text_service import TextService
-from handlers.utils import send_or_edit_message
+from handlers.v1.utils import send_or_edit_message
 
 
 router = Router()

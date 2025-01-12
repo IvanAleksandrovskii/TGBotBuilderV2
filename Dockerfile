@@ -1,6 +1,9 @@
 # Use a slim Python runtime as a parent image
 FROM python:3.12-slim
 
+# Set environment variable to print all Python output instantly.
+ENV PYTHONUNBUFFERED=1
+
 # Additional fixing installation for Postgres, needed to work with db with Linux system
 RUN apt-get update && apt-get install -y libpq-dev
 # Installing netcat

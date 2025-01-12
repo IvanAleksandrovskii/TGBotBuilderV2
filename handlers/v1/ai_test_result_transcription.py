@@ -14,7 +14,7 @@ from core.models import db_helper, SentTest
 from core.models.psycho_tests_ai_trascription import PsycoTestsAITranscription
 from core.models.sent_test import TestStatus
 from services.ai_services import get_ai_response
-from handlers.utils import send_or_edit_message
+from handlers.v1.utils import send_or_edit_message
 
 
 router = Router()
