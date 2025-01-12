@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from aiogram import Router, Bot, types
+from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
@@ -13,7 +13,7 @@ from core import log, settings
 from core.models import db_helper
 from core.models.sent_test import SentTest, TestStatus
 from services import UserService
-from services.promocode_service import PromoCodeService
+# from services.promocode_service import PromoCodeService
 from services.text_service import TextService
 from services.button_service import ButtonService
 from .utils import send_or_edit_message
@@ -101,9 +101,18 @@ async def start_command(message: types.Message, state: FSMContext):
     args = message.text.split()[1:]
     chat_id = int(message.chat.id)
     username = message.from_user.username
-    promocode = args[0] if args else None
+    # promocode = args[0] if args else None
+    # log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Promocode: {promocode}")
+
+    test_pack_id = args[0] if args else None
+    if test_pack_id:
+        log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Test pack ID: {test_pack_id}")
+        
+        from handlers.test_packs.solve_the_pack import solve_the_pack
+        await solve_the_pack(message)
+        return
+
     
-    log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Promocode: {promocode}")
 
     # Get start content will create user if needed
     text, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
@@ -117,23 +126,21 @@ async def start_command(message: types.Message, state: FSMContext):
         await message.answer("An error occurred. Please try again later.")
         return
 
-    # Handle promocode if provided and user is new
-    if promocode and is_new_user:
-        log.debug(f"Processing promocode {promocode} for new user {chat_id}")
-        try:
-            success = await PromoCodeService.register_promo_usage(promocode, user.id)
-            if success:
-                log.info(f"Successfully registered promocode usage for user {chat_id}")
-                # Optionally notify about successful referral
-                # await message.answer("Welcome! You've joined using a referral link!")
-            else:
-                log.info(f"Failed to register promocode usage for user {chat_id}, might be already registered")
-        except Exception as e:
-            log.exception(f"Error processing promocode: {e}")
-    elif promocode and not is_new_user:
-        log.debug(f"Existing user {chat_id} tried to use promocode {promocode}")
-        # await message.answer("Promocodes are only for new users!")
-        # return
+    # # Handle promocode if provided and user is new
+    # if promocode and is_new_user:
+    #     log.debug(f"Processing promocode {promocode} for new user {chat_id}")
+    #     try:
+    #         success = await PromoCodeService.register_promo_usage(promocode, user.id)
+    #         if success:
+    #             log.info(f"Successfully registered promocode usage for user {chat_id}")
+    #             # Optionally notify about successful referral
+    #             # await message.answer("Welcome! You've joined using a referral link!")
+    #         else:
+    #             log.info(f"Failed to register promocode usage for user {chat_id}, might be already registered")
+    #     except Exception as e:
+    #         log.exception(f"Error processing promocode: {e}")
+    # elif promocode and not is_new_user:
+    #     log.debug(f"Existing user {chat_id} tried to use promocode {promocode}")
 
     # Set state and send message
     if is_new_user:

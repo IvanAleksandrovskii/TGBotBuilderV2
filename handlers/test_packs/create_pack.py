@@ -28,6 +28,20 @@ class SendTestsPackState(StatesGroup):
 async def tests_pack_create_new(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     
     await callback_query.answer("Command called")
+    
+    async with db_helper.db_session() as session:
+        try:
+            test_packs_query = select(TestPack).where(TestPack.creator_id == callback_query.from_user.id)
+            test_packs = await session.execute(test_packs_query)
+            test_packs = test_packs.scalars().all()
+            
+            if len(test_packs) >= 5:
+                await callback_query.message.answer("You already have 5 test packs created. Please delete one of them first.")
+                return
+            
+        except Exception as e:
+            log.exception(f"Error in tests_pack_create_new: {e}")
+    
     await state.set_state(SendTestsPackState.NAMING_PACK)
 
     default_media = await get_gefault_media()
@@ -102,13 +116,13 @@ async def choosing_tests(callback_query: types.CallbackQuery, state: FSMContext)
     state_data = await state.get_data()  # Это вернёт dict со всеми данными
     log.debug(f"State data: {state_data}")
     
-    if callback_query.data == "test_pack_save":
+    if callback_query.data == "test_pack_save":  # TODO: Add link (to pass the pack) to the result
         state_data = await state.get_data()
         await state.clear()
         if "tests" not in state_data:
             await callback_query.answer("Please, select at least one test.")
             return
-            
+        
         selected_tests = state_data["tests"]
         selected_tests_objects = [test for test in all_tests if str(test.id) in selected_tests]
         
