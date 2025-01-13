@@ -17,6 +17,9 @@ __all__ = [
     "PsycoTestsAITranscription",
     "TestPack",
     "test_pack_tests",
+    "CustomTest",
+    "CustomQuestion",
+    "test_pack_custom_tests",
 ]
 
 
@@ -35,4 +38,5 @@ from .quiz_result import QuizResult
 from .sent_test import SentTest
 from .psycho_tests_ai_trascription import PsycoTestsAITranscription
 
-from .test_pack import TestPack, test_pack_tests
+from .test_pack import TestPack, test_pack_tests, test_pack_custom_tests
+from .custom_test import CustomTest, CustomQuestion

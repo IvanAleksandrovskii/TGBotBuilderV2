@@ -125,6 +125,9 @@ async def handle_webhook(request: Request):
     """Endpoint для обработки вебхуков от Telegram"""
     return await bot_manager.handle_webhook_request(request)
 
+from api import router as api_router
+main_app.include_router(api_router)
+
 
 # Mount media storage
 main_app.mount("/app/media/", StaticFiles(directory=settings.media.root[4:]), name="media")

@@ -88,13 +88,13 @@ async def test_pack_check(callback_query: types.CallbackQuery, state: FSMContext
     
     bot_username = (await callback_query.bot.get_me()).username
     invite_link = f"https://t.me/{bot_username}?start={test_pack.id}"
-    text += f"Invite link: {invite_link}\n\n"
+    text += f"Invite link: \n<code>{invite_link}</code>\n\n"
     
     text += f"Tests inside: {test_pack.test_count}\n\n"
     
     for test in test_pack.tests:
-        text += f"▫️ {test.name}\n"
-        text += f"Description: {test.description[:100]}...\n\n"
+        text += f"● {test.name}\n\n"
+        # text += f"Description: {test.description[:100]}...\n\n"
     
     # text += f"Creator: {test_pack.creator_username}\n\n"
     # text += f"Created at: {test_pack.created_at}\n\n"

@@ -16,6 +16,9 @@ from .ai_transcripts import AITranscriptsAdmin
 
 from .test_pack import TestPackAdmin
 
+from .custom_test import CustomTestAdmin, CustomQuestionAdmin
+
+
 # Register admin views
 def setup_admin(admin):
     admin.add_view(UserAdmin)
@@ -32,4 +35,8 @@ def setup_admin(admin):
     admin.add_view(ResultAdmin)
     admin.add_view(SentTestAdmin)
     admin.add_view(AITranscriptsAdmin)
+    
     admin.add_view(TestPackAdmin)
+    
+    admin.add_view(CustomTestAdmin)
+    admin.add_view(CustomQuestionAdmin)

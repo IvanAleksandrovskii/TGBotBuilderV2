@@ -28,7 +28,7 @@ def get_contact_keyboard():
 @router.message(Command("solve_the_pack"))
 async def solve_the_pack(message: types.Message) -> None:
     await message.answer(
-        "Привет! Нажми на кнопку ниже, чтобы поделиться контактом:",
+        "Привет! Нажми на кнопку ниже, чтобы поделиться контактом (это нужно, чтобы отправитель смог понять, кто вы и связать вас с ним):",
         reply_markup=get_contact_keyboard()
     )
 

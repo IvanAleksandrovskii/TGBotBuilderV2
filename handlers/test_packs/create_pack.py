@@ -141,9 +141,11 @@ async def choosing_tests(callback_query: types.CallbackQuery, state: FSMContext)
                 session.add(test_pack)
                 await session.commit()
                 
+                bot_username = (await callback_query.bot.get_me()).username
+                
                 text = (
                     f"✅ Test pack '{test_pack.name}' successfully created!\n"
-                    f"Test pack ID: {test_pack.id}\n\n"
+                    f"Test pack LINK: \n <code>https://t.me/{bot_username}?start={test_pack.id}</code>\n\n"
                     f"Tests included: \n{', '.join([test.name for test in selected_tests_objects])}"
                 )
                 
