@@ -91,20 +91,36 @@ class CustomQuestion(Base):
         return f"{self.question_text[:50]}"
 
 
-@event.listens_for(CustomTest, 'after_delete')
+@event.listens_for(CustomTest, 'before_delete')
 def delete_empty_test_pack(mapper, connection, target):
-    from .test_pack import TestPack, test_pack_custom_tests  # Перенесли импорт сюда
+    """
+    Вызывается до фактического удаления CustomTest из БД.
+    """
     from sqlalchemy.orm import Session
+    
+    from .test_pack import TestPack  # , test_pack_custom_tests
+    from .custom_test import CustomTest  # чтобы можно было фильтровать
+    session = Session(bind=connection)
 
-    session = Session(connection)
-    
-    test_packs = session.query(TestPack).join(test_pack_custom_tests).filter(
-        test_pack_custom_tests.c.custom_test_id == target.id
-    ).all()
-    
+    # Находим те TestPack, где присутствует именно этот CustomTest
+    # (он ещё есть в M2M-таблице, поэтому join сработает)
+    test_packs = session.query(TestPack)\
+        .join(TestPack.custom_tests)\
+        .filter(CustomTest.id == target.id)\
+        .all()
+
     for test_pack in test_packs:
-        if not test_pack.tests and not test_pack.custom_tests:
+        # Сейчас test_pack.custom_tests всё ещё содержит target.
+        # Но если «удалить target» - значит из test_pack.custom_tests пропадёт target
+        # Нужно проверить, не останется ли других.
+        # На этот момент ORM-сессия ещё не обновлена, так что
+        # len(test_pack.custom_tests) может быть N, где N>=1
+
+        # Поэтому надёжнее проверить «кроме target есть кто-то ещё?»
+        other_custom_tests = [ct for ct in test_pack.custom_tests if ct.id != target.id]
+        if not test_pack.tests and not other_custom_tests:
+            # Удаляем TestPack, т.к. он точно станет пустым
             session.delete(test_pack)
-    
+
     session.commit()
     session.close()

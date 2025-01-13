@@ -305,10 +305,10 @@ async def save_test_pack(
         await callback_query.answer("Please, select at least one test.")
         return
 
-    selected_tests = state_data["tests"]
+    selected_tests = state_data.get("tests", [])
     selected_tests_objects = [t for t in all_tests if str(t.id) in selected_tests]
 
-    selected_custom_tests = state_data["custom_tests"]
+    selected_custom_tests = state_data.get("custom_tests", [])
     selected_custom_tests_objects = [ct for ct in all_custom_tests if str(ct.id) in selected_custom_tests]
 
     await state.clear()
