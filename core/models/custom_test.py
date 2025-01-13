@@ -5,6 +5,7 @@ from typing import Optional, List
 
 from sqlalchemy import ForeignKey, Integer, String, Boolean, Text, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import event
 
 from .base import Base
 
@@ -88,3 +89,22 @@ class CustomQuestion(Base):
 
     def __str__(self):
         return f"{self.question_text[:50]}"
+
+
+@event.listens_for(CustomTest, 'after_delete')
+def delete_empty_test_pack(mapper, connection, target):
+    from .test_pack import TestPack, test_pack_custom_tests  # Перенесли импорт сюда
+    from sqlalchemy.orm import Session
+
+    session = Session(connection)
+    
+    test_packs = session.query(TestPack).join(test_pack_custom_tests).filter(
+        test_pack_custom_tests.c.custom_test_id == target.id
+    ).all()
+    
+    for test_pack in test_packs:
+        if not test_pack.tests and not test_pack.custom_tests:
+            session.delete(test_pack)
+    
+    session.commit()
+    session.close()

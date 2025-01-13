@@ -9,6 +9,7 @@ from sqlalchemy.sql.expression import select
 
 from .base import Base
 from .quiz import Test
+
 from .custom_test import CustomTest
 
 
@@ -25,10 +26,9 @@ test_pack_tests = Table(
 test_pack_custom_tests = Table(
     'test_pack_custom_tests',
     Base.metadata,
-    Column('test_pack_id', ForeignKey('test_packs.id', ondelete='CASCADE'), primary_key=True),
-    Column('custom_test_id', ForeignKey('custom_tests.id', ondelete='CASCADE'), primary_key=True)
+    Column('test_pack_id', ForeignKey('test_packs.id'), primary_key=True),
+    Column('custom_test_id', ForeignKey('custom_tests.id'), primary_key=True) 
 )
-
 
 class TestPack(Base):
     """
@@ -54,7 +54,6 @@ class TestPack(Base):
         "CustomTest",
         secondary=test_pack_custom_tests,
         lazy="selectin",
-        cascade="all, delete"
     )
     
     def __repr__(self):
