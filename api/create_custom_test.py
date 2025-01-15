@@ -17,6 +17,7 @@ class Answer(BaseModel):
     text: str = Field(..., min_length=1)
     score: Optional[int]
 
+
 class Question(BaseModel):
     question_text: str = Field(..., min_length=1)
     is_quiz_type: bool = False
@@ -33,6 +34,7 @@ class Question(BaseModel):
                 ],
             }
         }
+
 
 class CustomTestCreate(BaseModel):
     name: str = Field(..., min_length=1)
@@ -65,6 +67,7 @@ class CustomTestCreate(BaseModel):
                 ],
             }
         }
+
 
 @router.post("/custom_tests/")
 async def create_custom_test(test_data: CustomTestCreate, db: AsyncSession = Depends(db_helper.session_getter)):

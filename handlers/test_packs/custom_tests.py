@@ -45,7 +45,7 @@ async def my_custom_tests(callback_query: types.CallbackQuery, state: FSMContext
             text += "Error while fetching custom tests."
     
     if len(custom_tests) <= 3:
-        button_create_test = InlineKeyboardButton(text="📝 Create test", url="https://s3dbwm-ip-49-228-96-123.tunnelmole.net")
+        button_create_test = InlineKeyboardButton(text="📝 Create test", url="https://s3dbwm-ip-49-228-96-123.tunnelmole.net")  # TODO: FIX
         keyboard.inline_keyboard.append([button_create_test])
     else:
         button_create_test = InlineKeyboardButton(text="📝 Create test", callback_data="custom_tests_full")

@@ -98,8 +98,8 @@ def delete_empty_test_pack(mapper, connection, target):
     """
     from sqlalchemy.orm import Session
     
-    from .test_pack import TestPack  # , test_pack_custom_tests
-    from .custom_test import CustomTest  # чтобы можно было фильтровать
+    from .test_pack import TestPack
+    from .custom_test import CustomTest
     session = Session(bind=connection)
 
     # Находим те TestPack, где присутствует именно этот CustomTest
