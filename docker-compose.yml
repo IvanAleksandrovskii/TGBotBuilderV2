@@ -40,7 +40,7 @@ services:
 
       # (( ! ))
       # - BOT_TOKEN=${BOT_TOKEN:-7638664164:AA...}  # Fill with the bot token or make a .env file with BOT_TOKEN=...
-      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://rzop47-ip-49-228-96-123.tunnelmole.net}
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://xefpmp-ip-49-228-96-123.tunnelmole.net}
 
     command: /app/start.sh
     volumes: 

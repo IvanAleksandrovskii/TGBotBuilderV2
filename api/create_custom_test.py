@@ -11,7 +11,7 @@ from core.schemas.custom_test import CustomTestCreate
 router = APIRouter()
 
 
-@router.post("/custom_tests/")
+@router.post("/custom_test/")
 async def create_custom_test(test_data: CustomTestCreate, db: AsyncSession = Depends(db_helper.session_getter)):
     if not test_data.questions:
         raise HTTPException(status_code=400, detail="A test must have at least one question.")
