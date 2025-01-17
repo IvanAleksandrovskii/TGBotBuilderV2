@@ -17,6 +17,7 @@ router = APIRouter()
 @router.put("/custom_test_update/{test_id}", response_model=CustomTestResponse)
 async def update_custom_test(
     test_id: UUID,
+    creator_id: int,
     test_data: CustomTestUpdate,
     db: AsyncSession = Depends(db_helper.session_getter)
 ):
@@ -30,7 +31,7 @@ async def update_custom_test(
         raise HTTPException(status_code=404, detail="Custom test not found")
 
     # Проверка на совпадение creator_id
-    if test.creator_id != test_data.creator_id:
+    if test.creator_id != creator_id:
         raise HTTPException(
             status_code=403,
             detail="Access denied. You don't have permission to edit this test."

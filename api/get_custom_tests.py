@@ -61,12 +61,8 @@ async def get_custom_test(
 
 
 @router.get("/custom_tests/{creator_id}", response_model=list[CustomTestResponse])
-async def get_custom_tests_by_creator_id(creator_id: str, db: AsyncSession = Depends(db_helper.session_getter)):
-    try:
-        creator_id = int(creator_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid creator_id. Must be an integer.")
-
+async def get_custom_tests_by_creator_id(creator_id: int, db: AsyncSession = Depends(db_helper.session_getter)):
+    
     # Запрос на выборку тестов, созданных указанным пользователем
     query = select(CustomTest).where(CustomTest.creator_id == creator_id).options(selectinload(CustomTest.custom_questions))
     result = await db.execute(query)
