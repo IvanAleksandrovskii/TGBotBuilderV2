@@ -2,71 +2,13 @@
 
 from fastapi import HTTPException, Depends, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, Field
-from typing import List, Optional
 
 from core.models import db_helper
 from core.models.custom_test import CustomTest, CustomQuestion
+from core.schemas.custom_test import CustomTestCreate
 
 
 router = APIRouter()
-
-
-# Pydantic-модели для валидации данных
-class Answer(BaseModel):
-    text: str = Field(..., min_length=1)
-    score: Optional[int]
-
-
-class Question(BaseModel):
-    question_text: str = Field(..., min_length=1)
-    is_quiz_type: bool = False
-    answers: Optional[List[Answer]] = None
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "question_text": "What is the capital of France?",
-                "is_quiz_type": True,
-                "answers": [
-                    {"text": "Paris", "score": 1},
-                    {"text": "Berlin", "score": 0},
-                ],
-            }
-        }
-
-
-class CustomTestCreate(BaseModel):
-    name: str = Field(..., min_length=1)
-    description: str = Field(..., min_length=1)
-    creator_id: int = Field(..., gt=0)
-    allow_back: bool = True
-    questions: List[Question]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "Sample Test",
-                "description": "A test for demonstration purposes.",
-                "creator_id": 12345,
-                "allow_back": True,
-                "questions": [
-                    {
-                        "question_text": "What is the capital of France?",
-                        "is_quiz_type": True,
-                        "answers": [
-                            {"text": "Paris", "score": 1},
-                            {"text": "Berlin", "score": 0},
-                        ],
-                    },
-                    {
-                        "question_text": "Describe your favorite hobby.",
-                        "is_quiz_type": False,
-                        "answers": None,
-                    },
-                ],
-            }
-        }
 
 
 @router.post("/custom_tests/")
