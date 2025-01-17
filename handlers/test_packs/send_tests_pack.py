@@ -42,7 +42,7 @@ async def tests_pack_menu(call: types.Message|types.CallbackQuery, state: FSMCon
     button_0 = InlineKeyboardButton(text="💽 Check My Tests Packs", callback_data="my_tests_packs")
     button_1 = InlineKeyboardButton(text="🆕 Create new Tests Pack", callback_data="tests_pack_create_new")
     button_2 = InlineKeyboardButton(text="🔍 Check Tests Results", callback_data="tests_pack_check_result")
-    button_3 = InlineKeyboardButton(text="❓Custom Tests", callback_data="my_custom_tests")
+    button_3 = InlineKeyboardButton(text="❓Custom Tests", url="https://t.me/my_demo_bb_bot/myapp")  # TODO: Fix
     button_4 = InlineKeyboardButton(text="🏡 Main menu", callback_data="back_to_start")
     
     

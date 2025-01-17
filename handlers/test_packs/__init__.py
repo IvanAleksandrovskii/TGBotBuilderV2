@@ -17,5 +17,5 @@ router.include_router(check_results_router)
 from .solve_the_pack import router as solve_the_pack_router
 router.include_router(solve_the_pack_router)
 
-from .custom_tests import router as custom_tests_router
-router.include_router(custom_tests_router)
+# from .custom_tests import router as custom_tests_router
+# router.include_router(custom_tests_router)
