@@ -13,14 +13,12 @@ class Answer(BaseModel):
 
 class Question(BaseModel):
     question_text: str = Field(..., min_length=1)
-    is_quiz_type: bool = False
     answers: Optional[List[Answer]] = None
 
     class Config:
         schema_extra = {
             "example": {
                 "question_text": "What is the capital of France?",
-                "is_quiz_type": True,
                 "answers": [
                     {"text": "Paris", "score": 1},
                     {"text": "Berlin", "score": 0},
@@ -49,7 +47,6 @@ class CustomTestCreate(CustomTestBase):
                 "questions": [
                     {
                         "question_text": "What is the capital of France?",
-                        "is_quiz_type": True,
                         "answers": [
                             {"text": "Paris", "score": 1},
                             {"text": "Berlin", "score": 0},
@@ -57,7 +54,6 @@ class CustomTestCreate(CustomTestBase):
                     },
                     {
                         "question_text": "Describe your favorite hobby.",
-                        "is_quiz_type": False,
                         "answers": None,
                     },
                 ],

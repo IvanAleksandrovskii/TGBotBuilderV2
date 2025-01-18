@@ -12,27 +12,31 @@ from uuid import UUID
 
 from core.models import db_helper
 from core.models.custom_test import CustomTest, CustomQuestion
-from core.schemas.custom_test import CustomTestUpdate, CustomTestResponse
+from core.schemas.custom_test import (
+    CustomTestUpdate, 
+    CustomTestResponse, 
+    Answer, 
+    Question
+    )
 
 
 router = APIRouter()
 
 
-# Schema definitions
-class AnswerUpdate(BaseModel):
-    text: str
-    score: float
+# # Schema definitions
+# class AnswerUpdate(BaseModel):
+#     text: str
+#     score: float
 
-class QuestionUpdate(BaseModel):
-    question_text: str
-    is_quiz_type: bool = True
-    answers: List[AnswerUpdate]
+# class QuestionUpdate(BaseModel):
+#     question_text: str
+#     answers: List[AnswerUpdate]
 
 class CustomTestUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     allow_back: Optional[bool] = None
-    questions: Optional[List[QuestionUpdate]] = None
+    questions: Optional[List[Question]] = None
 
 class CustomTestResponse(BaseModel):
     id: UUID
@@ -40,7 +44,7 @@ class CustomTestResponse(BaseModel):
     description: str
     creator_id: int
     allow_back: bool
-    questions: List[QuestionUpdate]
+    questions: List[Question]
 
 router = APIRouter()
 
@@ -51,23 +55,21 @@ async def update_custom_test(
     creator_id: int,
     db: AsyncSession = Depends(db_helper.session_getter)
 ):
-    # Fetch existing test with questions
     query = await db.execute(
         select(CustomTest)
         .where(CustomTest.id == test_id)
         .options(selectinload(CustomTest.custom_questions))
     )
     test = query.scalar_one_or_none()
-
+    
     if not test:
         raise HTTPException(status_code=404, detail="Custom test not found")
-
     if test.creator_id != creator_id:
         raise HTTPException(
             status_code=403,
             detail="Access denied. You don't have permission to edit this test."
         )
-
+    
     # Update basic test information
     if test_data.name is not None:
         test.name = test_data.name
@@ -75,40 +77,36 @@ async def update_custom_test(
         test.description = test_data.description
     if test_data.allow_back is not None:
         test.allow_back = test_data.allow_back
-
+    
     # Update questions if provided
     if test_data.questions is not None:
         # Remove existing questions
         for question in test.custom_questions:
             await db.delete(question)
         await db.flush()
-
+        
         # Add new questions
         for question_data in test_data.questions:
-            # Validate number of answers
-            # if not 2 <= len(question_data.answers) <= 6:
-            #     raise HTTPException(
-            #         status_code=422,
-            #         detail="Each question must have between 2 and 6 answers"
-            #     )
-
-            # Create new question
+            # Automatically determine is_quiz_type based on answers presence
+            has_answers = bool(question_data.answers and len(question_data.answers) > 0)
+            
             new_question = CustomQuestion(
                 test_id=test.id,
                 question_text=question_data.question_text,
-                is_quiz_type=question_data.is_quiz_type
+                is_quiz_type=has_answers  # Set based on answers presence
             )
-
-            # Add answers
-            for i, answer in enumerate(question_data.answers, start=1):
-                setattr(new_question, f"answer{i}_text", answer.text)
-                setattr(new_question, f"answer{i}_score", answer.score)
-
+            
+            # Add answers if they exist
+            if has_answers:
+                for i, answer in enumerate(question_data.answers, start=1):
+                    setattr(new_question, f"answer{i}_text", answer.text)
+                    setattr(new_question, f"answer{i}_score", answer.score)
+            
             db.add(new_question)
-
+    
     await db.commit()
     await db.refresh(test)
-
+    
     # Prepare response
     return CustomTestResponse(
         id=test.id,
@@ -117,11 +115,11 @@ async def update_custom_test(
         creator_id=test.creator_id,
         allow_back=test.allow_back,
         questions=[
-            QuestionUpdate(
+            Question(
                 question_text=q.question_text,
-                is_quiz_type=q.is_quiz_type,
+                is_quiz_type=any(getattr(q, f"answer{i}_text") is not None for i in range(1, 7)),
                 answers=[
-                    AnswerUpdate(
+                    Answer(
                         text=getattr(q, f"answer{i}_text"),
                         score=getattr(q, f"answer{i}_score")
                     )
