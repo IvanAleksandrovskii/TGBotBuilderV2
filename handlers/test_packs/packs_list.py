@@ -96,8 +96,12 @@ async def test_pack_check(callback_query: types.CallbackQuery, state: FSMContext
         text += f"● {test.name}\n\n"
         # text += f"Description: {test.description[:100]}...\n\n"
     
+    for custom_test in test_pack.custom_tests:
+        text += f"● {custom_test.name}\n\n"
+        # text += f"Description: {custom_test.description[:100]}...\n\n"
+    
     # text += f"Creator: {test_pack.creator_username}\n\n"
-    # text += f"Created at: {test_pack.created_at}\n\n"
+    # text += f"Created at: {test_pack.created_at}\n\n"  # TODO: подумать, как добавить, чтобы отображать в формате для пользователя
     # text += f"Updated at: {test_pack.updated_at}\n\n"
     
     button_delete = InlineKeyboardButton(text="❌ Delete", callback_data=f"test_pack_delete_{test_pack.id}")

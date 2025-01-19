@@ -175,9 +175,14 @@ async def choosing_tests(callback_query: types.CallbackQuery, state: FSMContext)
 
     # Добавление кастомного теста
     if callback_query.data.startswith("test_pack_add_custom_test_"):
+        await confirm_custom_test_adding(callback_query, media)
+        return
+    
+    # Добавление кастомного теста (подтверждение «Yes»)
+    if callback_query.data.startswith("yes_add_custom_test_"):
         custom_test_id = callback_query.data.split("_")[-1]
         state_data["custom_tests"].append(custom_test_id)
-        await state.set_data(state_data)
+        await state.update_data(custom_tests=state_data["custom_tests"])
 
     # Сохранение пака
     if callback_query.data == "test_pack_save":
@@ -218,6 +223,25 @@ async def confirm_test_adding(callback_query: types.CallbackQuery, media: types.
     text = f"{test.name}:\n{test.description}\n\nAdd test '{test.name}' to the pack?"
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [types.InlineKeyboardButton(text="Yes", callback_data=f"test_pack_yes_add_test_{test.id}")],
+        [types.InlineKeyboardButton(text="No", callback_data="test_pack_back_to_selection")]
+    ])
+
+    await send_or_edit_message(callback_query.message, text, keyboard, media)
+
+
+async def confirm_custom_test_adding(callback_query: types.CallbackQuery, media: types.InputMedia) -> None:
+    """
+    Уточняет у пользователя, действительно ли он хочет добавить выбранный тест в пак.
+    Показывает название и описание теста.
+    """
+    custom_test_id = callback_query.data.split("_")[-1]
+    async with db_helper.db_session() as session:
+        custom_test = await session.execute(select(CustomTest).where(CustomTest.id == custom_test_id))
+        custom_test = custom_test.scalar_one()
+
+    text = f"{custom_test.name}:\n{custom_test.description}\n\nAdd test '{custom_test.name}' to the pack?"
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [types.InlineKeyboardButton(text="Yes", callback_data=f"yes_add_custom_test_{custom_test.id}")],
         [types.InlineKeyboardButton(text="No", callback_data="test_pack_back_to_selection")]
     ])
 
