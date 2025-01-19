@@ -61,12 +61,12 @@ class CustomTestCreate(CustomTestBase):
         }
 
 
-class CustomTestUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1)
-    description: Optional[str] = Field(None, min_length=1)
-    allow_back: Optional[bool]
-    questions: Optional[List[Question]]
-
-
 class CustomTestResponse(BaseResponse, CustomTestBase):
     questions: List[Question]
+
+
+class CustomTestUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    allow_back: Optional[bool] = None
+    questions: Optional[List[Question]] = None
