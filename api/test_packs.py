@@ -15,7 +15,10 @@ from core.models.custom_test import CustomTest
 from core.schemas.test_packs import (
     TestPackOut, 
     TestPackCreate, 
-    TestPackUpdate
+    TestPackUpdate,
+    TestPackOutExtended,
+    CustomTestOut,
+    TestOut,
 )
 
 
@@ -111,10 +114,32 @@ async def create_test_pack(
         )
 
 
-@router.get("/test_pack/{pack_id}", response_model=TestPackOut)
+# @router.get("/test_pack/{pack_id}", response_model=TestPackOut)
+# async def get_test_pack(pack_id: UUID):
+#     """
+#     Получить конкретный TestPack по ID.
+#     """
+#     async with db_helper.db_session() as session:
+#         query = select(TestPack).where(TestPack.id == pack_id)
+#         result = await session.execute(query)
+#         pack = result.scalar_one_or_none()
+
+#         if not pack:
+#             raise HTTPException(status_code=404, detail="Test pack not found")
+
+#         return TestPackOut(
+#             id=pack.id,
+#             name=pack.name,
+#             creator_id=pack.creator_id,
+#             test_count=pack.test_count,
+#             tests=[t.name for t in pack.tests],
+#             custom_tests=[ct.name for ct in pack.custom_tests]
+#         )
+
+@router.get("/test_pack/{pack_id}", response_model=TestPackOutExtended)
 async def get_test_pack(pack_id: UUID):
     """
-    Получить конкретный TestPack по ID.
+    Получить конкретный TestPack по ID и отдать объекты тестов (id, name, description).
     """
     async with db_helper.db_session() as session:
         query = select(TestPack).where(TestPack.id == pack_id)
@@ -124,13 +149,32 @@ async def get_test_pack(pack_id: UUID):
         if not pack:
             raise HTTPException(status_code=404, detail="Test pack not found")
 
-        return TestPackOut(
+        # Формируем списки обычных и кастомных тестов
+        regular_tests_out = [
+            TestOut(
+                id=test.id,
+                name=test.name,
+                description=test.description
+            )
+            for test in pack.tests
+        ]
+        custom_tests_out = [
+            CustomTestOut(
+                id=ct.id,
+                name=ct.name,
+                description=ct.description,
+                creator_id=ct.creator_id,
+            )
+            for ct in pack.custom_tests
+        ]
+
+        return TestPackOutExtended(
             id=pack.id,
             name=pack.name,
             creator_id=pack.creator_id,
             test_count=pack.test_count,
-            tests=[t.name for t in pack.tests],
-            custom_tests=[ct.name for ct in pack.custom_tests]
+            tests=regular_tests_out,
+            custom_tests=custom_tests_out,
         )
 
 

@@ -9,6 +9,9 @@ __all__ = [
     "TestPackCreate",
     "TestPackUpdate",
     
+    "TestPackOutExtended",
+    "CustomTestOut",
+    
     "TestOut",
 ]
 
@@ -25,6 +28,9 @@ from .test_packs import (
     TestPackOut,
     TestPackCreate,
     TestPackUpdate,
+    
+    TestPackOutExtended,
+    CustomTestOut,
 )
 
 from .test_response import TestOut

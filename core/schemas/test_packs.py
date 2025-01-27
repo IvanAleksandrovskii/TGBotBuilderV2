@@ -47,3 +47,20 @@ class TestPackOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+from .custom_test import CustomTestBase
+from .test_response import TestOut
+
+
+class CustomTestOut(CustomTestBase):
+    id: UUID
+    
+    class Config:
+        orm_mode = True
+
+
+class TestPackOutExtended(TestPackOut):
+    
+    tests: List[TestOut]
+    custom_tests: List[CustomTestOut]
