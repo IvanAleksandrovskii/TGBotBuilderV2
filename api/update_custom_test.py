@@ -14,7 +14,7 @@ from core.schemas.custom_test import (
 )
 
 
-router = APIRouter()
+router = APIRouter(tags=["custom-tests"])
 
 
 @router.put("/custom_test_update/{test_id}", response_model=CustomTestResponse)

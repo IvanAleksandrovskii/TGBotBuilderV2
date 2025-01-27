@@ -8,7 +8,7 @@ from core.models.custom_test import CustomTest, CustomQuestion
 from core.schemas.custom_test import CustomTestCreate
 
 
-router = APIRouter()
+router = APIRouter(tags=["custom-tests"])
 
 
 @router.post("/custom_test/")

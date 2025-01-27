@@ -10,7 +10,7 @@ from core.models import db_helper
 from core.models.custom_test import CustomTest
 
 
-router = APIRouter()
+router = APIRouter(tags=["custom-tests"])
 
 
 @router.delete("/custom_test/{test_id}")

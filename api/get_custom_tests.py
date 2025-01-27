@@ -7,12 +7,12 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import log
-from core.models import db_helper
+from core.models.db_helper import db_helper
 from core.models.custom_test import CustomTest
 from core.schemas import CustomTestResponse
 
 
-router = APIRouter()
+router = APIRouter(tags=["custom-tests"])
 
 
 @router.get("/custom_test/{test_id}", response_model=CustomTestResponse)

@@ -4,6 +4,10 @@ __all__ = [
     "Answer",
     "Question",
     "CustomTestUpdate",
+    
+    "TestPackOut",
+    "TestPackCreate",
+    "TestPackUpdate",
 ]
 
 
@@ -14,3 +18,9 @@ from .custom_test import (
     Question,
     CustomTestUpdate,
 )   
+
+from .test_packs import (
+    TestPackOut,
+    TestPackCreate,
+    TestPackUpdate,
+)

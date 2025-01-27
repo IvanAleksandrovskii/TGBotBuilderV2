@@ -10,8 +10,6 @@ from aiogram.utils.keyboard import InlineKeyboardMarkup, InlineKeyboardButton
 from core import log
 from core.models import db_helper
 from services.text_service import TextService
-# from services.user_services import UserService
-# from services.button_service import ButtonService
 from handlers.v1.utils import send_or_edit_message
 
 router = Router()

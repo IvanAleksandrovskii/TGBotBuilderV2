@@ -120,7 +120,7 @@ main_app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
-@main_app.post("/webhook/bot/")
+@main_app.post("/webhook/bot/", tags=["tg"])
 async def handle_webhook(request: Request):
     """Endpoint для обработки вебхуков от Telegram"""
     return await bot_manager.handle_webhook_request(request)
