@@ -1,25 +1,16 @@
 # api/get_tests.py
 
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel
+
 
 from core import log
 from core.models.db_helper import db_helper
 from core.models.quiz import Test
+from core.schemas import TestOut
 
 
 router = APIRouter(tags=["tests"])
-
-class TestOut(BaseModel):
-    id: UUID
-    name: str
-    description: str
-    
-    class Config:
-        orm_mode = True
 
 
 @router.get('/')
