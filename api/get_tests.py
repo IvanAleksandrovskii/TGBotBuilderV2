@@ -13,7 +13,7 @@ from core.schemas import TestOut
 router = APIRouter(tags=["tests"])
 
 
-@router.get('/')
+@router.get('/psychological-tests/')
 async def get_tests(db: AsyncSession = Depends(db_helper.session_getter)):
     try:
         query = await db.execute(Test.active().where(Test.is_psychological))
