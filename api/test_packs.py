@@ -114,28 +114,6 @@ async def create_test_pack(
         )
 
 
-# @router.get("/test_pack/{pack_id}", response_model=TestPackOut)
-# async def get_test_pack(pack_id: UUID):
-#     """
-#     Получить конкретный TestPack по ID.
-#     """
-#     async with db_helper.db_session() as session:
-#         query = select(TestPack).where(TestPack.id == pack_id)
-#         result = await session.execute(query)
-#         pack = result.scalar_one_or_none()
-
-#         if not pack:
-#             raise HTTPException(status_code=404, detail="Test pack not found")
-
-#         return TestPackOut(
-#             id=pack.id,
-#             name=pack.name,
-#             creator_id=pack.creator_id,
-#             test_count=pack.test_count,
-#             tests=[t.name for t in pack.tests],
-#             custom_tests=[ct.name for ct in pack.custom_tests]
-#         )
-
 @router.get("/test_pack/{pack_id}", response_model=TestPackOutExtended)
 async def get_test_pack(pack_id: UUID):
     """
