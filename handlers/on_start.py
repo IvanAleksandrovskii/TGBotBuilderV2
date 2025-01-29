@@ -10,20 +10,26 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 
 from core import log, settings
-from core.models import db_helper
+from core.models import (
+    db_helper,
+)
+from core.models.test_pack_completion import TestPackCompletion, CompletionStatus
 from core.models.sent_test import SentTest, TestStatus
 from services import UserService
 from services.text_service import TextService
 from services.button_service import ButtonService
+
 from .utils import send_or_edit_message
 
-from handlers.test_packs.solve_the_pack import start_solve_the_pack
+from handlers.test_packs.solve_the_pack import (
+    start_solve_the_pack, 
+    SolveThePackStates
+)
 
 
 router = Router()
 
 
-# TODO: Add sent tests deletion if tests are not existing anymore
 class FirstGreetingStates(StatesGroup):
     GREETING = State()
 
@@ -38,7 +44,9 @@ async def get_start_content(chat_id: int, username: str | None):
             is_new_user = False
             if not user:
                 user = await user_service.create_user(chat_id, username)
-                log.info("Created new user: %s, username: %s", user.chat_id, user.username)
+                log.info(
+                    "Created new user: %s, username: %s", user.chat_id, user.username
+                )
                 is_new_user = True
             elif user.username != username:
                 updated = await user_service.update_username(chat_id, username)
@@ -47,9 +55,13 @@ async def get_start_content(chat_id: int, username: str | None):
                 else:
                     log.warning("Failed to update username for user %s", chat_id)
 
-            context_marker = "first_greeting" if is_new_user or user.is_new_user else "welcome_message"
+            context_marker = (
+                "first_greeting"
+                if is_new_user or user.is_new_user
+                else "welcome_message"
+            )
             content = await text_service.get_text_with_media(context_marker, session)
-            
+
             if not content:
                 log.warning("Content not found for marker: %s", context_marker)
                 return settings.bot_main_page_text.user_error_message, None, None, False
@@ -57,28 +69,41 @@ async def get_start_content(chat_id: int, username: str | None):
             text = content["text"]
             media_url = content["media_urls"][0] if content["media_urls"] else None
 
-            formatted_text = text.replace("{username}", username or settings.bot_main_page_text.welcome_fallback_user_word)
-            
-            keyboard = await button_service.create_inline_keyboard(context_marker, session)
+            formatted_text = text.replace(
+                "{username}",
+                username or settings.bot_main_page_text.welcome_fallback_user_word,
+            )
+
+            keyboard = await button_service.create_inline_keyboard(
+                context_marker, session
+            )
 
             log.debug("Media URL: %s", media_url)
             log.debug("Formatted text: %s", formatted_text)
 
             if not media_url:
                 media_url = await text_service.get_default_media(session)
-            
-            
+
             # Check for undelivered tests
             undelivered_tests = await session.execute(
-                select(SentTest)
-                .where(SentTest.receiver_username == username, SentTest.status.in_([TestStatus.SENT, TestStatus.DELIVERED]))
+                select(SentTest).where(
+                    SentTest.receiver_username == username,
+                    SentTest.status.in_([TestStatus.SENT, TestStatus.DELIVERED]),
+                )
             )
             undelivered_tests = undelivered_tests.scalars().all()
 
             if undelivered_tests:
-                new_keyboard = keyboard.inline_keyboard + [[types.InlineKeyboardButton(text=settings.on_start_text.start_recived_tests_button, callback_data="view_received_tests")]]
+                new_keyboard = keyboard.inline_keyboard + [
+                    [
+                        types.InlineKeyboardButton(
+                            text=settings.on_start_text.start_recived_tests_button,
+                            callback_data="view_received_tests",
+                        )
+                    ]
+                ]
                 keyboard = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
-                
+
                 # Notify senders
                 for test in undelivered_tests:
                     if test.status == TestStatus.SENT:
@@ -86,7 +111,7 @@ async def get_start_content(chat_id: int, username: str | None):
                         test.delivered_at = datetime.now()
                         test.receiver_id = chat_id
                 await session.commit()
-            
+
             return formatted_text, keyboard, media_url, is_new_user or user.is_new_user
 
         except Exception as e:
@@ -103,33 +128,66 @@ async def start_command(message: types.Message, state: FSMContext):
     chat_id = int(message.chat.id)
     username = message.from_user.username
     test_pack_id = args[0] if args else None
-    
+
     user_service = UserService()
-    
-    from handlers.test_packs.solve_the_pack import SolveThePackStates
-    
+
     current_state = await state.get_state()
     forbidden_states = [
-        SolveThePackStates.WELCOME, 
-        SolveThePackStates.SOLVING, 
-        SolveThePackStates.COMPLETING, 
-        SolveThePackStates.ANSWERING_TEST
-        ]
-    
+        SolveThePackStates.WELCOME,
+        SolveThePackStates.SOLVING,
+        SolveThePackStates.COMPLETING,
+        SolveThePackStates.ANSWERING_TEST,
+    ]
+
     if current_state in forbidden_states:
         await send_or_edit_message(
-            message, 
+            message,
             "Вы проходите тест, сначала завершите его или используйте команду /abort. "
             "Будьте осторожны, чтобы вернуться к прохождению вам потребуется "
             "вновь перейти по ссылке",  # TODO: Move to config
-            None, None
-            )
+            None,
+            None,
+        )
         return
 
     # If user came to solve the pack
     if test_pack_id:
-        log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Test pack ID: {test_pack_id}")
+        log.info(
+            f"Start command received. Chat ID: {chat_id}, Username: {username}, Test pack ID: {test_pack_id}"
+        )
         user = await user_service.get_user(chat_id)
+
+        async with db_helper.db_session() as session:
+            try:
+                existing_test_pack_completion_query = (
+                    select(TestPackCompletion)
+                    .where(TestPackCompletion.user_id == user.chat_id)
+                    .where(TestPackCompletion.test_pack_id == test_pack_id)
+                )
+
+                existing_test_pack_completion = await session.execute(
+                    existing_test_pack_completion_query
+                )
+                existing_test_pack_completion = (
+                    existing_test_pack_completion.scalar_one_or_none()
+                )
+            except Exception as e:
+                log.exception(f"Error in get_start_content: {e}")
+                existing_test_pack_completion = None
+
+        if existing_test_pack_completion is not None:
+            log.info(
+                "User %s already has test pack completion %s", user.id, test_pack_id
+            )
+
+            if existing_test_pack_completion.status == CompletionStatus.COMPLETED:  # TODO: Write logic
+                log.info("Test pack completion %s already completed", test_pack_id)
+                return
+
+            if existing_test_pack_completion.status == CompletionStatus.IN_PROGRESS:  # TODO: Write logic
+                log.info("Test pack completion %s already in progress", test_pack_id)
+                return
+
         if not user:
             user = await user_service.create_user(chat_id, username)
             log.info("Created new user: %s, username: %s", user.chat_id, user.username)
@@ -144,10 +202,10 @@ async def start_command(message: types.Message, state: FSMContext):
 
     # Get start content will create user if needed
     text, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
-    
+
     # Now get the user that was just created or retrieved
     user = await user_service.get_user(chat_id)
-    
+
     if not user:
         log.error(f"Failed to get/create user for chat_id {chat_id}")
         await message.answer("An error occurred. Please try again later.")
@@ -158,15 +216,15 @@ async def start_command(message: types.Message, state: FSMContext):
         await state.set_state(FirstGreetingStates.GREETING)
     else:
         await state.clear()
-    
+
     await send_or_edit_message(message, text, keyboard, media_url)
 
 
 @router.callback_query(lambda c: c.data == "end_first_greeting")
 async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMContext):
-    
+
     await callback_query.answer("Главное меню")  # TODO: Move to config
-    
+
     chat_id = int(callback_query.from_user.id)
     username = callback_query.from_user.username
 
@@ -180,9 +238,9 @@ async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMCont
 
 @router.callback_query(lambda c: c.data == "back_to_start")
 async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
-    
+
     await callback_query.answer("Главное меню")  # TODO: Move to config
-    
+
     await state.clear()
     chat_id = int(callback_query.from_user.id)
     username = callback_query.from_user.username

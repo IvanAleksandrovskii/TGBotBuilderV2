@@ -18,8 +18,7 @@ class CompletionStatus(str, Enum):
     COMPLETED = "completed"
 
     # TODO: Implement later:
-
-    ABANDONED = "abandoned"
+    # ABANDONED = "abandoned"
     # ARCHIVED = "archived"  # USE active=False instead
     # ORIGIN_DELETED = "origin_deleted"
     # USER_DECLINED = "user_declined"
@@ -41,8 +40,6 @@ class TestPackCompletion(Base):
     # Test pack reference
     test_pack_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     test_pack_creator_id: Mapped[int] = mapped_column(nullable=False)
-
-    # tests_total_count: Mapped[int] = mapped_column(nullable=False)
 
     # Progress tracking
     status: Mapped[CompletionStatus] = mapped_column(

@@ -200,6 +200,10 @@ async def handle_contact(message: types.Message, state: FSMContext):
             await state.clear()
             return
 
-    await message.answer("Тест пак успешно начат")
+    await state.update_data(
+        test_pack_completion_id=new_test_pack_completion.id,
+    )
 
-    # TODO: Сделать меню выбора тестов для прохождения
+    await message.answer(
+        "Тест пак успешно начат"
+    )  # TODO: Сделать меню выбора тестов для прохождения
