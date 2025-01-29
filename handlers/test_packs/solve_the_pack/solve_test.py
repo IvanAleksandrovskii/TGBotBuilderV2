@@ -41,11 +41,6 @@ async def back_to_solve_test_menu(
     await get_solve_test_menu(callback_query.message, state)
 
 
-@router.callback_query(PassTestStates.STARTING, F.data == "yes")
-async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.answer("Начат тест")  # TODO: Move to config
-
-
 @router.callback_query(
     F.data.startswith("solve_test_") | F.data.startswith("solve_custom_test_")
 )
@@ -58,7 +53,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
         )
         return
 
-    await callback_query.answer("Начат тест")
+    await callback_query.answer("Начать?")
 
     # Get the test pack ID from the state
     data = await state.get_data()
@@ -88,6 +83,9 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
     keyboard.append([btn_no, btn_yes])
 
     if callback_query.data.startswith("solve_test_"):
+
+        await state.update_data(test_type="psychological")
+
         async with db_helper.db_session() as session:
             try:
                 test_query = select(Test).where(Test.id == test_id)
@@ -128,6 +126,9 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                 return
 
     elif callback_query.data.startswith("solve_custom_test_"):
+
+        await state.update_data(test_type="custom")
+
         async with db_helper.db_session() as session:
             try:
                 custom_test_query = select(CustomTest).where(CustomTest.id == test_id)
@@ -169,3 +170,56 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
 
     else:
         await callback_query.message.answer("Error occured")
+
+
+@router.callback_query(PassTestStates.STARTING, F.data == "yes")
+async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer("Начат тест")  # TODO: Move to config
+
+    data = await state.get_data()
+    test_pack_completion_id = data.get("test_pack_completion_id")  # TODO: Should be turned back to state
+    test_id = data.get("test_id")
+    test_type = data.get("test_type")
+
+    async with db_helper.db_session() as session:
+        try:
+            if test_type == "psychological":
+                test_query = select(Test).where(Test.id == test_id)
+                test = await session.execute(test_query)
+                test = test.scalar_one_or_none()
+
+                if not test:  # TODO: Write this scenario
+                    await callback_query.message.answer(
+                        f"Test with id {test_id} not found"
+                    )
+                    return
+
+
+                await callback_query.message.answer(f"Test started! {test_id} name: {test.name}")
+
+
+            elif test_type == "custom":
+                custom_test_query = select(CustomTest).where(CustomTest.id == test_id)
+                custom_test = await session.execute(custom_test_query)
+                custom_test = custom_test.scalar_one_or_none()
+
+                if not custom_test:  # TODO: Write this scenario
+                    await callback_query.message.answer(
+                        f"Custom test with id {test_id} not found"
+                    )
+                    return
+
+
+                await callback_query.message.answer(f"Custom Test started! {test_id} name: {custom_test.name}")
+
+
+            else:
+                await callback_query.message.answer("Error occured")
+                return
+
+        except Exception as e:
+            log.exception(f"Error in start_test: {e}")
+            await callback_query.message.answer(
+                "An error occurred. Please try again later."
+            )
+            return
