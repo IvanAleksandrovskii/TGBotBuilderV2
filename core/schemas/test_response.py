@@ -11,4 +11,5 @@ class TestOut(BaseModel):
     description: str
     
     class Config:
-        orm_mode = True
+        from_attributes = True
+        json_schema_extra = {...}

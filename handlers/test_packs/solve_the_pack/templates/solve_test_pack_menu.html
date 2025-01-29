@@ -1,0 +1,17 @@
+{% if completed_tests | length > 0 or completed_custom_tests | length > 0 %}
+Завершённые тесты
+    {% if completed_tests %}
+        <strong>Обычные тесты:</strong>
+            {% for test in completed_tests %}
+            {{ test.name }}
+            {% endfor %}
+    {% endif %}
+    {% if completed_custom_tests %}
+        <strong>Кастомные тесты:</strong>
+            {% for test in completed_custom_tests %}
+            {{ test.name }}
+            {% endfor %}
+    {% endif %}
+{% else %}
+Нет завершённых тестов
+{% endif %}

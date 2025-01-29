@@ -127,6 +127,10 @@ async def start_solve_the_pack(
         await state.update_data(tests_dicts_list=tests_dicts_list)
         await state.update_data(custom_tests_dicts_list=custom_tests_dicts_list)
 
+        # TODO: Think about it
+        import asyncio
+        await asyncio.sleep(5)
+
         await message.answer(text=text, reply_markup=get_contact_keyboard())
     else:
         await message.answer(
@@ -204,6 +208,5 @@ async def handle_contact(message: types.Message, state: FSMContext):
         test_pack_completion_id=new_test_pack_completion.id,
     )
 
-    await message.answer(
-        "Тест пак успешно начат"
-    )  # TODO: Сделать меню выбора тестов для прохождения
+    from handlers.test_packs.solve_the_pack.solve_pack_menu import get_solve_test_menu
+    await get_solve_test_menu(message, state)

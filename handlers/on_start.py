@@ -191,7 +191,7 @@ async def start_command(message: types.Message, state: FSMContext):
                 await send_or_edit_message(message, template.render(), None, None)
                 return
 
-            if existing_test_pack_completion.status == CompletionStatus.IN_PROGRESS:  # TODO: Write logic
+            if existing_test_pack_completion.status == CompletionStatus.IN_PROGRESS:
                 log.info("Test pack completion %s already in progress", existing_test_pack_completion.id)
                 await state.set_state(SolveThePackStates.SOLVING)
                 await state.update_data(test_pack_completion_id=existing_test_pack_completion.id)

@@ -58,12 +58,6 @@ async def process_page_action(callback_query: types.CallbackQuery, state: FSMCon
     
     if action.startswith("show_page_"):
         await show_universal_page(callback_query, state)
-    elif action == "back_to_start":
-        await state.clear()
-        chat_id = callback_query.from_user.id
-        username = callback_query.from_user.username
-        text, keyboard, media_url = await get_start_content(chat_id, username)
-        await send_or_edit_message(callback_query, text, keyboard, media_url)
     
     elif action == "show_quizzes":
         await state.clear()

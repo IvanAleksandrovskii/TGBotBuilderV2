@@ -18,6 +18,8 @@ async def abortk(message: types.Message, state: FSMContext) -> None:
     chat_id = int(message.chat.id)
     username = message.from_user.username
     
+    await state.clear()
+    
     # Get start content will create user if needed
     text, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
     
@@ -32,7 +34,5 @@ async def abortk(message: types.Message, state: FSMContext) -> None:
     # Set state and send message
     if is_new_user:
         await state.set_state(FirstGreetingStates.GREETING)
-    else:
-        await state.clear()
     
     await send_or_edit_message(message, text, keyboard, media_url)

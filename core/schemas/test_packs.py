@@ -46,7 +46,8 @@ class TestPackOut(BaseModel):
     custom_tests: List[str]  # Названия кастомных тестов
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+        json_schema_extra = {...}
 
 
 from .custom_test import CustomTestBase
@@ -57,7 +58,8 @@ class CustomTestOut(CustomTestBase):
     id: UUID
     
     class Config:
-        orm_mode = True
+        from_attributes = True
+        json_schema_extra = {...}
 
 
 class TestPackOutExtended(TestPackOut):
