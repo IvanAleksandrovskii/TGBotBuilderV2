@@ -4,7 +4,8 @@ import uuid
 from typing import Optional, List
 
 from sqlalchemy import ForeignKey, Integer, String, Boolean, Text, CheckConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, object_session
+
 from sqlalchemy import event
 
 from .base import Base
@@ -94,33 +95,36 @@ class CustomQuestion(Base):
 @event.listens_for(CustomTest, 'before_delete')
 def delete_empty_test_pack(mapper, connection, target):
     """
-    Вызывается до фактического удаления CustomTest из БД.
+    Срабатывает перед удалением CustomTest из БД.
+    Удаляем TestPack, если он станет пустым (без обычных и без кастомных тестов).
     """
-    from sqlalchemy.orm import Session
-    
     from .test_pack import TestPack
-    from .custom_test import CustomTest
-    session = Session(bind=connection)
+    
+    # Получаем ту же ORM-сессию, где идёт удаление:
+    session = object_session(target)
+    if not session:
+        return  # бывает, если объект "detached"
 
-    # Находим те TestPack, где присутствует именно этот CustomTest
-    # (он ещё есть в M2M-таблице, поэтому join сработает)
-    test_packs = session.query(TestPack)\
-        .join(TestPack.custom_tests)\
-        .filter(CustomTest.id == target.id)\
+    # Находим TestPack, у которых в M2M-таблице есть данный custom_test
+    # (так как сейчас связь ещё не удалена).
+    test_packs = (
+        session.query(TestPack)
+        .join(TestPack.custom_tests)
+        .filter(CustomTest.id == target.id)
         .all()
+    )
 
     for test_pack in test_packs:
-        # Сейчас test_pack.custom_tests всё ещё содержит target.
-        # Но если «удалить target» - значит из test_pack.custom_tests пропадёт target
-        # Нужно проверить, не останется ли других.
-        # На этот момент ORM-сессия ещё не обновлена, так что
-        # len(test_pack.custom_tests) может быть N, где N>=1
+        # Проверяем, есть ли в пакете обычные тесты:
+        has_regular_tests = bool(test_pack.tests)
+        
+        # Проверяем, есть ли в пакете ещё кастомные тесты (кроме удаляемого)
+        other_ct = [ct for ct in test_pack.custom_tests if ct.id != target.id]
 
-        # Поэтому надёжнее проверить «кроме target есть кто-то ещё?»
-        other_custom_tests = [ct for ct in test_pack.custom_tests if ct.id != target.id]
-        if not test_pack.tests and not other_custom_tests:
-            # Удаляем TestPack, т.к. он точно станет пустым
+        # Если нет регулярных тестов и других кастомных не останется,
+        # то удаляем сам test_pack
+        if not has_regular_tests and not other_ct:
             session.delete(test_pack)
 
-    session.commit()
-    session.close()
+    # НЕ делаем session.commit(), не закрываем сессию!
+    # Всё произойдёт автоматически во внешнем коде (эндпоинт, сервис и т.д.)
