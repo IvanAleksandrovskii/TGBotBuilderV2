@@ -2,7 +2,9 @@
 
 from datetime import datetime
 
-from aiogram import Router, types
+from jinja2 import Environment, FileSystemLoader
+
+from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
@@ -180,12 +182,22 @@ async def start_command(message: types.Message, state: FSMContext):
                 "User %s already has test pack completion %s", user.id, test_pack_id
             )
 
-            if existing_test_pack_completion.status == CompletionStatus.COMPLETED:  # TODO: Write logic
+            if existing_test_pack_completion.status == CompletionStatus.COMPLETED:
                 log.info("Test pack completion %s already completed", test_pack_id)
+                
+                # Generate the jinja environment and render the template
+                env = Environment(loader=FileSystemLoader("handlers/test_packs/solve_the_pack/templates"))
+                template = env.get_template("start_solved_pack.html")
+                await send_or_edit_message(message, template.render(), None, None)
                 return
 
             if existing_test_pack_completion.status == CompletionStatus.IN_PROGRESS:  # TODO: Write logic
-                log.info("Test pack completion %s already in progress", test_pack_id)
+                log.info("Test pack completion %s already in progress", existing_test_pack_completion.id)
+                await state.set_state(SolveThePackStates.SOLVING)
+                await state.update_data(test_pack_completion_id=existing_test_pack_completion.id)
+                
+                from handlers.test_packs.solve_the_pack.solve_pack_menu import get_solve_test_menu 
+                await get_solve_test_menu(message, state)
                 return
 
         if not user:
@@ -220,7 +232,7 @@ async def start_command(message: types.Message, state: FSMContext):
     await send_or_edit_message(message, text, keyboard, media_url)
 
 
-@router.callback_query(lambda c: c.data == "end_first_greeting")
+@router.callback_query(F.data == "end_first_greeting")
 async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMContext):
 
     await callback_query.answer("Главное меню")  # TODO: Move to config
@@ -236,7 +248,7 @@ async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMCont
     await send_or_edit_message(callback_query, text, keyboard, media_url)
 
 
-@router.callback_query(lambda c: c.data == "back_to_start")
+@router.callback_query(F.data == "back_to_start")
 async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
 
     await callback_query.answer("Главное меню")  # TODO: Move to config
