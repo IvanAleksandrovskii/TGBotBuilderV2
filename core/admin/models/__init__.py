@@ -18,6 +18,8 @@ from .test_pack import TestPackAdmin
 
 from .custom_test import CustomTestAdmin, CustomQuestionAdmin
 
+from .test_pack_completion import TestPackCompletionAdmin
+
 
 # Register admin views
 def setup_admin(admin):
@@ -40,3 +42,5 @@ def setup_admin(admin):
     
     admin.add_view(CustomTestAdmin)
     admin.add_view(CustomQuestionAdmin)
+    
+    admin.add_view(TestPackCompletionAdmin)

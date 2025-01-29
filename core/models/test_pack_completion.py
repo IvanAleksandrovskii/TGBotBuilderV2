@@ -7,12 +7,10 @@ from typing import Dict, Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sqlalchemy import JSON, Enum as SQLEnum  # ForeignKey, DateTime,
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import JSON, Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
-
-# from .test_pack import TestPack
 
 
 class CompletionStatus(str, Enum):
@@ -23,8 +21,8 @@ class CompletionStatus(str, Enum):
 
     ABANDONED = "abandoned"
     # ARCHIVED = "archived"  # USE active=False instead
-    ORIGIN_DELETED = "origin_deleted"
-    USER_DECLINED = "user_declined"
+    # ORIGIN_DELETED = "origin_deleted"
+    # USER_DECLINED = "user_declined"
 
 
 class TestPackCompletion(Base):
@@ -61,139 +59,65 @@ class TestPackCompletion(Base):
         JSON, default=dict, nullable=True
     )
 
+    """
     # Структура user_data должна содержать:
-    # user_data: dict = {
-    #     "phone": "",
-    #     "first_name": "",
-    #     "last_name": "",
-    #     "username": ""
-    # }
+    user_data: dict = {
+        "phone": "",
+        "first_name": "",
+        "last_name": "",
+        "username": ""
+    }
 
     # Структура tests_to_complete должна содержать:
-    # tests_to_complete = {
-    #     "tests_to_complete": {
-    #         "tests": [{
-    #             "test_name": "Test name",
-    #             "test_id": "test_id",
-    #         },],
-    #     "custom_tests": [{
-    #             "test_name": "Test name",
-    #             "test_id": "test_id",
-    #         },],
-    #     }
-    # }
+    tests_to_complete = {
+        "tests_to_complete": {
+            "tests": [{
+                "test_name": "Test name",
+                "test_id": "test_id",
+            },],
+        "custom_tests": [{
+                "test_name": "Test name",
+                "test_id": "test_id",
+            },],
+        }
+    }
 
     # Структура progress_data должна содержать:
-    # progress_data = {
-    #     "progress_data": {
-    #         "completed_tests": {
-    #             "test_<UUID>": {
-    #                 "test_name": "Test name",
-    #                 "completed_at": "ISO datetime",
-    #                 "result_text": "текст результата"
-    #             }
-    #         },
-    #         "completed_custom_tests": {
-    #             "custom_<UUID>": {
-    #                 "test_name": "Test name",
-    #                 "completed_at": "ISO datetime",
-    #                 "total_score": 0,
-    #                 "score": 0,
-    #                 "free_answers": [
-    #                     {
-    #                         "question_text": "Text of the question",
-    #                         "answer_text": "пользовательский ввод",
-    #                         "timestamp": "ISO datetime"
-    #                     },
-    #                 ],
-    #                 "test_answers": [
-    #                     {
-    #                         "question_text": "Text of the question",
-    #                         "answer_text": "Answer text",
-    #                         "score": 0,
-    #                         "timestamp": "ISO datetime"
-    #                     },
-    #                 ]
-    #             }
-    #         }
-    #     }
-    # }
-
-    async def remove_test_by_id(
-        self, 
-        *,
-        session: AsyncSession, 
-        test_id: str, 
-        test_type: str
-    ):
-        """
-        Удаляет тест по UUID из tests_to_complete и сохраняет изменения в БД.
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param test_id: ID теста (UUID).
-        :param test_type: Тип теста ("tests" или "custom_tests").
-        """
-        if test_type not in {"tests", "custom_tests"}:
-            raise ValueError("test_type должен быть 'tests' или 'custom_tests'")
-
-        tests_list = self.tests_to_complete.get("tests_to_complete", {}).get(
-            test_type, []
-        )
-
-        # Фильтруем список, исключая тест с переданным ID
-        updated_tests = [t for t in tests_list if t["test_id"] != test_id]
-
-        # Обновляем JSON-структуру
-        self.tests_to_complete["tests_to_complete"][test_type] = updated_tests
-
-        # Фиксируем изменения в БД
-        await session.commit()
-
-    async def add_completed_test(
-        self,
-        *,
-        session: AsyncSession,
-        test_id: str,
-        test_name: str,
-        test_type: str,
-        result_data: Dict[str, Any],
-    ):
-        """
-        Добавляет завершённый тест в progress_data и сохраняет изменения в БД.
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param test_id: UUID теста.
-        :param test_name: Название теста.
-        :param test_type: "tests" или "custom_tests".
-        :param result_data: Данные результата теста.
-        """
-        if test_type not in {"tests", "custom_tests"}:
-            raise ValueError("test_type должен быть 'tests' или 'custom_tests'")
-
-        # Ключ для теста - его UUID
-        test_key = test_id
-
-        # Если progress_data отсутствует, инициализируем структуру
-        if not self.progress_data:
-            self.progress_data = {
-                "progress_data": {"completed_tests": {}, "completed_custom_tests": {}}
+    progress_data = {
+        "progress_data": {
+            "completed_tests": {
+                "test_<UUID>": {
+                    "test_name": "Test name",
+                    "completed_at": "ISO datetime",
+                    "result_text": "текст результата"
+                }
+            },
+            "completed_custom_tests": {
+                "custom_<UUID>": {
+                    "test_name": "Test name",
+                    "completed_at": "ISO datetime",
+                    "total_score": 0,
+                    "score": 0,
+                    "free_answers": [
+                        {
+                            "question_text": "Text of the question",
+                            "answer_text": "пользовательский ввод",
+                            "timestamp": "ISO datetime"
+                        },
+                    ],
+                    "test_answers": [
+                        {
+                            "question_text": "Text of the question",
+                            "answer_text": "Answer text",
+                            "score": 0,
+                            "timestamp": "ISO datetime"
+                        },
+                    ]
+                }
             }
-
-        completed_section = (
-            self.progress_data["progress_data"]["completed_custom_tests"]
-            if test_type == "custom_tests"
-            else self.progress_data["progress_data"]["completed_tests"]
-        )
-
-        # Заполняем результат
-        completed_section[test_key] = {
-            "test_name": test_name,
-            "completed_at": datetime.utcnow().isoformat(),
-            **result_data,
         }
-
-        # Фиксируем изменения в БД
-        await session.commit()
+    }
+    """
 
     @classmethod
     async def create_test_pack_completion(
@@ -231,8 +155,9 @@ class TestPackCompletion(Base):
                 }
             },
         )
-        await session.add(new_completion)
+        session.add(new_completion)
         await session.commit()
+        await session.refresh(new_completion)
         return new_completion
 
     @property
@@ -320,6 +245,32 @@ class TestPackCompletion(Base):
 
         completed_section[test_id] = test_entry
 
+        await session.commit()
+
+    async def remove_test_by_id(
+        self, *, session: AsyncSession, test_id: str, test_type: str
+    ):
+        """
+        Удаляет тест по UUID из tests_to_complete и сохраняет изменения в БД.
+
+        :param session: Асинхронная сессия SQLAlchemy.
+        :param test_id: ID теста (UUID).
+        :param test_type: Тип теста ("tests" или "custom_tests").
+        """
+        if test_type not in {"tests", "custom_tests"}:
+            raise ValueError("test_type должен быть 'tests' или 'custom_tests'")
+
+        tests_list = self.tests_to_complete.get("tests_to_complete", {}).get(
+            test_type, []
+        )
+
+        # Фильтруем список, исключая тест с переданным ID
+        updated_tests = [t for t in tests_list if t["test_id"] != test_id]
+
+        # Обновляем JSON-структуру
+        self.tests_to_complete["tests_to_complete"][test_type] = updated_tests
+
+        # Фиксируем изменения в БД
         await session.commit()
 
     def __repr__(self):

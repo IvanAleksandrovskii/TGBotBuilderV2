@@ -10,10 +10,12 @@ from core.models.test_pack_completion import TestPackCompletion
 
 # TODO: Make notifications for the test pack start and completion
 async def notify_creator(message: types.Message, test_pack_creator_chat_id: int, text: str):
+    
     username: str = message.from_user.username
-    if username == "":
+    
+    if username is None:
         username = message.from_user.first_name
-    if username == "":
+    if (username.strip() == "") or (username is None):
         username = f"User {message.from_user.id}"
     
     notification_text: str = f"{username}: {text}" 

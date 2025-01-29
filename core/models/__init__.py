@@ -20,6 +20,7 @@ __all__ = [
     "CustomTest",
     "CustomQuestion",
     "test_pack_custom_tests",
+    "TestPackCompletion",
 ]
 
 
@@ -40,3 +41,5 @@ from .psycho_tests_ai_trascription import PsycoTestsAITranscription
 
 from .test_pack import TestPack, test_pack_tests, test_pack_custom_tests
 from .custom_test import CustomTest, CustomQuestion
+
+from .test_pack_completion import TestPackCompletion
