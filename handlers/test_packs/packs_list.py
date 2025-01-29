@@ -10,9 +10,9 @@ from sqlalchemy import select
 from core import log
 from core.models import db_helper
 from core.models.test_pack import TestPack
-from handlers.v1.utils import send_or_edit_message
+from handlers.utils import send_or_edit_message
 
-from .send_tests_pack import get_gefault_media
+from ..utils import get_default_media
 
 
 router = Router()
@@ -28,7 +28,7 @@ async def my_tests_packs(callback_query: types.CallbackQuery, state: FSMContext)
     await callback_query.answer("Command called")
     await state.clear()
     
-    default_media = await get_gefault_media()
+    default_media = await get_default_media()
     
     text = ""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[])
@@ -68,7 +68,7 @@ async def test_pack_check(callback_query: types.CallbackQuery, state: FSMContext
     parts = callback_query.data.split("_")
     test_pack_id = parts[-1]
     
-    media = await get_gefault_media()
+    media = await get_default_media()
     
     async with db_helper.db_session() as session:
         try:
@@ -123,7 +123,7 @@ async def test_pack_delete(callback_query: types.CallbackQuery, state: FSMContex
     
     await state.update_data(test_pack_id=test_pack_id)
     
-    media = await get_gefault_media()
+    media = await get_default_media()
 
     text = f"Are you sure you want to delete test pack?"
     keyboard = InlineKeyboardMarkup(inline_keyboard=[

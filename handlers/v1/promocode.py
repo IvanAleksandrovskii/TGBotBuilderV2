@@ -14,7 +14,7 @@ from core.models.promocode import PromoRegistration
 from services import UserService
 from services.promocode_service import PromoCodeService
 
-from .utils import send_or_edit_message, get_content
+from ..utils import send_or_edit_message, get_content
 
 
 router = Router()

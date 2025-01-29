@@ -10,7 +10,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.enums.dice_emoji import DiceEmoji
 
 from core.models import db_helper
-from .utils import send_or_edit_message
+from ..utils import send_or_edit_message
 
 
 router = Router()

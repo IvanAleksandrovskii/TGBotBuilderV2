@@ -13,10 +13,11 @@ from core import log, settings
 from core.models import db_helper
 from core.models.sent_test import SentTest, TestStatus
 from services import UserService
-# from services.promocode_service import PromoCodeService
 from services.text_service import TextService
 from services.button_service import ButtonService
 from .utils import send_or_edit_message
+
+from handlers.test_packs.solve_the_pack import start_solve_the_pack
 
 
 router = Router()
@@ -101,46 +102,56 @@ async def start_command(message: types.Message, state: FSMContext):
     args = message.text.split()[1:]
     chat_id = int(message.chat.id)
     username = message.from_user.username
-    # promocode = args[0] if args else None
-    # log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Promocode: {promocode}")
-
     test_pack_id = args[0] if args else None
-    if test_pack_id:
-        log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Test pack ID: {test_pack_id}")
-        
-        from handlers.test_packs.solve_the_pack import solve_the_pack
-        await solve_the_pack(message)
+    
+    user_service = UserService()
+    
+    from handlers.test_packs.solve_the_pack import SolveThePackStates
+    
+    current_state = await state.get_state()
+    forbidden_states = [
+        SolveThePackStates.WELCOME, 
+        SolveThePackStates.SOLVING, 
+        SolveThePackStates.COMPLETING, 
+        SolveThePackStates.ANSWERING_TEST
+        ]
+    
+    if current_state in forbidden_states:
+        await send_or_edit_message(
+            message, 
+            "Вы проходите тест, сначала завершите его или используйте команду /abort. "
+            "Будьте осторожны, чтобы вернуться к прохождению вам потребуется "
+            "вновь перейти по ссылке",  # TODO: Move to config
+            None, None
+            )
         return
 
-    
+    # If user came to solve the pack
+    if test_pack_id:
+        log.info(f"Start command received. Chat ID: {chat_id}, Username: {username}, Test pack ID: {test_pack_id}")
+        user = await user_service.get_user(chat_id)
+        if not user:
+            user = await user_service.create_user(chat_id, username)
+            log.info("Created new user: %s, username: %s", user.chat_id, user.username)
+        elif user.username != username:
+            updated = await user_service.update_username(chat_id, username)
+            if updated:
+                log.info("Updated username for user %s to %s", chat_id, username)
+            else:
+                log.warning("Failed to update username for user %s", chat_id)
+        await start_solve_the_pack(message, test_pack_id, state)
+        return
 
     # Get start content will create user if needed
     text, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
     
     # Now get the user that was just created or retrieved
-    user_service = UserService()
     user = await user_service.get_user(chat_id)
     
     if not user:
         log.error(f"Failed to get/create user for chat_id {chat_id}")
         await message.answer("An error occurred. Please try again later.")
         return
-
-    # # Handle promocode if provided and user is new
-    # if promocode and is_new_user:
-    #     log.debug(f"Processing promocode {promocode} for new user {chat_id}")
-    #     try:
-    #         success = await PromoCodeService.register_promo_usage(promocode, user.id)
-    #         if success:
-    #             log.info(f"Successfully registered promocode usage for user {chat_id}")
-    #             # Optionally notify about successful referral
-    #             # await message.answer("Welcome! You've joined using a referral link!")
-    #         else:
-    #             log.info(f"Failed to register promocode usage for user {chat_id}, might be already registered")
-    #     except Exception as e:
-    #         log.exception(f"Error processing promocode: {e}")
-    # elif promocode and not is_new_user:
-    #     log.debug(f"Existing user {chat_id} tried to use promocode {promocode}")
 
     # Set state and send message
     if is_new_user:

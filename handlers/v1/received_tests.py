@@ -16,7 +16,7 @@ from core.models.sent_test import TestStatus
 from services.text_service import TextService
 from services.user_services import UserService
 
-from .utils import send_or_edit_message
+from ..utils import send_or_edit_message
 from .quiz import get_sorted_questions
 
 
@@ -258,7 +258,7 @@ async def confirm_reject_all_tests(callback_query: types.CallbackQuery, state: F
             if other_tests:
                 await view_received_tests(callback_query, state)
             else:
-                from .on_start import back_to_start
+                from ..on_start import back_to_start
                 await back_to_start(callback_query, state)
             
         except Exception as e:
@@ -331,7 +331,7 @@ async def confirm_reject_test(callback_query: types.CallbackQuery, state: FSMCon
                 if other_tests:
                     await view_received_tests(callback_query, state)
                 else:
-                    from .on_start import back_to_start
+                    from ..on_start import back_to_start
                     await back_to_start(callback_query, state)
             
         except Exception as e:

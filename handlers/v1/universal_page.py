@@ -6,8 +6,8 @@ from aiogram.fsm.state import State, StatesGroup
 
 from core import log, settings
 from core.models import db_helper
-from .utils import send_or_edit_message, get_content
-from .on_start import get_start_content
+from ..utils import send_or_edit_message, get_content
+from ..on_start import get_start_content
 
 
 router = Router()

@@ -3,7 +3,7 @@ from aiogram import Router
 
 router = Router()
 
-from .on_start import router as on_start_router
+from ..on_start import router as on_start_router
 from .broadcast import router as admin_router
 
 # from .promocode import router as promocode_router

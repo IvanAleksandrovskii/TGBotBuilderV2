@@ -18,7 +18,7 @@ from core.models import db_helper
 from core.models.quiz import Test
 from core.models.user import User
 from core.models.sent_test import SentTest, TestStatus
-from handlers.v1.utils import send_or_edit_message
+from handlers.utils import send_or_edit_message
 from services.text_service import TextService
 
 

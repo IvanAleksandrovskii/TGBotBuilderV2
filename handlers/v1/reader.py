@@ -10,7 +10,7 @@ from core.models import db_helper
 from core import log, settings
 from services.text_service import TextService
 from services.button_service import ButtonService
-from .utils import send_or_edit_message
+from ..utils import send_or_edit_message
 
 
 router = Router()

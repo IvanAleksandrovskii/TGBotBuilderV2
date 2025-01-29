@@ -4,10 +4,12 @@ from aiogram import types
 from aiogram.exceptions import TelegramBadRequest
 
 from aiogram.types import InputMediaAnimation, InputMediaPhoto, InputMediaVideo
+from async_lru import alru_cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import log, settings
 
+from core.models import db_helper
 from services.button_service import ButtonService
 from services.text_service import TextService
 
@@ -83,3 +85,15 @@ async def get_content(context_marker: str, session: AsyncSession):
         media_url = await text_service.get_default_media(session)
 
     return content_data["text"], keyboard, media_url
+
+
+@alru_cache(maxsize=1, ttl=60)
+async def get_default_media() -> str:
+    text_service = TextService()
+    async with db_helper.db_session() as session:
+        try:
+            default_media = await text_service.get_default_media(session)
+        except Exception as e:
+            log.exception(f"Error in getting default media: {e}")
+            default_media = None
+    return default_media
