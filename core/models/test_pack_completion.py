@@ -16,9 +16,9 @@ from .base import Base
 class CompletionStatus(str, Enum):
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
+    ABANDONED = "abandoned"
 
     # TODO: Implement later:
-    # ABANDONED = "abandoned"
     # ARCHIVED = "archived"  # USE active=False instead
     # ORIGIN_DELETED = "origin_deleted"
     # USER_DECLINED = "user_declined"
