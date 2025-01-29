@@ -17,7 +17,7 @@ from core.models import (
     TestPackCompletion,
 )
 from handlers.utils import send_or_edit_message, get_default_media
-
+from handlers.test_packs.solve_the_pack.start_the_pack import SolveThePackStates
 # from handlers.test_packs.solve_the_pack.notifications_for_creator import notify_creator
 
 
@@ -30,12 +30,11 @@ env = Environment(
 )
 
 
-@router.callback_query(F.data == "back_to_solve_test_menu")
-async def get_solve_test_menu(message: types.Message, state: FSMContext):
+async def get_solve_test_menu(message: types.Message | types.CallbackQuery, state: FSMContext):
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
 
     state_instance = await state.get_state()
-
-    from handlers.test_packs.solve_the_pack.start_the_pack import SolveThePackStates
 
     if state_instance not in [
         SolveThePackStates.SOLVING,
@@ -50,6 +49,9 @@ async def get_solve_test_menu(message: types.Message, state: FSMContext):
 
     data = await state.get_data()
     test_pack_completion_id = data.get("test_pack_completion_id")
+
+    state.set_state(SolveThePackStates.SOLVING)
+    await state.update_data(test_pack_completion_id=test_pack_completion_id)
 
     async with db_helper.db_session() as session:
         try:
@@ -175,7 +177,7 @@ async def get_solve_test_menu(message: types.Message, state: FSMContext):
         loader=FileSystemLoader("handlers/test_packs/solve_the_pack/templates")
     )
     template = env.get_template("solve_test_pack_menu.html")
-    
+
     default_media = await get_default_media()
 
     await send_or_edit_message(

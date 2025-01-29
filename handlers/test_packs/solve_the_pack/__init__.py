@@ -17,3 +17,6 @@ router.include_router(solve_the_pack_router)
 
 from .solve_test import router as solve_test_router
 router.include_router(solve_test_router)
+
+from .solve_pack_menu import router as solve_pack_menu_router
+router.include_router(solve_pack_menu_router)

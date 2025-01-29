@@ -24,6 +24,7 @@ class CompletionStatus(str, Enum):
     # USER_DECLINED = "user_declined"
 
 
+# TODO: Add completion date and time
 class TestPackCompletion(Base):
     """
     Tracks user's progress through a test pack including both standard and custom tests.
