@@ -68,6 +68,7 @@ async def inside_the_custom_test(
     # Будем хранить user_answers временно до окончания
     await state.update_data(
         custom_test_name=custom_test.name,
+        allow_back=custom_test.allow_back,  # сохраняем настройку возврата назад
         questions=[q.id for q in questions],
         current_index=0,
         user_answers=[],  # здесь будем копить ответы
@@ -99,27 +100,33 @@ async def ask_next_question(message: types.Message, state: FSMContext):
     text = question.question_text
 
     if question.is_quiz_type:
-        # Собираем возможные варианты ответа
+        # Собираем варианты ответа
         kb_buttons = []
         for i in range(1, 7):
             ans_text = getattr(question, f"answer{i}_text", None)
             ans_score = getattr(question, f"answer{i}_score", None)
             if ans_text is not None:
-                # При нажатии кнопки передадим индекс ответа
                 kb_buttons.append(
                     [
                         types.InlineKeyboardButton(
                             text=ans_text,
-                            callback_data=f"custom_answer_{i}",  # укажем i
+                            callback_data=f"custom_answer_{i}",
                         )
                     ]
                 )
-        markup = types.InlineKeyboardMarkup(inline_keyboard=kb_buttons)
+        # Если разрешён возврат назад и не на первом вопросе – добавляем кнопку "Назад"
+        if data.get("allow_back", False) and current_index > 0:
+            kb_buttons.append(
+                [types.InlineKeyboardButton(text="Назад", callback_data="custom_back")]
+            )
 
+        markup = types.InlineKeyboardMarkup(inline_keyboard=kb_buttons)
         await message.answer(f"Вопрос (multiple choice): {text}", reply_markup=markup)
 
     else:
-        # Свободный ответ: просим пользователя написать в чат
+        # Свободный ответ: просим написать ответ, добавляем инструкцию для возврата, если включено
+        if data.get("allow_back", False) and current_index > 0:
+            text += "\n\n(Чтобы вернуться к предыдущему вопросу, отправьте /back)"
         await message.answer(
             f"Вопрос (свободный ответ): {text}\n\nНапишите свой ответ:"
         )
@@ -363,3 +370,21 @@ async def finalize_custom_test(message: types.Message, state: FSMContext):
     await state.set_state(SolveThePackStates.SOLVING)
     await state.update_data(test_pack_completion_id=test_pack_completion_id)
     await get_solve_test_menu(message, state)
+
+
+@router.callback_query(PassCustomTestStates.QUESTION, F.data == "custom_back")
+async def handle_back(callback_query: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    current_index = data.get("current_index", 0)
+    if current_index == 0:
+        await callback_query.answer("Невозможно вернуться назад", show_alert=True)
+        return
+
+    # Удаляем последний сохранённый ответ и переходим к предыдущему вопросу
+    user_answers = data.get("user_answers", [])
+    if user_answers:
+        user_answers.pop()
+    new_index = current_index - 1
+    await state.update_data(current_index=new_index, user_answers=user_answers)
+    await callback_query.answer("Возвращаемся к предыдущему вопросу")
+    await ask_next_question(callback_query.message, state)
