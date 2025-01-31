@@ -1,18 +1,10 @@
 # run_main.py
 
-from gunicorn_app import Application, get_app_options
-
-from main import main_app
-
-
-def main():
-    app = Application(
-        app=main_app,
-        options=get_app_options()
-    )
-    
-    app.run()
+from main_with_multy_workers import main_app
+from gunicorn_app.application_whith_multy_workers import Application
+from gunicorn_app.app_options import get_app_options
 
 
 if __name__ == "__main__":
-    main()
+    options = get_app_options()
+    Application(main_app, options).run()

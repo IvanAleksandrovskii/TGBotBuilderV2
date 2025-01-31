@@ -16,7 +16,7 @@ DEBUG = os.getenv("DEBUG", "True").lower() in ('true', '1')  # TODO: make False
 APP_RUN_HOST = str(os.getenv("APP_RUN_HOST", "0.0.0.0"))
 APP_RUN_PORT = int(os.getenv("APP_RUN_PORT", 8000))
 
-APP_RUN_WORKERS = int(os.getenv("APP_RUN_WORKERS", 1))
+APP_RUN_WORKERS = int(os.getenv("APP_RUN_WORKERS", 4))
 
 # Database ENV variables
 POSTGRES_ADDRESS = os.getenv("POSTGRES_ADDRESS", "0.0.0.0")

@@ -8,10 +8,11 @@ def get_app_options(
     port: int = settings.run.port,
     workers: int = settings.run.workers,
     timeout: int = settings.run.timeout,
-    ) -> dict:
+) -> dict:
     return {
         "bind": f"{host}:{port}",
         "workers": workers,
         "worker_class": "uvicorn.workers.UvicornWorker",
         "timeout": timeout,
+        "preload_app": False,  # Важно для правильной инициализации воркеров
     }
