@@ -44,11 +44,11 @@ class BotWebhookManager:
                     allowed_updates=["message", "callback_query"],
                     drop_pending_updates=True,
                 )
-                break  # Если удалось – выходим из цикла
+                break  # Успех – выходим из цикла
             except TelegramRetryAfter as e:
-                wait_time = e.retry_after
-                logging.warning(
-                    f"Flood control: превышен лимит. Повтор через {wait_time} секунд (попытка {attempt+1} из {max_retries})."
+                wait_time = e.retry_after * (attempt + 1)  # экспоненциальная задержка
+                logging.info(
+                    f"Telegram rate limit reached. Retrying after {wait_time} seconds (attempt {attempt+1} of {max_retries})."
                 )
                 await asyncio.sleep(wait_time)
             except Exception as e:
