@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from aiogram import Router, types, F
@@ -149,8 +150,8 @@ async def handle_contact(message: types.Message, state: FSMContext):
     test_pack_name: str = data["test_pack_name"]
     test_pack_creator_id: int = data["test_pack_creator_id"]
 
-    tests_dicts_list: list[dict] = data["tests_dicts_list"]
-    custom_tests_dicts_list: list[dict] = data["custom_tests_dicts_list"]
+    # tests_dicts_list: list[dict] = data["tests_dicts_list"]
+    # custom_tests_dicts_list: list[dict] = data["custom_tests_dicts_list"]
 
     # Set state to solving
     await state.set_state(SolveThePackStates.SOLVING)
@@ -185,6 +186,13 @@ async def handle_contact(message: types.Message, state: FSMContext):
     # Create a new test pack completion
     async with db_helper.db_session() as session:
         try:
+            test_pack = await session.execute(select(TestPack).where(TestPack.id == test_pack_id))
+            test_pack = test_pack.scalar_one_or_none()
+            
+            if not test_pack:
+                await message.answer("Test pack not found.")
+                return
+            
             new_test_pack_completion = (
                 await TestPackCompletion.create_test_pack_completion(
                     session=session,
@@ -192,8 +200,8 @@ async def handle_contact(message: types.Message, state: FSMContext):
                     user_data=user_data,
                     test_pack_id=str(test_pack_id),
                     test_pack_creator_id=test_pack_creator_id,
-                    tests=tests_dicts_list,
-                    custom_tests=custom_tests_dicts_list,
+                    tests = [{"test_name": t.name, "id": str(t.id), "type": "test"} for t in test_pack.tests],
+                    custom_tests = [{"test_name": ct.name, "id": str(ct.id), "type": "custom"} for ct in test_pack.custom_tests]
                 )
             )
         except Exception as e:

@@ -18,6 +18,7 @@ from core.models import (
 )
 from handlers.utils import send_or_edit_message, get_default_media
 from handlers.test_packs.solve_the_pack.start_the_pack import SolveThePackStates
+
 # from handlers.test_packs.solve_the_pack.notifications_for_creator import notify_creator
 
 
@@ -30,7 +31,9 @@ env = Environment(
 )
 
 
-async def get_solve_test_menu(message: types.Message | types.CallbackQuery, state: FSMContext):
+async def get_solve_test_menu(
+    message: types.Message | types.CallbackQuery, state: FSMContext
+):
     if isinstance(message, types.CallbackQuery):
         message = message.message
 
@@ -44,7 +47,7 @@ async def get_solve_test_menu(message: types.Message | types.CallbackQuery, stat
         await message.answer(
             "You are not in solving state. Telegram error happaned, bot made a restart. "
             "Please press -> /abort and open the test pack again using link."
-        )
+        )  # TODO: Move to config
         return
 
     data = await state.get_data()
@@ -68,82 +71,26 @@ async def get_solve_test_menu(message: types.Message | types.CallbackQuery, stat
             log.exception(f"Error in get_solve_test_menu: {e}")
             await message.answer("An error occurred. Please try again later.")
 
-    # Структура tests_to_complete:
-    # {
-    # "tests_to_complete": {
-    #     "tests": [{
-    #         "test_name": "Test name",
-    #         "test_id": "test_id",
-    #     },],
-    # "custom_tests": [{
-    #         "test_name": "Test name",
-    #         "test_id": "test_id",
-    #     },],
-    # }
+    completed_tests = [t for t in test_pack_completion.completed_tests if t["type"] == "test"]
+    completed_custom_tests = [t for t in test_pack_completion.completed_tests if t["type"] == "custom"]
 
-    # Структура progress_data:
-    # progress_data = {
-    #     "progress_data": {
-    #         "completed_tests": {
-    #             "test_<UUID>": {
-    #                 "test_name": "Test name",
-    #                 "completed_at": "ISO datetime",
-    #                 "result_text": "текст результата"
-    #             }
-    #         },
-    #         "completed_custom_tests": {
-    #             "custom_<UUID>": {
-    #                 "test_name": "Test name",
-    #                 "completed_at": "ISO datetime",
-    #                 "total_score": 0,
-    #                 "score": 0,
-    #                 "free_answers": [
-    #                     {
-    #                         "question_text": "Text of the question",
-    #                         "answer_text": "пользовательский ввод",
-    #                         "timestamp": "ISO datetime"
-    #                     },
-    #                 ],
-    #                 "test_answers": [
-    #                     {
-    #                         "question_text": "Text of the question",
-    #                         "answer_text": "Answer text",
-    #                         "score": 0,
-    #                         "timestamp": "ISO datetime"
-    #                     },
-    #                 ]
-    #             }
-    #         }
-    #     }
-    # }
+    completed_tests_names_list = [test["name"] for test in completed_tests]
+    completed_custom_tests_names_list = [test["name"] for test in completed_custom_tests]
 
-    progress_data: dict = test_pack_completion.progress_data
-    completed_tests: dict = progress_data.get("progress_data", {}).get(
-        "completed_tests", {}
-    )
-    completed_custom_tests: dict = progress_data.get("progress_data", {}).get(
-        "completed_custom_tests", {}
-    )
+    pending_tests = test_pack_completion.pending_tests
+    tests_to_complete = [t for t in pending_tests if t["type"] == "test"]
+    custom_tests_to_complete = [t for t in pending_tests if t["type"] == "custom"]
 
-    completed_tests_names_list: list[str] = []
-    for test_id, test in completed_tests.items():
-        completed_tests_names_list.append(test["test_name"])
+    # Фильтрации тестов:
+    completed_tests_ids = {t["id"] for t in completed_tests}
+    completed_custom_tests_ids = {t["id"] for t in completed_custom_tests}
 
-    completed_custom_tests_names_list: list[str] = []
-    for test_id, test in completed_custom_tests.items():
-        completed_custom_tests_names_list.append(test["test_name"])
+    tests_to_complete = [t for t in tests_to_complete if t["id"] not in completed_tests_ids]
+    custom_tests_to_complete = [t for t in custom_tests_to_complete if t["id"] not in completed_custom_tests_ids]
 
-    all_tests_to_complete: dict = test_pack_completion.tests_to_complete
-
-    # 1) Забираем вложенный словарь (или пустой) из tests_to_complete
-    tests_object = all_tests_to_complete.get("tests_to_complete", {})
-
-    # 2) Из этого словаря достаём списки
-    tests_to_complets = tests_object.get("tests", [])
-    custom_tests_to_complets = tests_object.get("custom_tests", [])
 
     # 3) Теперь можно проверить их длину:
-    if len(tests_to_complets) + len(custom_tests_to_complets) == 0:
+    if len(tests_to_complete) + len(custom_tests_to_complete) == 0:
         await message.answer(
             "No tests to complete. Error happened. Please press -> /abort"
         )
@@ -152,25 +99,25 @@ async def get_solve_test_menu(message: types.Message | types.CallbackQuery, stat
     # 4) Формируем клавиатуру
     keyboard = []
 
-    for test_data in tests_to_complets:
+    for test_data in tests_to_complete:
         keyboard.append(
             [
                 types.InlineKeyboardButton(
                     text=test_data["name"],
-                    callback_data=f"solve_test_{test_data['id']}",
+                    callback_data=f"solve_test_{test_data.get('test_id', test_data.get('id'))}",  # TODO: Fix to make only one check
                 )
             ]
         )
 
-    for test_data in custom_tests_to_complets:
+    for test_data in custom_tests_to_complete:
         keyboard.append(
             [
                 types.InlineKeyboardButton(
                     text=test_data["name"],
-                    callback_data=f"solve_custom_test_{test_data['id']}",
+                    callback_data=f"solve_custom_test_{test_data.get('test_id', test_data.get('id'))}",  # TODO: Fix to make only one check
                 )
             ]
-        )
+    )
 
     # jinja environment
     env = Environment(
@@ -183,8 +130,8 @@ async def get_solve_test_menu(message: types.Message | types.CallbackQuery, stat
     await send_or_edit_message(
         message,
         template.render(
-            completed_tests=completed_custom_tests_names_list,
-            completed_custom_tests=completed_custom_tests_names_list,
+            completed_tests_names_list=completed_tests_names_list,
+            completed_custom_tests_names_list=completed_custom_tests_names_list,
         ),
         types.InlineKeyboardMarkup(inline_keyboard=keyboard),
         default_media,
