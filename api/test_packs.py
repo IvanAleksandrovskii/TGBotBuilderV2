@@ -25,7 +25,7 @@ from core.schemas.test_packs import (
 router = APIRouter(prefix="/test-packs", tags=["test-packs"])
 
 
-@router.get("/{creator_id}", response_model=List[TestPackOut])
+@router.get("/{creator_id}")  # , response_model=List[TestPackOut]
 async def list_test_packs(
     creator_id: int,
     page: int = Query(1, ge=1),
@@ -63,7 +63,7 @@ async def list_test_packs(
     return packs_out
 
 
-@router.post("/", response_model=TestPackOut, status_code=201)
+@router.post("/", status_code=201)  # response_model=TestPackOut, 
 async def create_test_pack(
     data: TestPackCreate  # TODO: user id sould be in the request data && creator_username should be too but optional
 ):
@@ -114,7 +114,7 @@ async def create_test_pack(
         )
 
 
-@router.get("/test_pack/{pack_id}", response_model=TestPackOutExtended)
+@router.get("/test_pack/{pack_id}")  # response_model=TestPackOutExtended
 async def get_test_pack(pack_id: UUID):
     """
     Получить конкретный TestPack по ID и отдать объекты тестов (id, name, description).
@@ -156,8 +156,8 @@ async def get_test_pack(pack_id: UUID):
         )
 
 
-@router.put("/test_pack/{pack_id}", response_model=TestPackOut)
-@router.patch("/test_pack/{pack_id}", response_model=TestPackOut) 
+@router.put("/test_pack/{pack_id}")  # , response_model=TestPackOut
+@router.patch("/test_pack/{pack_id}")   # , response_model=TestPackOut
 async def update_test_pack(pack_id: UUID, data: TestPackUpdate):
     """
     Обновить TestPack (PUT/PATCH). 

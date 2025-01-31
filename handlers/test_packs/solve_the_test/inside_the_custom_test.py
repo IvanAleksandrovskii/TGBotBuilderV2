@@ -15,8 +15,8 @@ from core.models import (
     CustomTest,
     CustomQuestion,
 )
-from handlers.utils import send_or_edit_message
 from handlers.test_packs.solve_the_pack.solve_pack_menu import get_solve_test_menu
+
 
 router = Router()
 
@@ -90,22 +90,8 @@ async def ask_next_question(message: types.Message, state: FSMContext):
 
     question_id = questions_ids[current_index]
 
-    # # Достаём вопрос из БД
-    # async with db_helper.db_session() as session:
-    #     q_query = (
-    #         select(CustomTest.custom_questions)
-    #         .where(CustomTest.custom_questions.any(id=question_id))
-    #         .options(selectinload(CustomTest.custom_questions))
-    #     )
-    #     # Немного хитрый способ, но лучше напрямую:
-    #     question_result = await session.execute(select(CustomTest).where(CustomTest.custom_questions.any(id=question_id)))
-    #     # В реальном коде, проще сделать отдельный запрос к "SELECT CustomQuestion WHERE id=question_id"
-
-    # Проще было бы:
-    from core.models.custom_test import CustomQuestion
-
-    async with db_helper.db_session() as session2:
-        q = await session2.execute(
+    async with db_helper.db_session() as session:
+        q = await session.execute(
             select(CustomQuestion).where(CustomQuestion.id == question_id)
         )
         question = q.scalar_one()

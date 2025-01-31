@@ -129,8 +129,8 @@ async def start_solve_the_pack(
         await state.update_data(custom_tests_dicts_list=custom_tests_dicts_list)
 
         # TODO: Think about it
-        import asyncio
-        await asyncio.sleep(5)
+        # import asyncio
+        # await asyncio.sleep(5)
 
         await message.answer(text=text, reply_markup=get_contact_keyboard())
     else:
@@ -141,7 +141,7 @@ async def start_solve_the_pack(
 
 
 # Обработчик получения контакта
-@router.message(SolveThePackStates.WELCOME, F.contact)  # TODO: Продолжить...
+@router.message(SolveThePackStates.WELCOME, F.contact)
 async def handle_contact(message: types.Message, state: FSMContext):
 
     # Get the test pack ID from the state

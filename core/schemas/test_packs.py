@@ -47,7 +47,15 @@ class TestPackOut(BaseModel):
 
     class Config:
         from_attributes = True
-        json_schema_extra = {...}
+        # json_schema_extra = {
+        #     "example": {
+        #         "id": "123e4567-e89b-12d3-a456-426614174000",
+        #         "name": "Название тест-пака",
+        #         "creator_id": 123456,
+        #         "tests": ["Тест 1", "Тест 2"],
+        #         "custom_tests": ["Кастомный тест 1"],
+        #     }
+        # }
 
 
 from .custom_test import CustomTestBase
@@ -59,7 +67,6 @@ class CustomTestOut(CustomTestBase):
     
     class Config:
         from_attributes = True
-        json_schema_extra = {...}
 
 
 class TestPackOutExtended(TestPackOut):
