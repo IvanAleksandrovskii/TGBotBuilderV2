@@ -46,7 +46,7 @@ async def get_solve_test_menu(
     ]:
         await message.answer(
             "You are not in solving state. Telegram error happaned, bot made a restart. "
-            "Please press -> /abort and open the test pack again using link."
+            "Please press -> /abort and open the test pack again using the link."
         )  # TODO: Move to config
         return
 
@@ -70,6 +70,11 @@ async def get_solve_test_menu(
         except Exception as e:
             log.exception(f"Error in get_solve_test_menu: {e}")
             await message.answer("An error occurred. Please try again later.")
+    
+    if test_pack_completion.pending_tests == []:
+        from .final_all_tests_done import finish_the_pack
+        await finish_the_pack(message, state)
+        return
 
     completed_tests = [t for t in test_pack_completion.completed_tests if t["type"] == "test"]
     completed_custom_tests = [t for t in test_pack_completion.completed_tests if t["type"] == "custom"]
@@ -90,7 +95,7 @@ async def get_solve_test_menu(
 
 
     # 3) Теперь можно проверить их длину:
-    if len(tests_to_complete) + len(custom_tests_to_complete) == 0:
+    if len(tests_to_complete) + len(custom_tests_to_complete) == 0:  # TODO: Make it finalize the completion here
         await message.answer(
             "No tests to complete. Error happened. Please press -> /abort"
         )
