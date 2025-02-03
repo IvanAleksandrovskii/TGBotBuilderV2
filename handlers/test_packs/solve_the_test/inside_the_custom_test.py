@@ -326,7 +326,7 @@ async def finalize_custom_test(message: types.Message, state: FSMContext):  # TO
 
             # Удаляем тест из `pending_tests`
             original_len = len(tpc.pending_tests)
-            tpc.pending_tests = [t for t in tpc.pending_tests if t["id"] != test_id]
+            tpc.pending_tests = [t for t in tpc.pending_tests if t["id"] != str(test_id)]  # TODO: Double check (( ! ))
             log.info(
                 f"Удалено тестов: {original_len - len(tpc.pending_tests)} из pending_tests"
             )
@@ -341,7 +341,7 @@ async def finalize_custom_test(message: types.Message, state: FSMContext):  # TO
             }
 
             # Обновляем `completed_tests` через копию списка (важно для SQLAlchemy!)
-            if not any(t["id"] == test_id for t in tpc.completed_tests):
+            if not any(t["id"] == str(test_id) for t in tpc.completed_tests):
                 updated_completed_tests = tpc.completed_tests.copy()
                 updated_completed_tests.append(new_completed)
                 tpc.completed_tests = updated_completed_tests  # Явно обновляем JSON

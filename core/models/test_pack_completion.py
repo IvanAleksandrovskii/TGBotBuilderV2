@@ -56,32 +56,36 @@ class TestPackCompletion(Base):
         ARRAY(JSON), default=list
     )
 
-    async def mark_test_completed(self, session, test_id, test_type, result=None):
-        test = next(
-            (
-                t
-                for t in self.pending_tests
-                if t["id"] == test_id and t["type"] == test_type
-            ),
-            None,
-        )
-        if not test:
-            log.warning(
-                f"Test {test_id} of type {test_type} not found in pending tests!"
-            )
-            return
+    # TODO: Use this instead ???
+    # pending_tests: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list)
+    # completed_tests: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list)
 
-        self.pending_tests = [t for t in self.pending_tests if t["id"] != test_id]
+    # async def mark_test_completed(self, session, test_id, test_type, result=None):
+    #     test = next(
+    #         (
+    #             t
+    #             for t in self.pending_tests
+    #             if t["id"] == test_id and t["type"] == test_type
+    #         ),
+    #         None,
+    #     )
+    #     if not test:
+    #         log.warning(
+    #             f"Test {test_id} of type {test_type} not found in pending tests!"
+    #         )
+    #         return
 
-        # Добавляем тест в `completed_tests`, если его там еще нет
-        if not any(t["id"] == test_id for t in self.completed_tests):
-            completed_entry = {
-                **test,
-                "completed_at": datetime.utcnow().isoformat(),
-                "result": result or {},
-            }
-            self.completed_tests.append(completed_entry)
-            await session.commit()
+    #     self.pending_tests = [t for t in self.pending_tests if t["id"] != test_id]
+
+    #     # Добавляем тест в `completed_tests`, если его там еще нет
+    #     if not any(t["id"] == test_id for t in self.completed_tests):
+    #         completed_entry = {
+    #             **test,
+    #             "completed_at": datetime.utcnow().isoformat(),
+    #             "result": result or {},
+    #         }
+    #         self.completed_tests.append(completed_entry)
+    #         # await session.commit()
 
     @classmethod
     async def create_test_pack_completion(

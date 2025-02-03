@@ -1,7 +1,7 @@
 {% if completed_tests_names_list | length > 0 or completed_custom_tests_names_list | length > 0 %}
 Завершённые тесты:
 {% if completed_tests_names_list %}
-  <strong>Обычные тесты:</strong>
+  <strong>Психологические тесты:</strong>
   {% for test in completed_tests_names_list %}
   - {{ test }}
   {% endfor %}
@@ -13,5 +13,5 @@
   {% endfor %}
   {% endif %}
   {% else %}
-    Нет завершённых тестов
+    Выберите тест для прохождения:
   {% endif %}

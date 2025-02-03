@@ -38,9 +38,6 @@ async def finish_the_pack(message: types.Message, state: FSMContext) -> None:
                 await message.answer("An error occurred. Please try again later.")
                 return
 
-            test_pack_completion.status = CompletionStatus.COMPLETED
-            await session.commit()
-
         except Exception as e:
             log.exception(e)
             await message.answer("An error occurred. Please try again later.")
@@ -52,6 +49,44 @@ async def finish_the_pack(message: types.Message, state: FSMContext) -> None:
     )
 
 
+# should take everything except /start and /abort
 @router.message(SolveThePackStates.COMPLETING)
 async def recive_resume(message: types.Message, state: FSMContext):
-    await message.answer("recive_resume called")
+    state_data = await state.get_data()
+    test_pack_completion_id = state_data["test_pack_completion_id"]
+    
+    if (message.text == "/start") or (message.text == "/abort"):
+        await message.answer("Пожалуйста, пришлите свое резюме и (или) сопроводительное письмо, необходимо все прислать одним сообщением")
+        return
+    
+    async with db_helper.db_session() as session:
+        try:
+            query = select(TestPackCompletion).where(
+                TestPackCompletion.id == test_pack_completion_id
+            )
+            result = await session.execute(query)
+            test_pack_completion = result.scalar_one_or_none()
+
+            if test_pack_completion is None:
+                log.error(
+                    f"Failed to get test pack completion with id {test_pack_completion_id}"
+                )
+                await message.answer("An error occurred. Please try again later.")
+                return
+            
+            test_pack_completion.status = CompletionStatus.COMPLETED
+            await session.commit()
+
+        except Exception as e:
+            log.exception(e)
+            await message.answer("An error occurred. Please try again later.")
+            return
+        
+        await message.bot.forward_message(test_pack_completion.test_pack_creator_id, message.chat.id, message.message_id)
+        await message.bot.send_message(test_pack_completion.test_pack_creator_id, "Результаты пользователя доступны в панели управелния наборами тестов")
+        
+        await message.answer("Спасибо за прохождения, все данные переданы создателю набора")
+        await state.clear()
+        
+        from handlers.on_start import back_to_start_from_message
+        await back_to_start_from_message(message, state)

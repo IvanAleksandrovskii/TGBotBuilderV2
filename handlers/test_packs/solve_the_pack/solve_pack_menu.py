@@ -19,8 +19,6 @@ from core.models import (
 from handlers.utils import send_or_edit_message, get_default_media
 from handlers.test_packs.solve_the_pack.start_the_pack import SolveThePackStates
 
-# from handlers.test_packs.solve_the_pack.notifications_for_creator import notify_creator
-
 
 router = Router()
 
@@ -31,6 +29,7 @@ env = Environment(
 )
 
 
+# @router.callback_query(F.data == "back_to_completion_menu")
 async def get_solve_test_menu(
     message: types.Message | types.CallbackQuery, state: FSMContext
 ):
@@ -45,8 +44,7 @@ async def get_solve_test_menu(
         SolveThePackStates.COMPLETING,
     ]:
         await message.answer(
-            "You are not in solving state. Telegram error happaned, bot made a restart. "
-            "Please press -> /abort and open the test pack again using the link."
+            "Сейчас вы не находитесь в состоянии прохождения наботра тестов, пожалуйста, откройте набор который вы хотите пройти по ссылке-приглашению."
         )  # TODO: Move to config
         return
 
@@ -109,7 +107,7 @@ async def get_solve_test_menu(
             [
                 types.InlineKeyboardButton(
                     text=test_data["name"],
-                    callback_data=f"solve_test_{test_data.get('test_id', test_data.get('id'))}",  # TODO: Fix to make only one check
+                    callback_data=f"solve_test_{test_data.get('id')}",  # TODO: Fix to make only one check , test_data.get('test_id')
                 )
             ]
         )
@@ -119,7 +117,7 @@ async def get_solve_test_menu(
             [
                 types.InlineKeyboardButton(
                     text=test_data["name"],
-                    callback_data=f"solve_custom_test_{test_data.get('test_id', test_data.get('id'))}",  # TODO: Fix to make only one check
+                    callback_data=f"solve_custom_test_{test_data.get('id')}",  # TODO: Fix to make only one check , test_data.get('test_id')
                 )
             ]
     )

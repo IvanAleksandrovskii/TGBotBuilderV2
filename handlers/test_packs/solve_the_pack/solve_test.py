@@ -95,7 +95,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                 if any(t["id"] == test_id for t in tpc.completed_tests):
                     await callback_query.answer("Этот тест уже пройден!")
                     return
-                
+
                 test_query = select(Test).where(Test.id == test_id)
                 test = await session.execute(test_query)
                 test = test.scalar_one_or_none()
@@ -185,27 +185,33 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer("Начат тест")  # TODO: Move to config
 
     data = await state.get_data()
-    test_pack_completion_id = data.get("test_pack_completion_id")  # TODO: Should be turned back to state
+    test_pack_completion_id = data.get(
+        "test_pack_completion_id"
+    )  # TODO: Should be turned back to state
     test_id = data.get("test_id")
     test_type = data.get("test_type")
 
     async with db_helper.db_session() as session:
         try:
             if test_type == "psychological":
-                test_query = select(Test).where(Test.id == test_id)
-                test = await session.execute(test_query)
-                test = test.scalar_one_or_none()
+                # test_query = select(Test).where(Test.id == test_id)
+                # test = await session.execute(test_query)
+                # test = test.scalar_one_or_none()
 
-                if not test:  # TODO: Write this scenario
-                    await callback_query.message.answer(
-                        f"Test with id {test_id} not found"
-                    )
-                    return
+                # if not test:  # TODO: Write this scenario
+                #     await callback_query.message.answer(
+                #         f"Test with id {test_id} not found"
+                #     )
+                #     return
 
-                # TODO: Write this scenario
-                await callback_query.message.answer(f"Test started! {test_id} name: {test.name}")
+                # # TODO: Write this scenario
+                # await callback_query.message.answer(f"Test started! {test_id} name: {test.name}")
 
-
+                from handlers.test_packs.solve_the_test.inside_the_psychological_test import (
+                    confirm_start_test,
+                )
+                await confirm_start_test(callback_query, state, test_id)
+                return
 
             elif test_type == "custom":
                 custom_test_query = select(CustomTest).where(CustomTest.id == test_id)
@@ -219,6 +225,7 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
                     return
 
                 from handlers.test_packs.solve_the_test import inside_the_custom_test
+
                 await inside_the_custom_test(callback_query, state)
 
             else:
@@ -233,6 +240,6 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
             await state.clear()
             await state.set_state(SolveThePackStates.SOLVING)
             await state.update_data(test_pack_completion_id=test_pack_completion_id)
-            
+
             await get_solve_test_menu(callback_query.message, state)
             return

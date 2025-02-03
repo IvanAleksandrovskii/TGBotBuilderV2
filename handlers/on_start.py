@@ -23,10 +23,7 @@ from services.button_service import ButtonService
 
 from .utils import send_or_edit_message
 
-from handlers.test_packs.solve_the_pack import (
-    start_solve_the_pack, 
-    SolveThePackStates
-)
+from handlers.test_packs.solve_the_pack import start_solve_the_pack, SolveThePackStates
 
 
 router = Router()
@@ -152,13 +149,29 @@ async def start_command(message: types.Message, state: FSMContext):
         )
         return
 
+    # Now get the user that was just created or retrieved
+    user = await user_service.get_user(chat_id)
+
+    if not user:
+        user = await user_service.create_user(chat_id, username)
+        log.info("Created new user: %s, username: %s", user.chat_id, user.username)
+    elif user.username != username:
+        updated = await user_service.update_username(chat_id, username)
+        if updated:
+            log.info("Updated username for user %s to %s", chat_id, username)
+        else:
+            log.warning("Failed to update username for user %s", chat_id)
+    
+    # if not user.is_active:
+    #     log.info("Blocked user pressed start command: %s", chat_id)
+    #     await message.answer("Извините, ваш аккаунт заблокирован..")
+    #     return
+
     # If user came to solve the pack
     if test_pack_id:
         log.info(
             f"Start command received. Chat ID: {chat_id}, Username: {username}, Test pack ID: {test_pack_id}"
         )
-        user = await user_service.get_user(chat_id)
-
         async with db_helper.db_session() as session:
             try:
                 existing_test_pack_completion_query = (
@@ -184,39 +197,39 @@ async def start_command(message: types.Message, state: FSMContext):
 
             if existing_test_pack_completion.status == CompletionStatus.COMPLETED:
                 log.info("Test pack completion %s already completed", test_pack_id)
-                
+
                 # Generate the jinja environment and render the template
-                env = Environment(loader=FileSystemLoader("handlers/test_packs/solve_the_pack/templates"))
+                env = Environment(
+                    loader=FileSystemLoader(
+                        "handlers/test_packs/solve_the_pack/templates"
+                    )
+                )
                 template = env.get_template("start_solved_pack.html")
                 await send_or_edit_message(message, template.render(), None, None)
                 return
 
             if existing_test_pack_completion.status == CompletionStatus.IN_PROGRESS:
-                log.info("Test pack completion %s already in progress", existing_test_pack_completion.id)
+                log.info(
+                    "Test pack completion %s already in progress",
+                    existing_test_pack_completion.id,
+                )
                 await state.set_state(SolveThePackStates.SOLVING)
-                await state.update_data(test_pack_completion_id=existing_test_pack_completion.id)
-                
-                from handlers.test_packs.solve_the_pack.solve_pack_menu import get_solve_test_menu 
+                await state.update_data(
+                    test_pack_completion_id=existing_test_pack_completion.id
+                )
+
+                from handlers.test_packs.solve_the_pack.solve_pack_menu import (
+                    get_solve_test_menu,
+                )
+
                 await get_solve_test_menu(message, state)
                 return
 
-        if not user:
-            user = await user_service.create_user(chat_id, username)
-            log.info("Created new user: %s, username: %s", user.chat_id, user.username)
-        elif user.username != username:
-            updated = await user_service.update_username(chat_id, username)
-            if updated:
-                log.info("Updated username for user %s to %s", chat_id, username)
-            else:
-                log.warning("Failed to update username for user %s", chat_id)
         await start_solve_the_pack(message, test_pack_id, state)
         return
 
     # Get start content will create user if needed
     text, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
-
-    # Now get the user that was just created or retrieved
-    user = await user_service.get_user(chat_id)
 
     if not user:
         log.error(f"Failed to get/create user for chat_id {chat_id}")
@@ -258,3 +271,11 @@ async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
     username = callback_query.from_user.username
     text, keyboard, media_url, _ = await get_start_content(chat_id, username)
     await send_or_edit_message(callback_query.message, text, keyboard, media_url)
+
+
+async def back_to_start_from_message(message: types.Message, state: FSMContext):
+    await state.clear()
+    chat_id = int(message.chat.id)
+    username = message.from_user.username
+    text, keyboard, media_url, _ = await get_start_content(chat_id, username)
+    await send_or_edit_message(message, text, keyboard, media_url)
