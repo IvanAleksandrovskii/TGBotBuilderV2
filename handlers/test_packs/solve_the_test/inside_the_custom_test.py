@@ -117,7 +117,7 @@ async def ask_next_question(message: types.Message, state: FSMContext):
         # Если разрешён возврат назад и не на первом вопросе – добавляем кнопку "Назад"
         if data.get("allow_back", False) and current_index > 0:
             kb_buttons.append(
-                [types.InlineKeyboardButton(text="Назад", callback_data="custom_back")]
+                [types.InlineKeyboardButton(text="🔙 Назад", callback_data="custom_back")]
             )
 
         markup = types.InlineKeyboardMarkup(inline_keyboard=kb_buttons)
@@ -281,7 +281,7 @@ async def handle_free_text_answer_incorrect(message: types.Message, state: FSMCo
     await message.answer("Ответ напишите текстом в чат.")
 
 
-async def finalize_custom_test(message: types.Message, state: FSMContext):
+async def finalize_custom_test(message: types.Message, state: FSMContext):  # TODO: Write a method checking if no more tests to solve stays and add here + write scenarios
     data = await state.get_data()
     test_pack_completion_id = data.get("test_pack_completion_id")
     test_id = data.get("test_id")

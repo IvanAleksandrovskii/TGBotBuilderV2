@@ -42,19 +42,33 @@ class TestPackCompletion(Base):
     # Test pack reference
     test_pack_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     test_pack_creator_id: Mapped[int] = mapped_column(nullable=False)
+    test_pack_name: Mapped[str] = mapped_column(nullable=False)
 
     # Progress tracking
     status: Mapped[CompletionStatus] = mapped_column(
         SQLEnum(CompletionStatus), default=CompletionStatus.IN_PROGRESS, nullable=False
     )
-    
-    pending_tests: Mapped[List[Dict[str, Any]]] = mapped_column(ARRAY(JSON), default=list)
-    completed_tests: Mapped[List[Dict[str, Any]]] = mapped_column(ARRAY(JSON), default=list)
-    
+
+    pending_tests: Mapped[List[Dict[str, Any]]] = mapped_column(
+        ARRAY(JSON), default=list
+    )
+    completed_tests: Mapped[List[Dict[str, Any]]] = mapped_column(
+        ARRAY(JSON), default=list
+    )
+
     async def mark_test_completed(self, session, test_id, test_type, result=None):
-        test = next((t for t in self.pending_tests if t["id"] == test_id and t["type"] == test_type), None)
+        test = next(
+            (
+                t
+                for t in self.pending_tests
+                if t["id"] == test_id and t["type"] == test_type
+            ),
+            None,
+        )
         if not test:
-            log.warning(f"Test {test_id} of type {test_type} not found in pending tests!")
+            log.warning(
+                f"Test {test_id} of type {test_type} not found in pending tests!"
+            )
             return
 
         self.pending_tests = [t for t in self.pending_tests if t["id"] != test_id]
@@ -69,7 +83,6 @@ class TestPackCompletion(Base):
             self.completed_tests.append(completed_entry)
             await session.commit()
 
-
     @classmethod
     async def create_test_pack_completion(
         cls,
@@ -79,6 +92,7 @@ class TestPackCompletion(Base):
         user_data: Dict[str, Any],
         test_pack_id: uuid.UUID,
         test_pack_creator_id: int,
+        test_pack_name: str,
         tests: list[Dict[str, Any]],
         custom_tests: list[Dict[str, Any]],
     ) -> "TestPackCompletion":
@@ -99,16 +113,25 @@ class TestPackCompletion(Base):
             user_data=user_data,
             test_pack_id=test_pack_id,
             test_pack_creator_id=test_pack_creator_id,
+            test_pack_name=test_pack_name,
             pending_tests=[
-                    *[{"type": "test", "id": t["id"], "name": t["test_name"]} for t in tests],
-                    *[{"type": "custom", "id": ct["id"], "name": ct["test_name"]} for ct in custom_tests]
+                *[
+                    {"type": "test", "id": t["id"], "name": t["test_name"]}
+                    for t in tests
                 ],
-                completed_tests=[]
+                *[
+                    {"type": "custom", "id": ct["id"], "name": ct["test_name"]}
+                    for ct in custom_tests
+                ],
+            ],
+            completed_tests=[],
         )
-        
+
         log.debug(f"New test pack completion: {new_completion}")
-        log.debug(f"New test pack completion: pending_tests={new_completion.pending_tests}, completed_tests={new_completion.completed_tests}")
-        
+        log.debug(
+            f"New test pack completion: pending_tests={new_completion.pending_tests}, completed_tests={new_completion.completed_tests}"
+        )
+
         session.add(new_completion)
         await session.commit()
         await session.refresh(new_completion)

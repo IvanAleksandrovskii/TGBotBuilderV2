@@ -200,6 +200,7 @@ async def handle_contact(message: types.Message, state: FSMContext):
                     user_data=user_data,
                     test_pack_id=str(test_pack_id),
                     test_pack_creator_id=test_pack_creator_id,
+                    test_pack_name=test_pack_name,
                     tests = [{"test_name": t.name, "id": str(t.id), "type": "test"} for t in test_pack.tests],
                     custom_tests = [{"test_name": ct.name, "id": str(ct.id), "type": "custom"} for ct in test_pack.custom_tests]
                 )
