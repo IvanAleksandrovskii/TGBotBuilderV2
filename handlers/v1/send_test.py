@@ -25,7 +25,8 @@ from services.text_service import TextService
 router = Router()
 
 
-# TODO: Idea add option to input for how many days the csv file sould be 
+# TODO: Idea add option to input for how many days the csv file sould be
+
 
 class SendTestStates(StatesGroup):
     CHOOSING_TEST_TYPE = State()
@@ -42,47 +43,55 @@ async def get_send_test_media_url():
     try:
         async with db_helper.db_session() as session:
             text_service = TextService()
-            
+
             log.debug("Fetching text with media for send_test")
             data = await text_service.get_text_with_media("send_test", session)
             log.debug(f"Got data: {data}")
-            
+
             if not data:
                 log.debug("No data found, getting default media")
                 return await text_service.get_default_media(session)
-            
+
             media_urls = data["media_urls"]
             log.debug(f"Got media_urls: {media_urls}")
-            
+
             if media_urls and len(media_urls) >= 1:
                 log.debug(f"Returning first media URL: {media_urls[0]}")
                 return media_urls[0]
-            
+
             log.debug("No media URLs found, getting default media")
             return await text_service.get_default_media(session)
-            
+
     except Exception as e:
         log.exception(f"Error in get_send_test_media_url: {e}")
         return None
 
 
 @router.callback_query(lambda c: c.data == "export_csv_all")
-async def export_all_sent_tests_csv(callback_query: types.CallbackQuery, state: FSMContext):
+async def export_all_sent_tests_csv(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     sender_id = callback_query.from_user.id
     await export_sent_tests_csv(callback_query, sender_id, all_tests=True)
 
 
 @router.callback_query(lambda c: c.data == "export_csv_by_test")
-async def show_export_by_test_options(callback_query: types.CallbackQuery, state: FSMContext):
+async def show_export_by_test_options(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     sender_id = callback_query.from_user.id
     async for session in db_helper.session_getter():
         try:
             tests = await session.execute(
-                select(SentTest.test_name, SentTest.test_id, func.max(SentTest.created_at).label("last_sent"))
+                select(
+                    SentTest.test_name,
+                    SentTest.test_id,
+                    func.max(SentTest.created_at).label("last_sent"),
+                )
                 .where(SentTest.sender_id == sender_id)
                 .group_by(SentTest.test_name, SentTest.test_id)
                 .order_by(func.max(SentTest.created_at).desc())
@@ -91,9 +100,22 @@ async def show_export_by_test_options(callback_query: types.CallbackQuery, state
 
             keyboard = []
             for test_name, test_id, _ in tests:
-                keyboard.append([types.InlineKeyboardButton(text=test_name, callback_data=f"export_csv_test_{test_id}")])
-            
-            keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_back_button, callback_data="back_to_sent_tests")])
+                keyboard.append(
+                    [
+                        types.InlineKeyboardButton(
+                            text=test_name, callback_data=f"export_csv_test_{test_id}"
+                        )
+                    ]
+                )
+
+            keyboard.append(
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.csv_export_back_button,
+                        callback_data="back_to_sent_tests",
+                    )
+                ]
+            )
 
             text = settings.send_test.csv_choose_test_to_export
 
@@ -103,7 +125,7 @@ async def show_export_by_test_options(callback_query: types.CallbackQuery, state
                 callback_query.message,
                 text,
                 types.InlineKeyboardMarkup(inline_keyboard=keyboard),
-                media_url
+                media_url,
             )
 
         except Exception as e:
@@ -114,54 +136,77 @@ async def show_export_by_test_options(callback_query: types.CallbackQuery, state
 
 
 @router.callback_query(lambda c: c.data.startswith("export_csv_test_"))
-async def export_sent_tests_by_test_csv(callback_query: types.CallbackQuery, state: FSMContext):
+async def export_sent_tests_by_test_csv(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     sender_id = callback_query.from_user.id
     test_id = callback_query.data.split("_")[-1]
     await export_sent_tests_csv(callback_query, sender_id, test_id=test_id)
 
 
-async def export_sent_tests_csv(callback_query: types.CallbackQuery, sender_id: int, all_tests: bool = False, test_id: str = None):
+async def export_sent_tests_csv(
+    callback_query: types.CallbackQuery,
+    sender_id: int,
+    all_tests: bool = False,
+    test_id: str = None,
+):
     async for session in db_helper.session_getter():
         try:
             query = select(SentTest).where(SentTest.sender_id == sender_id)
             if not all_tests and test_id:
                 query = query.where(SentTest.test_id == test_id)
-            
-            sent_tests = await session.execute(query.order_by(desc(SentTest.created_at)))
+
+            sent_tests = await session.execute(
+                query.order_by(desc(SentTest.created_at))
+            )
             sent_tests = sent_tests.scalars().all()
 
             output = io.StringIO()
             writer = csv.writer(output)
-            
+
             # Записываем заголовки
-            writer.writerow(['Отправитель', 'Получатель', 'Тест', 'Статус', 'Отравлен', 'Доствален', 'Завершен', 'Баллы', 'Результат'])
-            
+            writer.writerow(
+                [
+                    "Отправитель",
+                    "Получатель",
+                    "Тест",
+                    "Статус",
+                    "Отравлен",
+                    "Доствален",
+                    "Завершен",
+                    "Баллы",
+                    "Результат",
+                ]
+            )
+
             # Записываем данные
             for test in sent_tests:
-                writer.writerow([
-                    test.sender_username,
-                    test.receiver_username,
-                    test.test_name,
-                    test.status.value,
-                    test.created_at.isoformat(),
-                    test.delivered_at.isoformat() if test.delivered_at else '',
-                    test.completed_at.isoformat() if test.completed_at else '',
-                    test.result_score,
-                    test.result_text
-                ])
-            
-            output_bytes = output.getvalue().encode('utf-8')
-            
-            # Отправляем файл 
+                writer.writerow(
+                    [
+                        test.sender_username,
+                        test.receiver_username,
+                        test.test_name,
+                        test.status.value,
+                        test.created_at.isoformat(),
+                        test.delivered_at.isoformat() if test.delivered_at else "",
+                        test.completed_at.isoformat() if test.completed_at else "",
+                        test.result_score,
+                        test.result_text,
+                    ]
+                )
+
+            output_bytes = output.getvalue().encode("utf-8")
+
+            # Отправляем файл
             # TODO: EDIT FILE NAME
             filename = f"tests_{datetime.now().strftime('%Y_%m_%d__%H_%M_%S')}.csv"
             file = BufferedInputFile(output_bytes, filename=filename)
             await callback_query.message.answer_document(file)
-            
+
             await callback_query.answer(settings.send_test.csv_export_success)
-            
+
         except Exception as e:
             log.exception(e)
             await callback_query.answer(settings.send_test.csv_export_error)
@@ -175,38 +220,53 @@ async def export_user_tests_csv(callback_query: types.CallbackQuery, username: s
         try:
             sent_tests = await session.execute(
                 select(SentTest)
-                .where(SentTest.sender_id == sender_id, SentTest.receiver_username == username)
+                .where(
+                    SentTest.sender_id == sender_id,
+                    SentTest.receiver_username == username,
+                )
                 .order_by(desc(SentTest.updated_at))
             )
             sent_tests = sent_tests.scalars().all()
 
             output = io.StringIO()
             writer = csv.writer(output)
-            
+
             # Записываем заголовки
-            writer.writerow(['Тест', 'Статус', 'Отаравлен', 'Доставлен', 'Завершен', 'Баллы', 'Результат'])
-            
+            writer.writerow(
+                [
+                    "Тест",
+                    "Статус",
+                    "Отаравлен",
+                    "Доставлен",
+                    "Завершен",
+                    "Баллы",
+                    "Результат",
+                ]
+            )
+
             # Записываем данные
             for test in sent_tests:
-                writer.writerow([
-                    test.test_name,
-                    test.status.value,
-                    test.created_at.isoformat(),
-                    test.delivered_at.isoformat() if test.delivered_at else '',
-                    test.completed_at.isoformat() if test.completed_at else '',
-                    test.result_score,
-                    test.result_text
-                ])
-            
-            output_bytes = output.getvalue().encode('utf-8')
-            
+                writer.writerow(
+                    [
+                        test.test_name,
+                        test.status.value,
+                        test.created_at.isoformat(),
+                        test.delivered_at.isoformat() if test.delivered_at else "",
+                        test.completed_at.isoformat() if test.completed_at else "",
+                        test.result_score,
+                        test.result_text,
+                    ]
+                )
+
+            output_bytes = output.getvalue().encode("utf-8")
+
             # Отправляем файл
             filename = f"tests_for_{username}_{datetime.now().strftime('%Y_%m_%d__%H_%M_%S')}.csv"
             file = BufferedInputFile(output_bytes, filename=filename)
             await callback_query.message.answer_document(file)
-            
+
             await callback_query.answer(settings.send_test.csv_send_success)
-            
+
         except Exception as e:
             log.exception(e)
             await callback_query.answer(settings.send_test.csv_export_error)
@@ -241,19 +301,20 @@ async def get_available_tests(test_type):
 async def notify_receiver(bot: Bot, receiver_id, sender_username, test_names):
     try:
         tests_str = ", ".join(test_names)
-        
+
         btn = InlineKeyboardButton(
-                text=settings.on_start_text.start_recived_tests_button,
-                url=None,
-                callback_data="view_received_tests"
-            )
-        
+            text=settings.on_start_text.start_recived_tests_button,
+            url=None,
+            callback_data="view_received_tests",
+        )
+
         keyboard = [[btn]]
-        
+
         await bot.send_message(
             receiver_id,
-            settings.send_test.send_test_notification_reciver + f"{sender_username}: {tests_str}.",  # \n\n" + settings.send_test.send_test_notification_reciver_part_2
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard) 
+            settings.send_test.send_test_notification_reciver
+            + f"{sender_username}: {tests_str}.",  # \n\n" + settings.send_test.send_test_notification_reciver_part_2
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard),
         )
     except Exception as e:
         log.exception("Failed to notify receiver %s: %s", receiver_id, e)
@@ -262,7 +323,9 @@ async def notify_receiver(bot: Bot, receiver_id, sender_username, test_names):
 async def save_sent_test(sender_id, test_id, receiver_username):
     async for session in db_helper.session_getter():
         try:
-            sender = await session.execute(select(User).where(User.chat_id == sender_id))
+            sender = await session.execute(
+                select(User).where(User.chat_id == sender_id)
+            )
             sender = sender.scalar_one_or_none()
             if not sender:
                 log.error("Sender with chat_id %s not found", sender_id)
@@ -273,10 +336,12 @@ async def save_sent_test(sender_id, test_id, receiver_username):
             if not test:
                 log.error("Test with id %s not found", test_id)
                 return None
-            
-            receiver = await session.execute(select(User).where(User.username == receiver_username))
+
+            receiver = await session.execute(
+                select(User).where(User.username == receiver_username)
+            )
             receiver = receiver.scalar_one_or_none()
-            
+
             sent_test = SentTest(
                 sender_id=sender.chat_id,
                 sender_username=sender.username,
@@ -285,12 +350,12 @@ async def save_sent_test(sender_id, test_id, receiver_username):
                 receiver_id=receiver.chat_id if receiver else None,
                 receiver_username=receiver_username,
                 status=TestStatus.DELIVERED if receiver else TestStatus.SENT,
-                delivered_at=func.now() if receiver else None
+                delivered_at=func.now() if receiver else None,
             )
 
             session.add(sent_test)
             await session.commit()
-            
+
             return sent_test
         except Exception as e:
             log.exception("Error in save_sent_test: %s", e)
@@ -312,45 +377,84 @@ async def get_test_names(test_ids):
             await session.close()
 
 
-
 async def show_available_tests(callback_query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    
+
     try:
-        test_type = data['test_type']
+        test_type = data["test_type"]
     except:
         test_type = "psyco"
-    
-    selected_tests = data.get('selected_tests', [])
-    
+
+    selected_tests = data.get("selected_tests", [])
+
     tests = await get_available_tests(test_type)
-    
+
     keyboard = []
     for test in tests:
         if str(test.id) not in selected_tests:
-            keyboard.append([types.InlineKeyboardButton(text=f"➕ {test.name}", callback_data=f"choose_test_{test.id}")])
-    
-    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.send_apply_chosen_tests_button, callback_data="confirm_test_selection")])
-    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.send_choose_another_tests_type_button, callback_data="back_to_test_type")])
-    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")])
-    
+            keyboard.append(
+                [
+                    types.InlineKeyboardButton(
+                        text=f"➕ {test.name}", callback_data=f"choose_test_{test.id}"
+                    )
+                ]
+            )
+
+    keyboard.append(
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.send_apply_chosen_tests_button,
+                callback_data="confirm_test_selection",
+            )
+        ]
+    )
+    keyboard.append(
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.send_choose_another_tests_type_button,
+                callback_data="back_to_test_type",
+            )
+        ]
+    )
+    keyboard.append(
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.back_to_main_menu_button,
+                callback_data="back_to_start",
+            )
+        ]
+    )
+
     text_service = TextService()
     async for session in db_helper.session_getter():
         text = settings.send_test.choose_another_test
         if selected_tests:
             selected_test_names = await get_test_names(selected_tests)
-            text += f"\n\n" + settings.send_test.selected_tests_count + f"{len(selected_tests)}\n" + settings.send_test.selected_tests_list + f"{', '.join(selected_test_names)}"
+            text += (
+                f"\n\n"
+                + settings.send_test.selected_tests_count
+                + f"{len(selected_tests)}\n"
+                + settings.send_test.selected_tests_list
+                + f"{', '.join(selected_test_names)}"
+            )
 
         media_url = await get_send_test_media_url()
-    
-    await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
+
+    await send_or_edit_message(
+        callback_query.message,
+        text,
+        types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+        media_url,
+    )
     await state.set_state(SendTestStates.CHOOSING_TEST)
 
 
 @router.callback_query(SendTestStates.CHOOSING_TEST_TYPE)
-async def process_test_type_choice(callback_query: types.CallbackQuery, state: FSMContext):
+async def process_test_type_choice(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     if callback_query.data == "view_sent_tests":
         await view_sent_tests(callback_query, state)
         return
@@ -365,49 +469,76 @@ async def process_test_type_choice(callback_query: types.CallbackQuery, state: F
         return
 
     data = await state.get_data()
-    selected_tests = data.get('selected_tests', [])
-    test_type = "psyco"  # "regular" if callback_query.data == "choose_regular_tests" else 
+    selected_tests = data.get("selected_tests", [])
+    test_type = (
+        "psyco"  # "regular" if callback_query.data == "choose_regular_tests" else
+    )
     await state.update_data(test_type=test_type, selected_tests=selected_tests)
-    
+
     await show_available_tests(callback_query, state)
 
 
 @router.callback_query(lambda c: c.data == "send_test")
 async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
-    
+
     await state.clear()
     log.info("start_send_test handler called")
     keyboard = [
-        [types.InlineKeyboardButton(text=settings.send_test.check_sent_tests_button, callback_data="view_sent_tests")],
-        [types.InlineKeyboardButton(text=settings.send_test.send_psyco_tests_button, callback_data="choose_psyco_tests")],
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.check_sent_tests_button,
+                callback_data="view_sent_tests",
+            )
+        ],
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.send_psyco_tests_button,
+                callback_data="choose_psyco_tests",
+            )
+        ],
         # [types.InlineKeyboardButton(text=settings.send_test.send_other_tests_button, callback_data="choose_regular_tests")],
-        [types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")]
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.back_to_main_menu_button,
+                callback_data="back_to_start",
+            )
+        ],
     ]
 
     text = settings.send_test.send_tests_choose_type
     media_url = await get_send_test_media_url()
-    
-    await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
+
+    await send_or_edit_message(
+        callback_query.message,
+        text,
+        types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+        media_url,
+    )
     await state.set_state(SendTestStates.CHOOSING_TEST_TYPE)
 
 
 @router.callback_query(lambda c: c.data == "view_sent_tests")
 async def view_sent_tests(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
-    
+
     sender_id = callback_query.from_user.id
     page = 1
     await state.update_data(current_page=page)
     await show_sent_tests_page(callback_query.message, sender_id, page, state)
 
 
-async def show_sent_tests_page(message: types.Message, sender_id: int, page: int, state: FSMContext):
+async def show_sent_tests_page(
+    message: types.Message, sender_id: int, page: int, state: FSMContext
+):
     async for session in db_helper.session_getter():
         try:
             # Subquery to get the last date of each user
             subquery = (
-                select(SentTest.receiver_username, func.max(SentTest.created_at).label("last_sent"))
+                select(
+                    SentTest.receiver_username,
+                    func.max(SentTest.created_at).label("last_sent"),
+                )
                 .where(SentTest.sender_id == sender_id)
                 .group_by(SentTest.receiver_username)
                 .subquery()
@@ -426,10 +557,9 @@ async def show_sent_tests_page(message: types.Message, sender_id: int, page: int
             users = result.scalars().all()
 
             # Get total number of unique receivers
-            total_users_query = (
-                select(func.count(func.distinct(SentTest.receiver_username)))
-                .where(SentTest.sender_id == sender_id)
-            )
+            total_users_query = select(
+                func.count(func.distinct(SentTest.receiver_username))
+            ).where(SentTest.sender_id == sender_id)
             total_users_result = await session.execute(total_users_query)
             total_users = total_users_result.scalar()
 
@@ -438,27 +568,65 @@ async def show_sent_tests_page(message: types.Message, sender_id: int, page: int
             keyboard = []
             for i in range(0, len(users), 2):
                 row = []
-                for user in users[i:i+2]:
-                    row.append(types.InlineKeyboardButton(text=user, callback_data=f"view_user_tests_{user}"))
+                for user in users[i : i + 2]:
+                    row.append(
+                        types.InlineKeyboardButton(
+                            text=user, callback_data=f"view_user_tests_{user}"
+                        )
+                    )
                 keyboard.append(row)
 
             navigation = []
             if page > 1:
-                navigation.append(types.InlineKeyboardButton(text="◀️", callback_data="prev_page"))
-            navigation.append(types.InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="current_page"))  # TODO: Maybe show only if more then 1 page only
+                navigation.append(
+                    types.InlineKeyboardButton(text="◀️", callback_data="prev_page")
+                )
+            navigation.append(
+                types.InlineKeyboardButton(
+                    text=f"{page}/{total_pages}", callback_data="current_page"
+                )
+            )  # TODO: Maybe show only if more then 1 page only
             if page < total_pages:
-                navigation.append(types.InlineKeyboardButton(text="▶️", callback_data="next_page"))
+                navigation.append(
+                    types.InlineKeyboardButton(text="▶️", callback_data="next_page")
+                )
             if navigation:
                 keyboard.append(navigation)
 
-            keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_all_button, callback_data="export_csv_all")])
-            keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_by_tests_button, callback_data="export_csv_by_test")])
-            keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_button, callback_data="back_to_send_test")])
+            keyboard.append(
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.csv_export_all_button,
+                        callback_data="export_csv_all",
+                    )
+                ]
+            )
+            keyboard.append(
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.csv_export_by_tests_button,
+                        callback_data="export_csv_by_test",
+                    )
+                ]
+            )
+            keyboard.append(
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.back_button,
+                        callback_data="back_to_send_test",
+                    )
+                ]
+            )
 
             text = settings.send_test.sent_tests_user_choose
             media_url = await get_send_test_media_url()
 
-            await send_or_edit_message(message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
+            await send_or_edit_message(
+                message,
+                text,
+                types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+                media_url,
+            )
             await state.set_state(SendTestStates.VIEWING_SENT_TESTS)
 
         except Exception as e:
@@ -469,12 +637,14 @@ async def show_sent_tests_page(message: types.Message, sender_id: int, page: int
 
 
 @router.callback_query(SendTestStates.VIEWING_SENT_TESTS)
-async def process_sent_tests_navigation(callback_query: types.CallbackQuery, state: FSMContext):
+async def process_sent_tests_navigation(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     action = callback_query.data
     data = await state.get_data()
-    current_page = data.get('current_page', 1)
+    current_page = data.get("current_page", 1)
 
     if action == "prev_page":
         current_page = max(1, current_page - 1)
@@ -510,22 +680,37 @@ def format_test_info(test):
         TestStatus.SENT: settings.send_test.test_sent,
         TestStatus.DELIVERED: settings.send_test.test_delivered,
         TestStatus.COMPLETED: settings.send_test.test_completed,
-        TestStatus.REJECTED: settings.send_test.test_rejected
+        TestStatus.REJECTED: settings.send_test.test_rejected,
     }.get(test.status, settings.send_test.test_unkown_status)
 
     info = settings.send_test.test_name_repr + f": {test.test_name}\n"
     info += settings.send_test.test_status_repr + f": {status_text}\n"
-    info += settings.send_test.test_sent + f": {test.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+    info += (
+        settings.send_test.test_sent
+        + f": {test.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+    )
 
     if test.status == TestStatus.DELIVERED:
-        info += settings.send_test.test_delivered + f": {test.delivered_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        info += (
+            settings.send_test.test_delivered
+            + f": {test.delivered_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        )
     elif test.status == TestStatus.COMPLETED:
-        info += settings.send_test.test_delivered + f": {test.delivered_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        info += settings.send_test.test_completed + f": {test.completed_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        info += (
+            settings.send_test.test_delivered
+            + f": {test.delivered_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        )
+        info += (
+            settings.send_test.test_completed
+            + f": {test.completed_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        )
         info += settings.send_test.test_score_result_repr + f": {test.result_score}\n"
         info += settings.send_test.test_text_result_repr + f": {test.result_text}\n"
     elif test.status == TestStatus.REJECTED:
-        info += settings.send_test.test_rejected + f": {test.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        info += (
+            settings.send_test.test_rejected
+            + f": {test.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        )
 
     return info + "\n"
 
@@ -535,30 +720,75 @@ def create_navigation_keyboard(current_page, total_pages, username):
 
     navigation = []
     if current_page > 1:
-        navigation.append(types.InlineKeyboardButton(text="◀️", callback_data=f"user_tests_page_{current_page-1}_{username}"))
-    navigation.append(types.InlineKeyboardButton(text=f"{current_page}/{total_pages}", callback_data="current_page"))
+        navigation.append(
+            types.InlineKeyboardButton(
+                text="◀️", callback_data=f"user_tests_page_{current_page-1}_{username}"
+            )
+        )
+    navigation.append(
+        types.InlineKeyboardButton(
+            text=f"{current_page}/{total_pages}", callback_data="current_page"
+        )
+    )
     if current_page < total_pages:
-        navigation.append(types.InlineKeyboardButton(text="▶️", callback_data=f"user_tests_page_{current_page+1}_{username}"))
-    
+        navigation.append(
+            types.InlineKeyboardButton(
+                text="▶️", callback_data=f"user_tests_page_{current_page+1}_{username}"
+            )
+        )
+
     if navigation:
         keyboard.append(navigation)
 
-    keyboard.append([types.InlineKeyboardButton(text="Получить ИИ расшифровку", callback_data=f"get_ai_transcription_{username}")])  # TODO: NEW
-    
-    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.csv_export_user_button, callback_data=f"export_user_csv_{username}")])
-    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_userlist_button, callback_data="back_to_users_list")])
-    keyboard.append([types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")])
+    keyboard.append(
+        [
+            types.InlineKeyboardButton(
+                text="Получить ИИ расшифровку",
+                callback_data=f"get_ai_transcription_{username}",
+            )
+        ]
+    )  # TODO: NEW
+
+    keyboard.append(
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.csv_export_user_button,
+                callback_data=f"export_user_csv_{username}",
+            )
+        ]
+    )
+    keyboard.append(
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.back_to_userlist_button,
+                callback_data="back_to_users_list",
+            )
+        ]
+    )
+    keyboard.append(
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.back_to_main_menu_button,
+                callback_data="back_to_start",
+            )
+        ]
+    )
 
     return keyboard
 
 
-async def view_user_tests(callback_query: types.CallbackQuery, username: str, state: FSMContext, page: int = 1):
+async def view_user_tests(
+    callback_query: types.CallbackQuery, username: str, state: FSMContext, page: int = 1
+):
     sender_id = callback_query.from_user.id
     async for session in db_helper.session_getter():
         try:
             sent_tests = await session.execute(
                 select(SentTest)
-                .where(SentTest.sender_id == sender_id, SentTest.receiver_username == username)
+                .where(
+                    SentTest.sender_id == sender_id,
+                    SentTest.receiver_username == username,
+                )
                 .order_by(desc(SentTest.updated_at))
             )
             sent_tests = sent_tests.scalars().all()
@@ -588,7 +818,12 @@ async def view_user_tests(callback_query: types.CallbackQuery, username: str, st
             keyboard = create_navigation_keyboard(page, len(pages), username)
 
             media_url = await get_send_test_media_url()
-            await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
+            await send_or_edit_message(
+                callback_query.message,
+                text,
+                types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+                media_url,
+            )
             await state.set_state(SendTestStates.VIEWING_USER_TESTS)
             await state.update_data(current_username=username, total_pages=len(pages))
 
@@ -599,15 +834,19 @@ async def view_user_tests(callback_query: types.CallbackQuery, username: str, st
 
 
 @router.callback_query(SendTestStates.VIEWING_USER_TESTS)
-async def process_user_tests_navigation(callback_query: types.CallbackQuery, state: FSMContext):
+async def process_user_tests_navigation(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     action = callback_query.data
     if action.startswith("user_tests_page_"):
         parts = action.split("_")
         if len(parts) >= 4:
             page = parts[3]
-            username = "_".join(parts[4:])  # Обрабатываем случай, когда в username есть подчеркивания
+            username = "_".join(
+                parts[4:]
+            )  # Обрабатываем случай, когда в username есть подчеркивания
             await view_user_tests(callback_query, username, state, int(page))
     elif action == "current_page":
         await callback_query.answer(settings.send_test.user_results_page_number)
@@ -618,55 +857,81 @@ async def process_user_tests_navigation(callback_query: types.CallbackQuery, sta
         await view_sent_tests(callback_query, state)
     elif action.startswith("get_ai_transcription_"):
         from .ai_test_result_transcription import get_ai_transcription
+
         await get_ai_transcription(callback_query)
     else:
         await callback_query.answer(settings.send_test.send_test_unknown_action)
 
 
 @router.callback_query(SendTestStates.VIEWING_USER_TESTS)
-async def process_user_tests_navigation(callback_query: types.CallbackQuery, state: FSMContext):
+async def process_user_tests_navigation(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     action = callback_query.data
     if action == "back_to_users_list":
         await view_sent_tests(callback_query, state)
 
 
-async def confirm_test_selection(callback_query: types.CallbackQuery, state: FSMContext):
+async def confirm_test_selection(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     data = await state.get_data()
-    selected_tests = data.get('selected_tests', [])
-    
+    selected_tests = data.get("selected_tests", [])
+
     if not selected_tests:
-        await callback_query.answer(settings.send_test.no_chosen_tests_to_send, show_alert=True)
+        await callback_query.answer(
+            settings.send_test.no_chosen_tests_to_send, show_alert=True
+        )
         return
-    
+
     async for session in db_helper.session_getter():
         tests = await session.execute(select(Test).where(Test.id.in_(selected_tests)))
         tests = tests.scalars().all()
-        
+
         test_names = ", ".join([test.name for test in tests])
-        
-        text = settings.send_test.tests_chosen_to_send_1 + f":\n\n{test_names}\n\n" + settings.send_test.tests_chosen_to_send_2
-        
+
+        text = (
+            settings.send_test.tests_chosen_to_send_1
+            + f":\n\n{test_names}\n\n"
+            + settings.send_test.tests_chosen_to_send_2
+        )
+
         media_url = await get_send_test_media_url()
-        
+
         keyboard = [
-            [types.InlineKeyboardButton(text=settings.send_test.confirm_send_button, callback_data="confirm_tests")],
-            [types.InlineKeyboardButton(text=settings.send_test.back_button, callback_data="back_to_test_selection")]
+            [
+                types.InlineKeyboardButton(
+                    text=settings.send_test.confirm_send_button,
+                    callback_data="confirm_tests",
+                )
+            ],
+            [
+                types.InlineKeyboardButton(
+                    text=settings.send_test.back_button,
+                    callback_data="back_to_test_selection",
+                )
+            ],
         ]
-        
-        await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
+
+        await send_or_edit_message(
+            callback_query.message,
+            text,
+            types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+            media_url,
+        )
         await state.set_state(SendTestStates.CONFIRMING_TESTS)
 
 
 @router.callback_query(SendTestStates.CHOOSING_TEST)
 async def process_test_choice(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
-    
+
     if callback_query.data == "back_to_test_type":
         await start_send_test(callback_query, state)
         return
-    
+
     if callback_query.data == "confirm_test_selection":
         await confirm_test_selection(callback_query, state)
         return
@@ -674,37 +939,57 @@ async def process_test_choice(callback_query: types.CallbackQuery, state: FSMCon
     if callback_query.data == "back_to_test_selection":
         await show_available_tests(callback_query, state)
         return
-    
+
     if callback_query.data.startswith("add_test_"):
         await add_test(callback_query, state)
         return
 
     test_id = callback_query.data.split("_")[-1]
-    
+
     async for session in db_helper.session_getter():
         try:
             test = await session.execute(select(Test).where(Test.id == test_id))
             test = test.scalar_one()
-            
-            text = settings.send_test.send_test_description + f"\n'<b>{test.name}</b>':\n\n{test.description}"
-            media_url = test.picture if test.picture else await get_send_test_media_url()
-            
-            if media_url and not media_url.startswith(('http://', 'https://')):
+
+            text = (
+                settings.send_test.send_test_description
+                + f"\n'<b>{test.name}</b>':\n\n{test.description}"
+            )
+            media_url = (
+                test.picture if test.picture else await get_send_test_media_url()
+            )
+
+            if media_url and not media_url.startswith(("http://", "https://")):
                 media_url = f"{settings.media.base_url}/app/{media_url}"
-            
+
             keyboard = [
-                [types.InlineKeyboardButton(text=settings.send_test.send_test_add_test_button, callback_data=f"add_test_{test_id}")],
-                [types.InlineKeyboardButton(text=settings.send_test.send_test_back_to_tests_list_button, callback_data="back_to_test_selection")],
-                [types.InlineKeyboardButton(text=settings.send_test.cancel_button, callback_data="back_to_start")]
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.send_test_add_test_button,
+                        callback_data=f"add_test_{test_id}",
+                    )
+                ],
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.send_test_back_to_tests_list_button,
+                        callback_data="back_to_test_selection",
+                    )
+                ],
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.cancel_button,
+                        callback_data="back_to_start",
+                    )
+                ],
             ]
-            
+
             await send_or_edit_message(
-                callback_query.message, 
+                callback_query.message,
                 text,
                 types.InlineKeyboardMarkup(inline_keyboard=keyboard),
-                media_url
+                media_url,
             )
-        
+
         except Exception as e:
             log.exception(e)
             await callback_query.answer(settings.send_test.send_test_load_info_error)
@@ -715,15 +1000,15 @@ async def process_test_choice(callback_query: types.CallbackQuery, state: FSMCon
 @router.callback_query(lambda c: c.data and c.data.startswith("add_test_"))
 async def add_test(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
-    
+
     test_id = callback_query.data.split("_")[-1]
     data = await state.get_data()
-    selected_tests = data.get('selected_tests', [])
-    
+    selected_tests = data.get("selected_tests", [])
+
     if test_id not in selected_tests:
         selected_tests.append(test_id)
         await state.update_data(selected_tests=selected_tests)
-    
+
     await callback_query.answer(settings.send_test.send_test_added_to_list)
     await show_available_tests(callback_query, state)
 
@@ -731,55 +1016,74 @@ async def add_test(callback_query: types.CallbackQuery, state: FSMContext):
 @router.callback_query(SendTestStates.CONFIRMING_TESTS)
 async def process_confirm_tests(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
-    
+
     if callback_query.data == "back_to_test_selection":
         await show_available_tests(callback_query, state)
         return
-    
+
     if callback_query.data == "confirm_tests":
         text = settings.send_test.send_test_enter_username
         keyboard = [
-            [types.InlineKeyboardButton(text=settings.send_test.cancel_button, callback_data="back_to_start")],
+            [
+                types.InlineKeyboardButton(
+                    text=settings.send_test.cancel_button, callback_data="back_to_start"
+                )
+            ],
         ]
 
         media_url = await get_send_test_media_url()
-        
-        await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
+
+        await send_or_edit_message(
+            callback_query.message,
+            text,
+            types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+            media_url,
+        )
         await state.set_state(SendTestStates.ENTERING_RECEIVER)
 
 
 @router.callback_query(lambda c: c.data == "back_to_test_selection")
-async def process_receiver_input(callback_query: types.CallbackQuery, state: FSMContext):
+async def process_receiver_input(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     await show_available_tests(callback_query, state)
 
 
 @router.message(SendTestStates.ENTERING_RECEIVER, F.text)
 async def process_receiver_input(message: types.Message, state: FSMContext):
-    receiver_username = message.text.strip().lstrip('@')
+    receiver_username = message.text.strip().lstrip("@")
     data = await state.get_data()
-    selected_tests = data.get('selected_tests', [])
-    
+    selected_tests = data.get("selected_tests", [])
+
     if not selected_tests:
         await message.answer(settings.send_test.send_test_error_no_tests_selected)
         await state.clear()
         return
-    
+
     if receiver_username == message.from_user.username:
         await message.answer(settings.send_test.send_test_error_send_youself)
         return
-    
+
     async for session in db_helper.session_getter():
         try:
-            tests = await session.execute(select(Test).where(Test.id.in_(selected_tests)))
+            tests = await session.execute(
+                select(Test).where(Test.id.in_(selected_tests))
+            )
             tests = tests.scalars().all()
-            
-            receiver = await session.execute(select(User).where(User.username == receiver_username))
+
+            receiver = await session.execute(
+                select(User).where(User.username == receiver_username)
+            )
             receiver = receiver.scalar_one_or_none()
-            
-            receiver_status = settings.send_test.send_test_reciver_authenticated if receiver else settings.send_test.send_test_reciver_not_authenticated
-            
+
+            receiver_status = (
+                settings.send_test.send_test_reciver_authenticated
+                if receiver
+                else settings.send_test.send_test_reciver_not_authenticated
+            )
+
             # Check if sent and uncompleted tests already exist
             sender_id = message.from_user.id
             sent_tests = await session.execute(
@@ -787,46 +1091,97 @@ async def process_receiver_input(message: types.Message, state: FSMContext):
                     SentTest.sender_id == sender_id,
                     SentTest.receiver_username == receiver_username,
                     SentTest.test_id.in_(selected_tests),
-                    SentTest.status.in_([TestStatus.SENT, TestStatus.DELIVERED])
+                    SentTest.status.in_([TestStatus.SENT, TestStatus.DELIVERED]),
                 )
             )
             sent_tests = sent_tests.scalars().all()
-            
+
             skipped_tests = [test.test_name for test in sent_tests]
-            selected_tests = [str(test.id) for test in tests if test.id not in [sent.test_id for sent in sent_tests]]
-            
+            selected_tests = [
+                str(test.id)
+                for test in tests
+                if test.id not in [sent.test_id for sent in sent_tests]
+            ]
+
             if not selected_tests:
-                text = (settings.send_test.send_test_all_chosen_tests_uncomplete + "\n\n" + settings.send_test.send_test_all_chosen_tests_uncomplete_2)
+                text = (
+                    settings.send_test.send_test_all_chosen_tests_uncomplete
+                    + "\n\n"
+                    + settings.send_test.send_test_all_chosen_tests_uncomplete_2
+                )
                 keyboard = [
-                    [types.InlineKeyboardButton(text=settings.send_test.send_test_return_to_test_choose_button, callback_data="back_to_test_selection")],
-                    [types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")]
+                    [
+                        types.InlineKeyboardButton(
+                            text=settings.send_test.send_test_return_to_test_choose_button,
+                            callback_data="back_to_test_selection",
+                        )
+                    ],
+                    [
+                        types.InlineKeyboardButton(
+                            text=settings.send_test.back_to_main_menu_button,
+                            callback_data="back_to_start",
+                        )
+                    ],
                 ]
-                await send_or_edit_message(message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard))
+                await send_or_edit_message(
+                    message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+                )
                 await state.clear()
                 return
-            
-            test_names = ", ".join([test.name for test in tests if str(test.id) in selected_tests])
-            
+
+            test_names = ", ".join(
+                [test.name for test in tests if str(test.id) in selected_tests]
+            )
+
             keyboard = [
-                [types.InlineKeyboardButton(text=settings.send_test.button_accept, callback_data="confirm_send_tests")],
-                [types.InlineKeyboardButton(text=settings.send_test.cancel_button, callback_data="back_to_start")]
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.button_accept,
+                        callback_data="confirm_send_tests",
+                    )
+                ],
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.send_test.cancel_button,
+                        callback_data="back_to_start",
+                    )
+                ],
             ]
-            
-            text = settings.send_test.send_test_last_confirm + f"{receiver_username}:\n\n{test_names}\n\n" + settings.send_test.send_test_last_confirm_2 + f"{receiver_status}" + settings.send_test.send_test_last_confirm_3 + "\n"
-            
+
+            text = (
+                settings.send_test.send_test_last_confirm
+                + f"{receiver_username}:\n\n{test_names}\n\n"
+                + settings.send_test.send_test_last_confirm_2
+                + f"{receiver_status}"
+                + settings.send_test.send_test_last_confirm_3
+                + "\n"
+            )
+
             if skipped_tests:
-                text += "\n" + settings.send_test.send_test_last_confirm_sent_before + f": \n{', '.join(skipped_tests)}.\n" + settings.send_test.send_test_last_confirm_sent_before_2
+                text += (
+                    "\n"
+                    + settings.send_test.send_test_last_confirm_sent_before
+                    + f": \n{', '.join(skipped_tests)}.\n"
+                    + settings.send_test.send_test_last_confirm_sent_before_2
+                )
             text += "\n" + settings.send_test.send_test_last_confirm_accept
-            
+
             media_url = await get_send_test_media_url()
-            
-            if media_url and not media_url.startswith(('http://', 'https://')):
+
+            if media_url and not media_url.startswith(("http://", "https://")):
                 media_url = f"{settings.media.base_url}/app/{media_url}"
-            
-            await send_or_edit_message(message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
+
+            await send_or_edit_message(
+                message,
+                text,
+                types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+                media_url,
+            )
             await state.set_state(SendTestStates.CONFIRMING)
-            await state.update_data(receiver_username=receiver_username, selected_tests=selected_tests)
-        
+            await state.update_data(
+                receiver_username=receiver_username, selected_tests=selected_tests
+            )
+
         except Exception as e:
             log.exception(e)
             await message.answer(settings.send_test.send_test_last_confirm_error)
@@ -838,18 +1193,20 @@ async def process_receiver_input(message: types.Message, state: FSMContext):
 @router.callback_query(SendTestStates.CONFIRMING)
 async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
-    
+
     if callback_query.data != "confirm_send_tests":
         await callback_query.answer(settings.send_test.send_test_confirm_error)
         return
 
     data = await state.get_data()
     sender_id = callback_query.from_user.id
-    selected_tests = data.get('selected_tests')
-    receiver_username = data.get('receiver_username')
+    selected_tests = data.get("selected_tests")
+    receiver_username = data.get("receiver_username")
 
     if not all([sender_id, selected_tests, receiver_username]):
-        await callback_query.answer(settings.send_test.send_test_confirm_error_not_enough_data)
+        await callback_query.answer(
+            settings.send_test.send_test_confirm_error_not_enough_data
+        )
         await state.clear()
         return
 
@@ -862,8 +1219,10 @@ async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMCont
                 if sent_test:
                     sent_tests.append(sent_test)
                     test_names.append(sent_test.test_name)
-            
-            sender = await session.execute(select(User).where(User.chat_id == sender_id))
+
+            sender = await session.execute(
+                select(User).where(User.chat_id == sender_id)
+            )
             sender = sender.scalar_one()
         except Exception as e:
             log.exception("Error in confirm_send_tests: %s", e)
@@ -871,48 +1230,62 @@ async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMCont
             await session.close()
 
     if not sent_tests:
-        await callback_query.answer(settings.send_test.send_test_confirm_different_error)
+        await callback_query.answer(
+            settings.send_test.send_test_confirm_different_error
+        )
         await state.clear()
         return
 
     receiver_id = sent_tests[0].receiver_id if sent_tests[0].receiver_id else None
     if receiver_id:
-        await notify_receiver(callback_query.bot, receiver_id, sender.username, test_names)
-        text = settings.send_test.tests_sent_success + f"{receiver_username} " + settings.send_test.tests_sent_success_2
+        await notify_receiver(
+            callback_query.bot, receiver_id, sender.username, test_names
+        )
+        text = (
+            settings.send_test.tests_sent_success
+            + f"{receiver_username} "
+            + settings.send_test.tests_sent_success_2
+        )
     else:
-        text = (settings.send_test.tests_sent_unsuccess + f"{receiver_username}.\n" + settings.send_test.tests_sent_unsuccess_2)
-        
-        from services.user_services import UserService
-        from services.promocode_service import PromoCodeService
-         # Get user from database
-        user = await UserService().get_user(chat_id=callback_query.from_user.id)
-        if not user:
-            await callback_query.answer("You need to start the bot first with /start")
-            return
-
-        # Generate promocode
-        promocode = await PromoCodeService.create_promocode(user.id)
+        text = (
+            settings.send_test.tests_sent_unsuccess
+            + f"{receiver_username}.\n"
+            + settings.send_test.tests_sent_unsuccess_2
+        )
 
         bot_username = (await callback_query.bot.get_me()).username
-        invite_link = f"https://t.me/{bot_username}?start={promocode.code}"
-        
+        invite_link = f"https://t.me/{bot_username}"
+
         text += f"{invite_link}"
-        
 
     media_url = await get_send_test_media_url()
 
     keyboard = [
-        [types.InlineKeyboardButton(text=settings.send_test.back_to_main_menu_button, callback_data="back_to_start")]
+        [
+            types.InlineKeyboardButton(
+                text=settings.send_test.back_to_main_menu_button,
+                callback_data="back_to_start",
+            )
+        ]
     ]
-    
-    await send_or_edit_message(callback_query.message, text, types.InlineKeyboardMarkup(inline_keyboard=keyboard), media_url)
+
+    await send_or_edit_message(
+        callback_query.message,
+        text,
+        types.InlineKeyboardMarkup(inline_keyboard=keyboard),
+        media_url,
+    )
     await state.clear()
 
 
-@router.callback_query(lambda c: c.data and c.data.startswith(("choose_", "confirm_", "back_to_")))
-async def process_send_test_callback(callback_query: types.CallbackQuery, state: FSMContext):
+@router.callback_query(
+    lambda c: c.data and c.data.startswith(("choose_", "confirm_", "back_to_"))
+)
+async def process_send_test_callback(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     await callback_query.answer()
-    
+
     current_state = await state.get_state()
 
     if current_state == SendTestStates.CHOOSING_TEST_TYPE:

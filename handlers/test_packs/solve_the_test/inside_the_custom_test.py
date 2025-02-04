@@ -300,8 +300,6 @@ async def finalize_custom_test(message: types.Message, state: FSMContext):  # TO
 
     # Собираем структуру результата
     result_entry = {
-        "test_name": test_name,
-        "completed_at": datetime.utcnow().isoformat(),
         "total_score": total_score,
         "score": total_score,
         "free_answers": [ans for ans in user_answers if ans.get("score") is None],
@@ -336,8 +334,8 @@ async def finalize_custom_test(message: types.Message, state: FSMContext):  # TO
                 "type": "custom",
                 "id": test_id,
                 "name": test_name,
-                "result": result_entry,
                 "completed_at": datetime.utcnow().isoformat(),
+                "result": result_entry,
             }
 
             # Обновляем `completed_tests` через копию списка (важно для SQLAlchemy!)

@@ -15,9 +15,10 @@ from core.models import db_helper
 from core.models import Test, QuizResult, User, Result, Question, TestPackCompletion
 from services.text_service import TextService
 
-# from services.user_services import UserService
+from services.user_services import UserService
 
 from handlers.utils import send_or_edit_message
+
 # from handlers.test_packs.solve_the_pack.solve_pack_menu import (
 #     get_solve_test_menu,
 #     SolveThePackStates,
@@ -417,24 +418,29 @@ async def finish_test(callback_query: types.CallbackQuery, state: FSMContext):
     result_picture = None
     test_picture = None
 
+    # TODO: Make everywhere 1 big query
     async for session in db_helper.session_getter():
         try:
             # Get test, sent test, and user information
             test = await session.execute(select(Test).where(Test.id == quiz_id))
             test = test.scalar_one_or_none()
 
-            if not test:
+            query = select(TestPackCompletion).where(
+                TestPackCompletion.id == test_pack_completion_id
+            )
+
+            test_pack_completion = await session.execute(query)
+            test_pack_completion = test_pack_completion.scalar_one_or_none()
+
+            query = select(User).where(User.chat_id == callback_query.from_user.id)
+            user = await session.execute(query)
+            user = user.scalar_one_or_none()
+
+            if not test or not test_pack_completion or not user:
                 await callback_query.answer(
                     "An error occurred. Please try again later."
                 )
                 return
-
-            user = await session.execute(
-                select(User).where(
-                    User.chat_id == callback_query.from_user.id
-                )  # TODO: use data from completion instead
-            )
-            user = user.scalar_one()
 
             # Calculate and save results
             results = await calculate_results(
@@ -454,22 +460,13 @@ async def finish_test(callback_query: types.CallbackQuery, state: FSMContext):
 
                 session.add(quiz_result)
 
-            # Prepare result message and media
+            # Prepare result message and media  # TODO: Fix result generation and add the max scores (?)
             if test.multi_graph_results:
-                result_text = settings.quiz_text.quiz_multi_result + "\n\n"
+                result_text = ""
                 for result in results:
-                    result_text += f"{result['category_name']}: {result['score']}\n{result['text']}\n\n"
+                    result_text += f"Набрано баллов в категории {result['category_name']}: {result['score']}\n{result['text']}\n\n"
             else:
-                result_text = (
-                    settings.quiz_text.quiz_result
-                    + f"{total_score}\n\n{results[0]['text']}"
-                )
-
-            query = select(TestPackCompletion).where(
-                TestPackCompletion.id == test_pack_completion_id
-            )
-            test_pack_completion = await session.execute(query)
-            test_pack_completion = test_pack_completion.scalar_one()
+                result_text = f"Набрано баллов: {total_score}\n{results[0]['text']}"
 
             # Удаляем тест из `pending_tests`
             original_len = len(test_pack_completion.pending_tests)
@@ -487,8 +484,8 @@ async def finish_test(callback_query: types.CallbackQuery, state: FSMContext):
                 "type": "test",
                 "id": str(test.id),
                 "name": test.name,
-                "result": result_text,
                 "completed_at": datetime.utcnow().isoformat(),
+                "result": result_text,
             }
 
             # Обновляем `completed_tests` через копию списка (важно для SQLAlchemy!)
@@ -513,14 +510,6 @@ async def finish_test(callback_query: types.CallbackQuery, state: FSMContext):
             log.info(
                 f"Изменения сохранены в БД для TestPackCompletion {test_pack_completion_id}"
             )
-
-            # state_data = await state.get_data()
-            # test_pack_completion_id = state_data["test_pack_completion_id"]
-
-            # await state.set_state(SolveThePackStates.SOLVING)
-            # state = await state.update_data(
-            #     test_pack_completion_id=test_pack_completion_id
-            # )
 
             # Build keyboard
             keyboard = []
@@ -572,9 +561,13 @@ async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMC
 
     current_state = await state.get_state()
     if current_state == PassingTestStates.SHOWING_RESULT:  # TODO: Double check (( ! ))
-        from handlers.test_packs.solve_the_pack.solve_pack_menu import get_solve_test_menu
-        from handlers.test_packs.solve_the_pack.solve_pack_menu import SolveThePackStates
-        
+        from handlers.test_packs.solve_the_pack.solve_pack_menu import (
+            get_solve_test_menu,
+        )
+        from handlers.test_packs.solve_the_pack.solve_pack_menu import (
+            SolveThePackStates,
+        )
+
         state_data = await state.get_data()
         test_pack_completion_id = state_data["test_pack_completion_id"]
         await state.set_state(SolveThePackStates.SOLVING)
@@ -590,3 +583,8 @@ async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMC
 
     elif current_state == PassingTestStates.SHOWING_COMMENT:
         await process_comment(callback_query, state)
+
+    else:
+        from handlers.on_start import back_to_start_from_message
+
+        await back_to_start_from_message(callback_query.message, state)

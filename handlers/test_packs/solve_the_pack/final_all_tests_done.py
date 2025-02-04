@@ -1,6 +1,6 @@
 # handlers/test_packs/solve_the_pack/final_all_tests_done.py
 
-from aiogram import Router, types, F
+from aiogram import Router, types  # , F  # TODO: implement filtration
 from aiogram.fsm.context import FSMContext
 
 from sqlalchemy import select
@@ -8,7 +8,6 @@ from sqlalchemy import select
 from core import log
 from core.models import db_helper
 from core.models.test_pack_completion import CompletionStatus, TestPackCompletion
-from handlers.test_packs.solve_the_pack.notifications_for_creator import notify_creator
 from handlers.test_packs.solve_the_pack.start_the_pack import SolveThePackStates
 
 

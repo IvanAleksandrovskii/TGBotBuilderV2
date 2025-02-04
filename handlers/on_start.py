@@ -24,6 +24,9 @@ from services.button_service import ButtonService
 from .utils import send_or_edit_message
 
 from handlers.test_packs.solve_the_pack import start_solve_the_pack, SolveThePackStates
+from handlers.test_packs.solve_the_pack.solve_pack_menu import (
+    get_solve_test_menu,
+)
 
 
 router = Router()
@@ -216,10 +219,6 @@ async def start_command(message: types.Message, state: FSMContext):
                 await state.set_state(SolveThePackStates.SOLVING)
                 await state.update_data(
                     test_pack_completion_id=existing_test_pack_completion.id
-                )
-
-                from handlers.test_packs.solve_the_pack.solve_pack_menu import (
-                    get_solve_test_menu,
                 )
 
                 await get_solve_test_menu(message, state)
