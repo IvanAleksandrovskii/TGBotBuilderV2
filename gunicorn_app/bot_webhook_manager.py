@@ -2,6 +2,7 @@ import asyncio
 import logging
 from aiogram.exceptions import TelegramRetryAfter
 from aiogram.types import WebhookInfo
+from aiogram.client.bot import DefaultBotProperties
 
 
 class BotWebhookManager:
@@ -16,7 +17,11 @@ class BotWebhookManager:
         from aiogram import Bot, Dispatcher
 
         session = AiohttpSession(timeout=60)
-        self.bot = Bot(token=token, session=session)
+        self.bot = Bot(
+            token=token,
+            session=session,
+            default=DefaultBotProperties(parse_mode="HTML"),
+        )
         self.dp = Dispatcher()
         self.dp.include_router(router)
         self.webhook_url = f"{webhook_host}{webhook_path}"

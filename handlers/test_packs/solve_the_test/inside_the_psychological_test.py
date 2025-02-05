@@ -564,7 +564,7 @@ async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMC
         from handlers.test_packs.solve_the_pack.solve_pack_menu import (
             get_solve_test_menu,
         )
-        from handlers.test_packs.solve_the_pack.solve_pack_menu import (
+        from handlers.test_packs.solve_the_pack import (
             SolveThePackStates,
         )
 

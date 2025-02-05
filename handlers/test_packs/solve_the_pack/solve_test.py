@@ -51,9 +51,11 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
 
     if state_instance not in [SolveThePackStates.SOLVING]:
         await callback_query.message.answer(
-            "Пока вы проходили тест бот был перезагружен, нажмите -> /abort "
-            "и откройте свое прохождение тестов снова используя ссылку по которой вы начали ранее."
+            "Пока вы проходили тест бот был перезагружен, пожалуйста, откройте свое прохождение "
+            "тестов снова используя ссылку по которой вы начали ранее, чтобы продолжить прохождение."
         )
+        from handlers.on_start import back_to_start
+        await back_to_start(callback_query, state)
         return
 
     await callback_query.answer("Начать?")

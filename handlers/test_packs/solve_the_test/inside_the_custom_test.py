@@ -300,7 +300,7 @@ async def finalize_custom_test(message: types.Message, state: FSMContext):  # TO
 
     # Собираем структуру результата
     result_entry = {
-        "total_score": total_score,
+        # "total_score": total_score,  # TODO: Fix or delete
         "score": total_score,
         "free_answers": [ans for ans in user_answers if ans.get("score") is None],
         "test_answers": [ans for ans in user_answers if ans.get("score") is not None],

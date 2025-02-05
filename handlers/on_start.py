@@ -157,7 +157,7 @@ async def start_command(message: types.Message, state: FSMContext):
         PassTestMenuStates.STARTING,
     ]
 
-    if current_state in forbidden_states:
+    if current_state in forbidden_states and test_pack_id is None:
         state_data = await state.get_data()
         test_pack_completion_id = state_data.get("test_pack_completion_id")
 
