@@ -19,13 +19,8 @@ class CompletionStatus(str, Enum):
     COMPLETED = "completed"
     ABANDONED = "abandoned"
 
-    # TODO: Implement later:
-    # ARCHIVED = "archived"  # USE active=False instead
-    # ORIGIN_DELETED = "origin_deleted"
-    # USER_DECLINED = "user_declined"
 
-
-# TODO: Add completion date and time
+# TODO: Add completion date and time ?
 class TestPackCompletion(Base):
     """
     Tracks user's progress through a test pack including both standard and custom tests.
@@ -56,36 +51,11 @@ class TestPackCompletion(Base):
         ARRAY(JSON), default=list
     )
 
+    ai_transcription: Mapped[str] = mapped_column(nullable=True)
+
     # TODO: Use this instead ???
     # pending_tests: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list)
     # completed_tests: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list)
-
-    # async def mark_test_completed(self, session, test_id, test_type, result=None):
-    #     test = next(
-    #         (
-    #             t
-    #             for t in self.pending_tests
-    #             if t["id"] == test_id and t["type"] == test_type
-    #         ),
-    #         None,
-    #     )
-    #     if not test:
-    #         log.warning(
-    #             f"Test {test_id} of type {test_type} not found in pending tests!"
-    #         )
-    #         return
-
-    #     self.pending_tests = [t for t in self.pending_tests if t["id"] != test_id]
-
-    #     # Добавляем тест в `completed_tests`, если его там еще нет
-    #     if not any(t["id"] == test_id for t in self.completed_tests):
-    #         completed_entry = {
-    #             **test,
-    #             "completed_at": datetime.utcnow().isoformat(),
-    #             "result": result or {},
-    #         }
-    #         self.completed_tests.append(completed_entry)
-    #         # await session.commit()
 
     @classmethod
     async def create_test_pack_completion(
@@ -129,6 +99,7 @@ class TestPackCompletion(Base):
                 ],
             ],
             completed_tests=[],
+            ai_transcription=None,
         )
 
         log.debug(f"New test pack completion: {new_completion}")

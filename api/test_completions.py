@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/test-completions",
+    "/test-completions/",
     summary="Получить тесты пользователя с пагинацией и список тестпаков",
 )
 async def get_user_test_completions(
@@ -116,6 +116,7 @@ async def get_user_test_completions(
                 "completed_tests": tc.completed_tests,
                 "completion_percentage": tc.completion_percentage,  # TODO: new
                 "user_data": tc.user_data,
+                "ai_transcription": tc.ai_transcription,  # TODO: new, nullable
             }
             for tc in test_completions
         ],

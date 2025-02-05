@@ -12,6 +12,8 @@ from .get_tests import router as get_tests_router
 
 from .test_completions import router as test_completions_router
 
+from .ai_transcript import router as ai_transcript_router
+
 
 router = APIRouter(prefix="/api")
 router.include_router(create_custom_test_router)
@@ -21,3 +23,4 @@ router.include_router(delete_custom_tests_router)
 router.include_router(test_packs_router)
 router.include_router(get_tests_router)
 router.include_router(test_completions_router)
+router.include_router(ai_transcript_router)
