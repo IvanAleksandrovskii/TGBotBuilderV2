@@ -1,6 +1,6 @@
 # api/ai_transcript.py
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +17,7 @@ from services.ai_services import get_ai_response
 router = APIRouter()
 
 
+# TODO: Дописать шаблон отвтета
 prompt: str = """Отвечай по-русски. Я провожу кинологические психологические тесты для собак, где сами их хозяева проходят за них тесты, 
 отвечая на поведенческие вопросы за своих питомцев, главная задача определить подходит ли их собака для работы или 
 нет и стоит ли брать ее в рабочий коллектив или это может повредить другим собакам или самой собаке. Какие рекомендации мы можем дать хозяину, 
@@ -57,6 +58,11 @@ async def ai_transcription(
 
         result = await session.execute(query)
         test_pack_completion = result.scalar_one_or_none()
+
+        if test_pack_completion is None:
+            raise HTTPException(
+                status_code=404, detail="Test pack completion not found."
+            )
 
         if test_pack_completion.test_pack_creator_id != user_id:
             raise HTTPException(
@@ -104,4 +110,45 @@ async def ai_transcription(
         raise HTTPException(
             status_code=500,
             detail="An error occurred while generating the AI transcription. Please try again.",
+        )
+
+
+@router.get(
+    "/ai_transcription_clear/",
+    summary="Clear AI transcription for test pack completion's psychological tests",
+)
+async def ai_transcription_clear(
+    user_id: int = Query(..., description="User ID"),
+    test_pack_completion_id: str = Query(..., description="Test pack completion UUID"),
+    session: AsyncSession = Depends(db_helper.session_getter),
+):
+    try:
+        query = select(TestPackCompletion).where(
+            TestPackCompletion.id == test_pack_completion_id,
+        )
+
+        result = await session.execute(query)
+        test_pack_completion = result.scalar_one_or_none()
+        
+        if test_pack_completion is None:
+            raise HTTPException(
+                status_code=404, detail="Test pack completion not found."
+            )
+
+        if test_pack_completion.test_pack_creator_id != user_id:
+            raise HTTPException(
+                status_code=403, detail="You are not allowed to access this resource."
+            )
+
+        if test_pack_completion.ai_transcription is not None:
+            test_pack_completion.ai_transcription = None
+            await session.commit()
+
+        return Response(status_code=204)
+
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while clearing the AI transcription. Please try again.",
         )

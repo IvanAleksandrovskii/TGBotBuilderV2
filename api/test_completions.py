@@ -107,6 +107,7 @@ async def get_user_test_completions(
         "page_size": page_size,
         "data": [
             {
+                "id": str(tc.id),
                 "test_pack_id": str(tc.test_pack_id),
                 "test_pack_name": tc.test_pack_name,
                 "status": tc.status.value.upper(),
