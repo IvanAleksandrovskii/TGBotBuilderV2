@@ -1,6 +1,6 @@
 # api/test_packs.py
 
-from typing import List
+# from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
@@ -40,8 +40,7 @@ async def list_test_packs(
     offset = (page - 1) * limit
 
     async with db_helper.db_session() as session:
-        # Допустим, вы храните creator_id для каждого пака.
-        # Если нужно выбрать только паки текущего пользователя, фильтруем:
+        # Фильтруем паки текущего пользователя
         query = select(TestPack).order_by(TestPack.updated_at.desc()).where(TestPack.creator_id == creator_id)
         # Считаем общее кол-во при желании
         # total = await session.scalar(select(func.count(TestPack.id))) 
@@ -57,8 +56,8 @@ async def list_test_packs(
                 name=pack.name,
                 creator_id=pack.creator_id,
                 test_count=pack.test_count,
-                tests=[test.name for test in pack.tests],  # предполагаем relationship
-                custom_tests=[ct.name for ct in pack.custom_tests]  # предполагаем relationship
+                tests=[test.name for test in pack.tests],
+                custom_tests=[ct.name for ct in pack.custom_tests]
             ))
     return packs_out
 

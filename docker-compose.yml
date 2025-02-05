@@ -1,11 +1,12 @@
 services:
 
-  pg-bot-tap-quiz:  # * rename as needed, put the right adress to the web service down below
+  pg-bot-tap-quiz:
+    # * rename as needed, put the right adress to the web service down below
     image: postgres:16.3
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-BotTapQuiz}  # * rename all here and put all right values to the web service down below
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}  # *
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}  # *
+      POSTGRES_DB: ${POSTGRES_DB:-BotTapQuiz} # * rename all here and put all right values to the web service down below
+      POSTGRES_USER: ${POSTGRES_USER:-postgres} # *
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password} # *
     ports:
       - "5432:5432"
     networks:
@@ -24,26 +25,26 @@ services:
     depends_on:
       - pg-bot-tap-quiz
     environment:
-      - POSTGRES_ADDRESS=${POSTGRES_ADDRESS:-pg-bot-tap-quiz}  # * 
-      - POSTGRES_DB=${POSTGRES_DB:-BotTapQuiz}  # *
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}  # *
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}  # *
+      - POSTGRES_ADDRESS=${POSTGRES_ADDRESS:-pg-bot-tap-quiz} # * 
+      - POSTGRES_DB=${POSTGRES_DB:-BotTapQuiz} # *
+      - POSTGRES_USER=${POSTGRES_USER:-postgres} # *
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password} # *
       - POSTGRES_POOL_SIZE=${POSTGRES_POOL_SIZE:-10}
       - POSTGRES_MAX_OVERFLOW=${POSTGRES_MAX_OVERFLOW:-20}
 
-      - DEBUG=${DEBUG:-True}  # Can be True for now, not making bot unsecure, just loading the stdout stream, causing slowdowns
+      - DEBUG=${DEBUG:-True} # Can be True for now, not making bot unsecure, just loading the stdout stream, causing slowdowns
       - APP_RUN_PORT=${APP_RUN_PORT:-8000}
 
-      - SQLADMIN_SECRET_KEY=${SQLADMIN_SECRET_KEY:-sqladmin_secret_key}  # UNSECURE, update it
-      - SQLADMIN_USERNAME=${SQLADMIN_USERNAME:-admin}  # UNSECURE, update it
-      - SQLADMIN_PASSWORD=${SQLADMIN_PASSWORD:-password}  # UNSECURE, update it
+      - SQLADMIN_SECRET_KEY=${SQLADMIN_SECRET_KEY:-sqladmin_secret_key} # UNSECURE, update it
+      - SQLADMIN_USERNAME=${SQLADMIN_USERNAME:-admin} # UNSECURE, update it
+      - SQLADMIN_PASSWORD=${SQLADMIN_PASSWORD:-password} # UNSECURE, update it
 
       # (( ! ))
       # - BOT_TOKEN=${BOT_TOKEN:-7638664164:AA...}  # Fill with the bot token or make a .env file with BOT_TOKEN=...
-      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://gls2aq-ip-184-22-33-222.tunnelmole.net}
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://lw8juy-ip-184-22-33-222.tunnelmole.net}
 
     command: /app/start.sh
-    volumes: 
+    volumes:
       - media:/app/media
       - .:/app
 

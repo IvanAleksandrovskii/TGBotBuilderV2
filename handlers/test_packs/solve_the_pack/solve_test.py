@@ -26,12 +26,12 @@ from handlers.test_packs.solve_the_pack.solve_pack_menu import get_solve_test_me
 router = Router()
 
 
-class PassTestStates(StatesGroup):
+class PassTestMenuStates(StatesGroup):
     STARTING = State()
 
 
 # Back to start for PassTestStates.STARTING
-@router.callback_query(PassTestStates.STARTING, F.data == "no")
+@router.callback_query(PassTestMenuStates.STARTING, F.data == "no")
 async def back_to_solve_test_menu(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -68,7 +68,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
 
     default_media = await get_default_media()
 
-    await state.set_state(PassTestStates.STARTING)
+    await state.set_state(PassTestMenuStates.STARTING)
     await state.update_data(test_pack_completion_id=test_pack_completion_id)
     await state.update_data(test_id=test_id)
 
@@ -180,7 +180,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
         await callback_query.message.answer("Error occured")
 
 
-@router.callback_query(PassTestStates.STARTING, F.data == "yes")
+@router.callback_query(PassTestMenuStates.STARTING, F.data == "yes")
 async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer("Начат тест")  # TODO: Move to config
 

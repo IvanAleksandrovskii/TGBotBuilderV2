@@ -4,10 +4,12 @@
 # from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 
-from aiogram import Router, types, F
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram import Router, types  # , F
+
+# from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
+
+# from aiogram.fsm.state import State, StatesGroup
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -17,7 +19,6 @@ from core.models import (
     TestPackCompletion,
 )
 from handlers.utils import send_or_edit_message, get_default_media
-from handlers.test_packs.solve_the_pack.start_the_pack import SolveThePackStates
 
 
 router = Router()
@@ -37,11 +38,27 @@ async def get_solve_test_menu(
         message = message.message
 
     state_instance = await state.get_state()
+    
+    from handlers.test_packs.solve_the_pack.start_the_pack import SolveThePackStates
+    from handlers.test_packs.solve_the_test.inside_the_custom_test import (
+        PassCustomTestStates,
+    )
+    from handlers.test_packs.solve_the_test.inside_the_psychological_test import (
+        PassingTestStates,
+    )
+    from handlers.test_packs.solve_the_pack.solve_test import PassTestMenuStates
 
     if state_instance not in [
         SolveThePackStates.SOLVING,
         SolveThePackStates.ANSWERING_TEST,
         SolveThePackStates.COMPLETING,
+        PassCustomTestStates.PASSING,
+        PassCustomTestStates.QUESTION,
+        PassingTestStates.VIEWING_INTRO,
+        PassingTestStates.ANSWERING,
+        PassingTestStates.SHOWING_COMMENT,
+        PassingTestStates.SHOWING_RESULT,
+        PassTestMenuStates.STARTING,
     ]:
         await message.answer(
             "Сейчас вы не находитесь в состоянии прохождения наботра тестов, пожалуйста, откройте набор который вы хотите пройти по ссылке-приглашению."
@@ -51,8 +68,9 @@ async def get_solve_test_menu(
     data = await state.get_data()
     test_pack_completion_id = data.get("test_pack_completion_id")
 
-    state.set_state(SolveThePackStates.SOLVING)
-    await state.update_data(test_pack_completion_id=test_pack_completion_id)
+    if state != SolveThePackStates.SOLVING:
+        await state.set_state(SolveThePackStates.SOLVING)
+        await state.update_data(test_pack_completion_id=test_pack_completion_id)
 
     async with db_helper.db_session() as session:
         try:
@@ -68,17 +86,24 @@ async def get_solve_test_menu(
         except Exception as e:
             log.exception(f"Error in get_solve_test_menu: {e}")
             await message.answer("An error occurred. Please try again later.")
-    
+
     if test_pack_completion.pending_tests == []:
         from .final_all_tests_done import finish_the_pack
+
         await finish_the_pack(message, state)
         return
 
-    completed_tests = [t for t in test_pack_completion.completed_tests if t["type"] == "test"]
-    completed_custom_tests = [t for t in test_pack_completion.completed_tests if t["type"] == "custom"]
+    completed_tests = [
+        t for t in test_pack_completion.completed_tests if t["type"] == "test"
+    ]
+    completed_custom_tests = [
+        t for t in test_pack_completion.completed_tests if t["type"] == "custom"
+    ]
 
     completed_tests_names_list = [test["name"] for test in completed_tests]
-    completed_custom_tests_names_list = [test["name"] for test in completed_custom_tests]
+    completed_custom_tests_names_list = [
+        test["name"] for test in completed_custom_tests
+    ]
 
     pending_tests = test_pack_completion.pending_tests
     tests_to_complete = [t for t in pending_tests if t["type"] == "test"]
@@ -88,12 +113,17 @@ async def get_solve_test_menu(
     completed_tests_ids = {t["id"] for t in completed_tests}
     completed_custom_tests_ids = {t["id"] for t in completed_custom_tests}
 
-    tests_to_complete = [t for t in tests_to_complete if t["id"] not in completed_tests_ids]
-    custom_tests_to_complete = [t for t in custom_tests_to_complete if t["id"] not in completed_custom_tests_ids]
-
+    tests_to_complete = [
+        t for t in tests_to_complete if t["id"] not in completed_tests_ids
+    ]
+    custom_tests_to_complete = [
+        t for t in custom_tests_to_complete if t["id"] not in completed_custom_tests_ids
+    ]
 
     # 3) Теперь можно проверить их длину:
-    if len(tests_to_complete) + len(custom_tests_to_complete) == 0:  # TODO: Make it finalize the completion here
+    if (
+        len(tests_to_complete) + len(custom_tests_to_complete) == 0
+    ):  # TODO: Make it finalize the completion here
         await message.answer(
             "No tests to complete. Error happened. Please press -> /abort"
         )
@@ -120,7 +150,7 @@ async def get_solve_test_menu(
                     callback_data=f"solve_custom_test_{test_data.get('id')}",  # TODO: Fix to make only one check , test_data.get('test_id')
                 )
             ]
-    )
+        )
 
     # jinja environment
     env = Environment(

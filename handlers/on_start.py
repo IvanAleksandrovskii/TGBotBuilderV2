@@ -24,9 +24,18 @@ from services.button_service import ButtonService
 from .utils import send_or_edit_message
 
 from handlers.test_packs.solve_the_pack import start_solve_the_pack, SolveThePackStates
+
 from handlers.test_packs.solve_the_pack.solve_pack_menu import (
     get_solve_test_menu,
 )
+
+from handlers.test_packs.solve_the_test.inside_the_custom_test import (
+    PassCustomTestStates,
+)
+from handlers.test_packs.solve_the_test.inside_the_psychological_test import (
+    PassingTestStates,
+)
+from handlers.test_packs.solve_the_pack.solve_test import PassTestMenuStates
 
 
 router = Router()
@@ -139,17 +148,23 @@ async def start_command(message: types.Message, state: FSMContext):
         SolveThePackStates.SOLVING,
         SolveThePackStates.COMPLETING,
         SolveThePackStates.ANSWERING_TEST,
+        PassCustomTestStates.PASSING,
+        PassCustomTestStates.QUESTION,
+        PassingTestStates.VIEWING_INTRO,
+        PassingTestStates.ANSWERING,
+        PassingTestStates.SHOWING_COMMENT,
+        PassingTestStates.SHOWING_RESULT,
+        PassTestMenuStates.STARTING,
     ]
 
     if current_state in forbidden_states:
-        await send_or_edit_message(
-            message,
-            "Вы проходите тест, сначала завершите его или используйте команду /abort. "
-            "Будьте осторожны, чтобы вернуться к прохождению вам потребуется "
-            "вновь перейти по ссылке",  # TODO: Move to config
-            None,
-            None,
-        )
+        state_data = await state.get_data()
+        test_pack_completion_id = state_data.get("test_pack_completion_id")
+
+        await state.set_state(SolveThePackStates.SOLVING)
+        await state.update_data(test_pack_completion_id=test_pack_completion_id)
+
+        await get_solve_test_menu(message, state)
         return
 
     # Now get the user that was just created or retrieved
@@ -164,7 +179,7 @@ async def start_command(message: types.Message, state: FSMContext):
             log.info("Updated username for user %s to %s", chat_id, username)
         else:
             log.warning("Failed to update username for user %s", chat_id)
-    
+
     # if not user.is_active:
     #     log.info("Blocked user pressed start command: %s", chat_id)
     #     await message.answer("Извините, ваш аккаунт заблокирован..")

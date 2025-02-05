@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Add project root to sys.path
-project_root = os.path.abspath(os.path.join(current_dir, '..'))
+project_root = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.insert(0, project_root)
 
 from core import log
@@ -25,6 +25,7 @@ from core.models import db_helper, Test, Question, Result
 @dataclass(frozen=True)
 class QuestionAnnotation:
     """Additional information for specific questions"""
+
     question_number: int  # Question number in CSV
     intro_text: Optional[str] = None
     comment: Optional[str] = None
@@ -37,11 +38,11 @@ class TestData:
     is_multigraph: bool
     test_file: str
     interpretation_file: str
-    
-    same_answers: bool  
-    same_answers_ordering: bool  
-    same_answers_score: bool  
-    
+
+    same_answers: bool
+    same_answers_ordering: bool
+    same_answers_score: bool
+
     category_names: Optional[Dict[str, str]] = None
     question_annotations: Optional[List[QuestionAnnotation]] = None
 
@@ -50,12 +51,11 @@ class TestProcessor:
     def __init__(self, test_data: TestData):
         self.test_data = test_data
         self.test_file_path = os.path.join(current_dir, test_data.test_file)
-        
+
         self.annotations = {}
         if test_data.question_annotations:
             self.annotations = {
-                ann.question_number: ann 
-                for ann in test_data.question_annotations
+                ann.question_number: ann for ann in test_data.question_annotations
             }
 
     def read_questions(self) -> List[Dict[str, any]]:
@@ -63,80 +63,98 @@ class TestProcessor:
         Reads questions from CSV file and processes them according to test settings
         Returns list of questions with their answers and scores
         """
-        with open(self.test_file_path, 'r', encoding='utf-8') as f:
+        with open(self.test_file_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             headers = reader.fieldnames
-            question_column = next(h for h in headers if 'вопрос' in h.lower())
+            question_column = next(h for h in headers if "вопрос" in h.lower())
             score_columns = [h for h in headers if h != question_column]
-            
+
             rows = list(reader)
             questions = []
-            
+
             # If all questions have same answers, get them from first row
             answer_order = None
             if self.test_data.same_answers:
                 first_row = rows[0]
-                answer_order = [first_row[col].strip() for col in score_columns if first_row[col].strip()]
+                answer_order = [
+                    first_row[col].strip()
+                    for col in score_columns
+                    if first_row[col].strip()
+                ]
 
             for i, row in enumerate(rows, 1):  # Start from 1 to match question numbers
                 # Get annotation for this question if exists
                 annotation = self.annotations.get(i)
-                
+
                 question_dict = {
-                    'text': row[question_column].strip(),
-                    'order': i,
-                    'answers': [],
-                    'intro_text': annotation.intro_text if annotation else None,
-                    'comment': annotation.comment if annotation else None
+                    "text": row[question_column].strip(),
+                    "order": i,
+                    "answers": [],
+                    "intro_text": annotation.intro_text if annotation else None,
+                    "comment": annotation.comment if annotation else None,
                 }
 
                 if self.test_data.same_answers_score:
                     # Use column headers as scores
-                    answers = [(row[col].strip(), int(col)) for col in score_columns if row[col].strip()]
+                    answers = [
+                        (row[col].strip(), int(col))
+                        for col in score_columns
+                        if row[col].strip()
+                    ]
                 else:  # TODO: Fix
                     # Use sequential numbers as scores
-                    answers = [(row[col].strip(), i) for i, col in enumerate(score_columns) if row[col].strip()]
+                    answers = [
+                        (row[col].strip(), i)
+                        for i, col in enumerate(score_columns)
+                        if row[col].strip()
+                    ]
 
                 # Order answers if needed
                 if self.test_data.same_answers_ordering and answer_order:
                     ordered_answers = []
                     for answer_text in answer_order:
-                        matching_answer = next((a for a in answers if a[0] == answer_text), None)
+                        matching_answer = next(
+                            (a for a in answers if a[0] == answer_text), None
+                        )
                         if matching_answer:
                             ordered_answers.append(matching_answer)
-                    question_dict['answers'] = ordered_answers
+                    question_dict["answers"] = ordered_answers
                 else:
-                    question_dict['answers'] = answers
+                    question_dict["answers"] = answers
 
                 questions.append(question_dict)
-            
+
             return questions
 
     def read_interpretation(self) -> List[Dict[str, any]]:
         """Reads test result interpretations from CSV file"""
-        interpretation_file_path = os.path.join(current_dir, self.test_data.interpretation_file)
+        interpretation_file_path = os.path.join(
+            current_dir, self.test_data.interpretation_file
+        )
         results = []
-        with open(interpretation_file_path, 'r', encoding='utf-8') as f:
+        with open(interpretation_file_path, "r", encoding="utf-8") as f:
             reader = csv.reader(f)
             for row in reader:
-                min_max_scores = row[0].split('-')
-                results.append({
-                    'min_score': int(min_max_scores[0]),
-                    'max_score': int(min_max_scores[1]),
-                    'text': row[1]
-                })
+                min_max_scores = row[0].split("-")
+                results.append(
+                    {
+                        "min_score": int(min_max_scores[0]),
+                        "max_score": int(min_max_scores[1]),
+                        "text": row[1],
+                    }
+                )
         return results
 
 
 async def create_test(session: AsyncSession, test_data: TestData) -> Test:
     """Creates or updates a psychological test with its questions and interpretations"""
-    
+
     # Check if test exists
     existing_test = await session.execute(
         select(Test).where(Test.name == test_data.name)
     )
     existing_test = existing_test.scalar_one_or_none()
-    
+
     if existing_test:
         log.info(f"Test {test_data.name} already exists, skipping")
         return existing_test
@@ -150,7 +168,7 @@ async def create_test(session: AsyncSession, test_data: TestData) -> Test:
         multi_graph_results=test_data.is_multigraph,
         allow_back=True,
         allow_play_again=True,
-        category_names=test_data.category_names if test_data.category_names else None
+        category_names=test_data.category_names if test_data.category_names else None,
     )
     session.add(new_test)
     await session.flush()
@@ -163,29 +181,29 @@ async def create_test(session: AsyncSession, test_data: TestData) -> Test:
     for q_data in questions:
         question = Question(
             test_id=new_test.id,
-            question_text=q_data['text'],
-            order=q_data['order'],
-            intro_text=q_data['intro_text'],
-            comment=q_data['comment']
+            question_text=q_data["text"],
+            order=q_data["order"],
+            intro_text=q_data["intro_text"],
+            comment=q_data["comment"],
         )
-        
+
         # Set answers and scores
-        for i, (answer_text, score) in enumerate(q_data['answers'], start=1):
-            setattr(question, f'answer{i}_text', answer_text)
-            setattr(question, f'answer{i}_score', score)
-        
+        for i, (answer_text, score) in enumerate(q_data["answers"], start=1):
+            setattr(question, f"answer{i}_text", answer_text)
+            setattr(question, f"answer{i}_score", score)
+
         session.add(question)
 
     # Process interpretations
     interpretations = processor.read_interpretation()
-    
+
     # Create interpretation results
     for interp in interpretations:
         result = Result(
             test_id=new_test.id,
-            min_score=interp['min_score'],
-            max_score=interp['max_score'],
-            text=interp['text']
+            min_score=interp["min_score"],
+            max_score=interp["max_score"],
+            text=interp["text"],
         )
         session.add(result)
 
@@ -194,33 +212,28 @@ async def create_test(session: AsyncSession, test_data: TestData) -> Test:
 
 # Example test data
 anxiety = TestData(
-    name="Шкала тревожности Бека",
-    description="Тест-самоопросник, который заполняет человек без помощи специалиста, один из инструментов ранней диагностики тревожных расстройств.",
+    name="Стресс-менеджмент",
+    description="Шкала тревожности Бека. Помогает определить устойчивость кандидата к стрессу и уровень тревожности.",
     is_multigraph=False,
     test_file="anxiety.csv",
     interpretation_file="anxiety_interpretation.csv",
     same_answers=True,
     same_answers_ordering=True,
     same_answers_score=True,
-    
     question_annotations=[
         QuestionAnnotation(
             question_number=1,
             intro_text="Отметьте, насколько вас беспокоил каждый из этих симптомов в течение последней недели, включая сегодняшний день.",
             # comment="Это пояснение к первому вопросу"
         ),
-    ]
-    
+    ],
 )
 
 
 hopeless = TestData(
-    name="Шкала безнадёжности Бека",
+    name="Психологическая устойчивость",
     description=(
-        "Шкала, состоящая из 20 вопросов, позволяющая измерить выраженность "
-        "негативного отношения к собственному предполагаемому будущему. "
-        "Позволяет косвенно определить суицидальный риск у людей, страдающих "
-        "депрессией и/или другими ментальными расстройствами."
+        "Шкала безнадежности Бека. Выявляет отношение кандидата к будущему и общий настрой."
     ),
     is_multigraph=False,
     test_file="hopeless_bek.csv",
@@ -232,10 +245,10 @@ hopeless = TestData(
 
 
 sterss_condition = TestData(
-    name="Экспресс диагностика стресса",
+    name="Контроль и эмоции",
     description=(
-        "Тест дает возможность выявить индивидуальные характеристики реакции на стресс, а"
-        " именно, степень контроля над собой и уровень эмоциональной неустойчивости в условиях повышенной нагрузки."
+        "Экспресс-диагностика стресса. Помогает определить, как кандидат "
+        "справляется с неожиданными трудностями и сохраняет продуктивность."
     ),
     is_multigraph=False,
     test_file="stress_condition.csv",
@@ -247,10 +260,10 @@ sterss_condition = TestData(
 
 
 stress_resistance = TestData(
-    name="Тест на стрессоустойчивость",
+    name="Стрессоустойчивость",
     description=(
-        "Бостонский тест на стрессоустойчивость разработан исследователями "
-        "Медицинского центра Университета Бостона для диагностики подверженности стрессу."
+        "Основано на Бостонском тесте. Оценивает способность кандидата "
+        "справляться с напряжением и выдерживать рабочие нагрузки."
     ),
     is_multigraph=False,
     test_file="stress_resistance.csv",
@@ -262,13 +275,9 @@ stress_resistance = TestData(
 
 
 depression_big = TestData(
-    name="Шкала депрессии Бека",
+    name="Эмоциональное состояние",
     description=(
-        "Шкала содержит 21 категорию симптомов и жалоб из числа наиболее часто "
-        "встречающихся у пациентов с депрессией. Каждая категория состоит из 4-5 утверждений, "
-        "соответствующих специфическим признакам депрессии. Утверждения распределены с "
-        "учетом повышения значимости вклада определяемых показателей в общую степень "
-        "тяжести депрессии."
+        "Шкала депрессии Бека. Позволяет оценить эмоциональное состояние кандидата и возможные риски."
     ),
     is_multigraph=False,
     test_file="depression_big.csv",
@@ -276,14 +285,13 @@ depression_big = TestData(
     same_answers=True,
     same_answers_ordering=True,
     same_answers_score=True,
-    
     question_annotations=[
         QuestionAnnotation(
             question_number=1,
             intro_text="Выберите одно утверждение в каждой группе, которое лучше всего описывает ваше состояние за прошедшую неделю, включая сегодняшний день.",
             # comment="Это пояснение к первому вопросу"
         ),
-    ]
+    ],
 )
 
 
@@ -295,11 +303,6 @@ async def main():
             await create_test(session, sterss_condition)
             await create_test(session, stress_resistance)
             await create_test(session, depression_big)
-            
-            # await create_test(session, ...)
-            
-            # TODO: Add other tests here
-            
             await session.commit()
             log.info("Tests added successfully")
         except Exception as e:
