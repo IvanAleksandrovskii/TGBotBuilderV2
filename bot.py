@@ -186,8 +186,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "bot:bot_app",
         host=settings.run.host,
-        # port=settings.run.port,
-        port=8080,  # TODO: Move to settings
+        port=settings.bot.port,
         reload=settings.run.debug,
         forwarded_allow_ips="*",  # Added this for htts fix
         proxy_headers=True,

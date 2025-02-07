@@ -40,6 +40,7 @@ services:
       - SQLADMIN_PASSWORD=${SQLADMIN_PASSWORD:-password} # UNSECURE, update it
 
       - BASE_SERVER_URL=${BASE_SERVER_URL:-https://dkjsyk-ip-184-22-35-246.tunnelmole.net}
+      - BASE_BOT_URL=${BASE_BOT_URL:-https://jrqmts-ip-184-22-35-246.tunnelmole.net} # Better to put the inner (docker) network address (( ! )) For now unused but gonna be implemented
 
     command: /app/start.sh
     volumes:
@@ -51,7 +52,7 @@ services:
       context: .
       dockerfile: bot/Dockerfile
     ports:
-      - "8080:8080" # TODO: Make configurable
+      - "${BOT_PORT:-8080}:8080" # TODO: Make configurable
     networks:
       - inner_bot
     depends_on:
@@ -65,6 +66,7 @@ services:
       - POSTGRES_MAX_OVERFLOW=${POSTGRES_MAX_OVERFLOW:-20}
 
       - DEBUG=${DEBUG:-True}
+      - BOT_PORT=${BOT_PORT:-8080}
 
       - BASE_SERVER_URL=${BASE_SERVER_URL:-https://dkjsyk-ip-184-22-35-246.tunnelmole.net}
       - BASE_BOT_URL=${BASE_BOT_URL:-https://jrqmts-ip-184-22-35-246.tunnelmole.net}
