@@ -34,6 +34,7 @@ services:
 
       - DEBUG=${DEBUG:-True} # Can be True for now, not making bot unsecure, just loading the stdout stream, causing slowdowns
       - APP_RUN_PORT=${APP_RUN_PORT:-8000}
+      - APP_RUN_WORKERS=${APP_RUN_WORKERS:-1}  # TODO: Make 4 at least for production (( ! ))
 
       - SQLADMIN_SECRET_KEY=${SQLADMIN_SECRET_KEY:-sqladmin_secret_key} # UNSECURE, update it
       - SQLADMIN_USERNAME=${SQLADMIN_USERNAME:-admin} # UNSECURE, update it

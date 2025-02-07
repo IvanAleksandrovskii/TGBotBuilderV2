@@ -4,7 +4,6 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-
 from aiogram import Bot, Dispatcher
 from aiogram.types import WebhookInfo, Update
 from aiogram.client.bot import DefaultBotProperties
