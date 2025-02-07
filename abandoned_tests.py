@@ -28,7 +28,7 @@ async def send_notification(
 
 async def get_abandoned_tests(session):
     current_time = datetime.datetime.now(datetime.UTC)
-    timedelta = current_time - datetime.timedelta(hours=0.5)  # TODO: Make it configurable (( ! ))
+    timedelta = current_time - datetime.timedelta(hours=0.25)  # TODO: Make it configurable (( ! ))
 
     query = select(TestPackCompletion).where(
         TestPackCompletion.status == CompletionStatus.IN_PROGRESS,
@@ -76,7 +76,7 @@ async def main():
                     await send_notification(
                         bot,
                         completion,
-                        f"Your test pack has been abandoned. Please continue -> https://{bot_username}?start={completion.test_pack_id}",
+                        f"Your test pack has been abandoned. Please continue -> https://t.me/{bot_username}?start={completion.test_pack_id}",
                     )
 
             # Batch update all modified completions
