@@ -3,7 +3,7 @@
 import uuid
 from typing import Optional, List
 
-from sqlalchemy import ForeignKey, Integer, String, Boolean, Text, CheckConstraint
+from sqlalchemy import ForeignKey, Integer, String, Boolean, Text, CheckConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship, object_session
 
 from sqlalchemy import event
@@ -16,6 +16,8 @@ class CustomTest(Base):
     Represents a custom test.
     """
     __tablename__ = "custom_tests"
+    
+    __table_args__ = (Index("idx_custom_test_creator_id", "creator_id"),)
     
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)

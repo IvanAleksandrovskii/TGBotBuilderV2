@@ -3,11 +3,11 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any  # , Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sqlalchemy import JSON, ARRAY, Enum as SQLEnum
+from sqlalchemy import JSON, ARRAY, Enum as SQLEnum, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -27,6 +27,8 @@ class TestPackCompletion(Base):
     """
 
     __tablename__ = "test_pack_completions"
+
+    __table_args__ = (Index("idx_test_pack_creator_id", "test_pack_creator_id"),)
 
     # User information
     user_id: Mapped[int] = mapped_column(nullable=False)  # Telegram user ID

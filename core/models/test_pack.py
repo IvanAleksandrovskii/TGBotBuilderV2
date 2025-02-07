@@ -3,7 +3,7 @@
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Table, Column, func
+from sqlalchemy import String, ForeignKey, Table, Column, func, Index
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.expression import select
 
@@ -36,6 +36,8 @@ class TestPack(Base):
     Represents a collection of tests that can be sent together.
     """
     __tablename__ = "test_packs"
+    
+    __table_args__ = (Index("idx_pack_creator_id", "creator_id"),)
     
     # Basic information
     name: Mapped[str] = mapped_column(String, nullable=False)
