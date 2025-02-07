@@ -5,10 +5,10 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 
-from aiogram import Bot, Dispatcher
-from aiogram.types import WebhookInfo, Update
-from aiogram.client.bot import DefaultBotProperties
-from aiogram.client.session.aiohttp import AiohttpSession
+# from aiogram import Bot, Dispatcher
+# from aiogram.types import WebhookInfo, Update
+# from aiogram.client.bot import DefaultBotProperties
+# from aiogram.client.session.aiohttp import AiohttpSession
 
 from fastapi.responses import ORJSONResponse, JSONResponse
 from fastapi import FastAPI, Response, Request
@@ -26,88 +26,88 @@ from core.admin import async_sqladmin_db_helper, sqladmin_authentication_backend
 from core.admin.models import setup_admin
 from core.models import client_manager
 
-from handlers import router as main_router
+# from handlers import router as main_router
 
 
 # TODO: Make possible to start up with multiple workers
 
-class BotWebhookManager:
-    def __init__(self):
-        self.bot = None
-        self.dp = None
-        self.webhook_url = None
-        self.webhook_handler = None
+# class BotWebhookManager:
+#     def __init__(self):
+#         self.bot = None
+#         self.dp = None
+#         self.webhook_url = None
+#         self.webhook_handler = None
         
-    async def setup(self, token: str, webhook_host: str, webhook_path: str, router):
-        """Initialize bot and webhook configuration"""
-        session = AiohttpSession(timeout=60)
-        self.bot = Bot(token=token, session=session, default=DefaultBotProperties(parse_mode='HTML'))
-        self.dp = Dispatcher()
-        self.dp.include_router(router)
+#     async def setup(self, token: str, webhook_host: str, webhook_path: str, router):
+#         """Initialize bot and webhook configuration"""
+#         session = AiohttpSession(timeout=60)
+#         self.bot = Bot(token=token, session=session, default=DefaultBotProperties(parse_mode='HTML'))
+#         self.dp = Dispatcher()
+#         self.dp.include_router(router)
         
-        # URL for webhook
-        self.webhook_url = f"{webhook_host}{webhook_path}"
+#         # URL for webhook
+#         self.webhook_url = f"{webhook_host}{webhook_path}"
         
-    async def start_webhook(self):
-        """Set webhook for the bot"""
-        await self.bot.delete_webhook(drop_pending_updates=True)
-        await self.bot.set_webhook(
-            url=self.webhook_url,
-            allowed_updates=["message", "callback_query"],
-            drop_pending_updates=True
-        )
+#     async def start_webhook(self):
+#         """Set webhook for the bot"""
+#         await self.bot.delete_webhook(drop_pending_updates=True)
+#         await self.bot.set_webhook(
+#             url=self.webhook_url,
+#             allowed_updates=["message", "callback_query"],
+#             drop_pending_updates=True
+#         )
         
-        webhook_info: WebhookInfo = await self.bot.get_webhook_info()
-        if not webhook_info.url:
-            raise RuntimeError("Webhook setup failed!")
+#         webhook_info: WebhookInfo = await self.bot.get_webhook_info()
+#         if not webhook_info.url:
+#             raise RuntimeError("Webhook setup failed!")
         
-        logging.info(f"Webhook was set to URL: {webhook_info.url}")
+#         logging.info(f"Webhook was set to URL: {webhook_info.url}")
         
-    async def stop_webhook(self):
-        """Remove webhook and cleanup"""
-        log.info("Stopping webhook...")
-        if self.bot:
-            await self.bot.delete_webhook()
-            await self.bot.session.close()
+#     async def stop_webhook(self):
+#         """Remove webhook and cleanup"""
+#         log.info("Stopping webhook...")
+#         if self.bot:
+#             await self.bot.delete_webhook()
+#             await self.bot.session.close()
 
-    async def handle_webhook_request(self, request: Request):
-        """Handle incoming webhook request from FastAPI"""
-        try:
-            # Get data from request
-            data = await request.json()
+#     async def handle_webhook_request(self, request: Request):
+#         """Handle incoming webhook request from FastAPI"""
+#         try:
+#             # Get data from request
+#             data = await request.json()
             
-            # Create Update object from received data
-            update = Update(**data)
+#             # Create Update object from received data
+#             update = Update(**data)
             
-            # Process update
-            await self.dp.feed_webhook_update(self.bot, update)
+#             # Process update
+#             await self.dp.feed_webhook_update(self.bot, update)
             
-            return Response(status_code=200)
-        except Exception as e:
-            log.error(f"Error processing webhook update: {e}", exc_info=True)
-            return Response(status_code=500)
+#             return Response(status_code=200)
+#         except Exception as e:
+#             log.error(f"Error processing webhook update: {e}", exc_info=True)
+#             return Response(status_code=500)
 
 # Global bot manager instance
-bot_manager = BotWebhookManager()
+# bot_manager = BotWebhookManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     log.info("Starting up the FastAPI application...")
     
-    await bot_manager.setup(
-        token=settings.bot.token,
-        webhook_host=settings.media.base_url,
-        webhook_path=settings.webhook.path,
-        router=main_router
-    )
-    await bot_manager.start_webhook()
+    # await bot_manager.setup(
+    #     token=settings.bot.token,
+    #     webhook_host=settings.media.base_url,
+    #     webhook_path=settings.webhook.path,
+    #     router=main_router
+    # )
+    # await bot_manager.start_webhook()
     
     await client_manager.start()
     
     yield
     
     log.info("Shutting down the FastAPI application...")
-    await bot_manager.stop_webhook()
+    # await bot_manager.stop_webhook()
     
     await db_helper.dispose()
     await async_sqladmin_db_helper.dispose()
@@ -120,10 +120,10 @@ main_app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
-@main_app.post("/webhook/bot/", tags=["tg"])
-async def handle_webhook(request: Request):
-    """Endpoint для обработки вебхуков от Telegram"""
-    return await bot_manager.handle_webhook_request(request)
+# @main_app.post("/webhook/bot/", tags=["tg"])
+# async def handle_webhook(request: Request):
+#     """Endpoint для обработки вебхуков от Telegram"""
+#     return await bot_manager.handle_webhook_request(request)
 
 from api import router as api_router
 main_app.include_router(api_router)

@@ -64,8 +64,12 @@ services:
       - POSTGRES_POOL_SIZE=${POSTGRES_POOL_SIZE:-10}
       - POSTGRES_MAX_OVERFLOW=${POSTGRES_MAX_OVERFLOW:-20}
 
+      - DEBUG=${DEBUG:-True}
+
       - BASE_SERVER_URL=${BASE_SERVER_URL:-https://wlgq9x-ip-184-22-35-246.tunnelmole.net}
     command: /bot/start-bot.sh
+    volumes:
+      - .:/bot
 
 networks:
   inner_bot:
