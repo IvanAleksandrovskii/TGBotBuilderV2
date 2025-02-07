@@ -10,4 +10,5 @@ while ! nc -z "$PG_ADDR" "$POSTGRES_PORT"; do sleep 1; done
 # alembic upgrade head
 
 # Run the bot
-exec python3 bot.py
+# exec python3 bot.py
+exec python3 run_bot.py

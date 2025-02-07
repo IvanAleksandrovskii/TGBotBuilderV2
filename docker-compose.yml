@@ -39,19 +39,19 @@ services:
       - SQLADMIN_USERNAME=${SQLADMIN_USERNAME:-admin} # UNSECURE, update it
       - SQLADMIN_PASSWORD=${SQLADMIN_PASSWORD:-password} # UNSECURE, update it
 
-      # (( ! ))
-      # - BOT_TOKEN=${BOT_TOKEN:-7638664164:AA...}  # Fill with the bot token or make a .env file with BOT_TOKEN=...
-      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://wlgq9x-ip-184-22-35-246.tunnelmole.net}
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://dkjsyk-ip-184-22-35-246.tunnelmole.net}
 
     command: /app/start.sh
     volumes:
       - media:/app/media
-      - .:/app
+      - .:/app # DEBUG, DELETE ON DEPLOY (( ! ))
 
   bot:
     build:
       context: .
       dockerfile: bot/Dockerfile
+    ports:
+      - "8080:8080" # TODO: Make configurable
     networks:
       - inner_bot
     depends_on:
@@ -66,10 +66,14 @@ services:
 
       - DEBUG=${DEBUG:-True}
 
-      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://wlgq9x-ip-184-22-35-246.tunnelmole.net}
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://dkjsyk-ip-184-22-35-246.tunnelmole.net}
+      - BASE_BOT_URL=${BASE_BOT_URL:-https://jrqmts-ip-184-22-35-246.tunnelmole.net}
+      # (( ! ))
+      # - BOT_TOKEN=${BOT_TOKEN:-7638664164:AA...}  # Fill with the bot token or make a .env file with BOT_TOKEN=...
+
     command: /bot/start-bot.sh
     volumes:
-      - .:/bot
+      - .:/bot # DEBUG, DELETE ON DEPLOY (( ! ))
 
 networks:
   inner_bot:
