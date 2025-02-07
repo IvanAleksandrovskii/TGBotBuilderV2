@@ -27,4 +27,5 @@ fi
 
 # Run the app
 # exec python3 run_main.py  
-exec python3 main.py
+exec python3 main_with_no_bot.py
+# exec python3 main.py

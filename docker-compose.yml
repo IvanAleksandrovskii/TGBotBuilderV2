@@ -41,12 +41,31 @@ services:
 
       # (( ! ))
       # - BOT_TOKEN=${BOT_TOKEN:-7638664164:AA...}  # Fill with the bot token or make a .env file with BOT_TOKEN=...
-      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://abgtsk-ip-184-22-33-222.tunnelmole.net}
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://wlgq9x-ip-184-22-35-246.tunnelmole.net}
 
     command: /app/start.sh
     volumes:
       - media:/app/media
       - .:/app
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    networks:
+      - inner_bot
+    depends_on:
+      - pg-bot-tap-quiz
+    environment:
+      - POSTGRES_ADDRESS=${POSTGRES_ADDRESS:-pg-bot-tap-quiz} # * 
+      - POSTGRES_DB=${POSTGRES_DB:-BotTapQuiz} # *
+      - POSTGRES_USER=${POSTGRES_USER:-postgres} # *
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password} # *
+      - POSTGRES_POOL_SIZE=${POSTGRES_POOL_SIZE:-10}
+      - POSTGRES_MAX_OVERFLOW=${POSTGRES_MAX_OVERFLOW:-20}
+
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://wlgq9x-ip-184-22-35-246.tunnelmole.net}
+    command: /bot/start-bot.sh
 
 networks:
   inner_bot:

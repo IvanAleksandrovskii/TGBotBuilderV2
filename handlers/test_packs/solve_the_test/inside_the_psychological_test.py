@@ -156,6 +156,7 @@ async def confirm_start_test(
                 category_scores={},
                 intro_shown=False,
                 sorted_questions=sorted_questions,  # Save the order
+                start_time=datetime.utcnow().isoformat(),  # Add start time tracking
             )
             # Вызов send_question с объектом callback_query
             await send_question(callback_query, state)
@@ -415,6 +416,13 @@ async def finish_test(callback_query: types.CallbackQuery, state: FSMContext):
 
     result_text = ""
 
+    # Calculate time spent
+    start_time = datetime.fromisoformat(data["start_time"])
+    end_time = datetime.utcnow()
+    time_spent = end_time - start_time
+    minutes = int(time_spent.total_seconds() // 60)
+    seconds = int(time_spent.total_seconds() % 60)
+
     result_picture = None
     test_picture = None
 
@@ -461,12 +469,20 @@ async def finish_test(callback_query: types.CallbackQuery, state: FSMContext):
                 session.add(quiz_result)
 
             # Prepare result message and media  # TODO: Fix result generation and add the max scores (?)
+            # if test.multi_graph_results:
+            #     result_text = ""
+            #     for result in results:
+            #         result_text += f"Набрано баллов в категории {result['category_name']}: {result['score']}\n{result['text']}\n\n"
+            # else:
+            #     result_text = f"Набрано баллов: {total_score}\n{results[0]['text']}"
+
             if test.multi_graph_results:
-                result_text = ""
+                result_text = f"Время прохождения: {minutes} мин {seconds} сек\n\n"  # Add time spent
                 for result in results:
                     result_text += f"Набрано баллов в категории {result['category_name']}: {result['score']}\n{result['text']}\n\n"
             else:
-                result_text = f"Набрано баллов: {total_score}\n{results[0]['text']}"
+                result_text = f"Время прохождения: {minutes} мин {seconds} сек\n\n"  # Add time spent
+                result_text += f"Набрано баллов: {total_score}\n{results[0]['text']}"
 
             # Удаляем тест из `pending_tests`
             original_len = len(test_pack_completion.pending_tests)
