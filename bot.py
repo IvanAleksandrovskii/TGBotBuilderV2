@@ -15,12 +15,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import uvicorn
 
-from core import log, settings
-from core.models import db_helper
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
-from core.models import client_manager
+from core import log, settings
+from core.models import db_helper, client_manager
 
 from handlers import router as main_router
+
+from abandoned_tests import main as check_abandoned_tests
+
+
+# Создаем планировщик
+scheduler = AsyncIOScheduler()
 
 
 class BotWebhookManager:
@@ -91,7 +98,6 @@ bot_manager = BotWebhookManager()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     log.info("Starting up the BOT FastAPI application...")
-
     await bot_manager.setup(
         token=settings.bot.token,
         webhook_host=settings.bot.base_url,
@@ -99,17 +105,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         router=main_router,
     )
     await bot_manager.start_webhook()
-
     await client_manager.start()
+
+    # Настраиваем и запускаем планировщик
+    scheduler.add_job(
+        check_abandoned_tests,
+        trigger=CronTrigger(minute="*/15"),  # TODO: Make it configurable (( ! ))
+        id="check_abandoned_tests",
+        name="Check and process abandoned tests",
+        replace_existing=True,
+    )
+    scheduler.start()
+    log.info("Scheduler started")
 
     yield
 
     log.info("Shutting down the BOT FastAPI application...")
     await bot_manager.stop_webhook()
-
     await db_helper.dispose()
-
     await client_manager.dispose_all_clients()
+
+    scheduler.shutdown()
     log.info("BOT application shutdown complete")
 
 

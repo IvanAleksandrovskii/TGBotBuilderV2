@@ -10,6 +10,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import log, settings
 from core.models import (
@@ -39,6 +40,26 @@ from handlers.test_packs.solve_the_pack.solve_test import PassTestMenuStates
 
 
 router = Router()
+
+
+async def notify_creator_completion_continued(
+    message: types.Message, test_pack_completion: TestPackCompletion
+):
+    await message.bot.send_message(
+        test_pack_completion.test_pack_creator_id,
+        "1 test pack completion was continued.",
+    )
+
+
+async def continue_completion(
+    message: types.Message,
+    test_pack_completion: TestPackCompletion,
+    session: AsyncSession,
+):
+    await notify_creator_completion_continued(message, test_pack_completion)
+    test_pack_completion.status = CompletionStatus.IN_PROGRESS
+    session.add(test_pack_completion)
+    await session.commit()
 
 
 class FirstGreetingStates(StatesGroup):
@@ -236,6 +257,16 @@ async def start_command(message: types.Message, state: FSMContext):
                     test_pack_completion_id=existing_test_pack_completion.id
                 )
 
+                await get_solve_test_menu(message, state)
+                return
+
+            if existing_test_pack_completion.status == CompletionStatus.ABANDONED:
+                await state.set_state(SolveThePackStates.SOLVING)
+                await state.update_data(
+                    test_pack_completion_id=existing_test_pack_completion.id
+                )
+                # TODO: Add notification for creator and set status to IN_PROGRESS (( ! ))
+                await continue_completion(message, existing_test_pack_completion, session)
                 await get_solve_test_menu(message, state)
                 return
 

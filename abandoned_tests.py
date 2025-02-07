@@ -28,11 +28,11 @@ async def send_notification(
 
 async def get_abandoned_tests(session):
     current_time = datetime.datetime.now(datetime.UTC)
-    threshold = current_time - datetime.timedelta(hours=6)
+    timedelta = current_time - datetime.timedelta(hours=0.5)  # TODO: Make it configurable (( ! ))
 
     query = select(TestPackCompletion).where(
         TestPackCompletion.status == CompletionStatus.IN_PROGRESS,
-        TestPackCompletion.updated_at < threshold,
+        TestPackCompletion.updated_at < timedelta,
     )
     results = await session.execute(query)
     abandoned_completions = results.scalars().all()
