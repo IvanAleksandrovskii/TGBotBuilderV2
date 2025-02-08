@@ -26,7 +26,7 @@ async def tests_pack_menu(
 
     button_0 = InlineKeyboardButton(
         text="❓Custom Tests & Test Packs",
-        url="https://t.me/my_demo_bb_bot/myapp",  # TODO: Fix, move to config
+        url="https://t.me/tap_quiz_bot/myapp",  # TODO: Fix, move to config
     )
     button_1 = InlineKeyboardButton(
         text="💽 Check My Tests Packs", callback_data="my_tests_packs"
