@@ -11,8 +11,10 @@ from pydantic_settings import BaseSettings
 load_dotenv(".env")
 
 
+# Telegram Bot ENV variables
 BASE_BOT_URL = os.getenv("BASE_BOT_URL", "https://jrqmts-ip-184-22-35-246.tunnelmole.net")  # TODO: Move to conf vars
 BOT_PORT = int(os.getenv("BOT_PORT", 8080))
+APP_NAME = os.getenv("APP_NAME", "myapp")  # TODO: Move to conf vars
 
 # App ENV variables
 DEBUG = os.getenv("DEBUG", "True").lower() in ('true', '1')  # TODO: make False
@@ -89,6 +91,7 @@ class BotConfig(BaseModel):
     token: str = BOT_TOKEN
     base_url: str = BASE_BOT_URL 
     port: int = BOT_PORT
+    app_name: str = APP_NAME
 
 
 class SQLAdminConfig(BaseModel):
