@@ -87,5 +87,5 @@ async def recive_resume(message: types.Message, state: FSMContext):
         await message.answer("Спасибо за прохождения, все данные переданы создателю набора")
         await state.clear()
         
-        from handlers.on_start import back_to_start_from_message
+        from handlers.back_to_start import back_to_start_from_message
         await back_to_start_from_message(message, state)

@@ -1,7 +1,6 @@
 # handlers/reader.py
 
-from aiogram import Router, types
-from aiogram.filters import Command
+from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.exceptions import TelegramBadRequest
@@ -12,6 +11,8 @@ from services.text_service import TextService
 from services.button_service import ButtonService
 from ..utils import send_or_edit_message
 
+from services.decorators import handle_as_task, TaskPriority
+
 
 router = Router()
 
@@ -20,7 +21,8 @@ class LargeTextStates(StatesGroup):
     READING = State()
 
 
-@router.callback_query(LargeTextStates.READING, lambda c: c.data == "current_page_reader")
+@router.callback_query(LargeTextStates.READING, F.data == "current_page_reader")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def current_page_number(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer(settings.bot_reader_text.reader_page_number_button_ansewer)
     return
@@ -56,8 +58,8 @@ def split_text_into_chunks(text: str, max_chunk_size: int) -> list[str]:
     return chunks
 
 
-# @router.message(Command("read"))
-@router.callback_query(lambda c: c.data and c.data.startswith("read_"))
+@router.callback_query(F.data.startswith("read_"))
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def start_reading(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
     
@@ -110,6 +112,7 @@ async def start_reading(callback_query: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(LargeTextStates.READING)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_reading(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
     
@@ -143,6 +146,7 @@ async def process_reading(callback_query: types.CallbackQuery, state: FSMContext
 
 
 @router.message(LargeTextStates.READING)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_page_input(message: types.Message, state: FSMContext):
     try:
         page_number = int(message.text)

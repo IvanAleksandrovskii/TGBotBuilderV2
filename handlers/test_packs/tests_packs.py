@@ -5,8 +5,11 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardMarkup, InlineKeyboardButton
 
+from core import settings
 from handlers.utils import get_default_media
 from handlers.utils import send_or_edit_message
+
+from services.decorators import handle_as_task, TaskPriority
 
 
 router = Router()
@@ -14,6 +17,7 @@ router = Router()
 
 @router.callback_query(F.data == "send_tests_pack")
 @router.message(Command("send_tests_pack"))
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def tests_pack_menu(
     call: types.Message | types.CallbackQuery, state: FSMContext
 ) -> None:
@@ -21,12 +25,15 @@ async def tests_pack_menu(
         await call.answer("Command called")
 
     await state.clear()
+    
+    bot_username = (await call.bot.get_me()).username
+    app_url = f"https://t.me/{bot_username}/{settings.bot.app_name}"
 
     default_media = await get_default_media()
 
     button_0 = InlineKeyboardButton(
         text="❓Custom Tests & Test Packs",
-        url="https://t.me/tap_quiz_bot/myapp",  # TODO: Fix, move to config
+        url=app_url,  # TODO: Fix, move to config
     )
     button_1 = InlineKeyboardButton(
         text="💽 Check My Tests Packs", callback_data="my_tests_packs"

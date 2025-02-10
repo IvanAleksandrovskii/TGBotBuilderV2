@@ -38,6 +38,8 @@ from handlers.test_packs.solve_the_test.inside_the_psychological_test import (
 )
 from handlers.test_packs.solve_the_pack.solve_test import PassTestMenuStates
 
+from services.decorators import handle_as_task, TaskPriority
+
 
 router = Router()
 
@@ -154,6 +156,9 @@ async def get_start_content(chat_id: int, username: str | None):
 
 
 @router.message(Command("start"))
+@handle_as_task(
+    priority=TaskPriority.NORMAL,
+)
 async def start_command(message: types.Message, state: FSMContext):
     """Handler for /start command with promocode support"""
     args = message.text.split()[1:]
@@ -164,7 +169,7 @@ async def start_command(message: types.Message, state: FSMContext):
     user_service = UserService()
 
     current_state = await state.get_state()
-    forbidden_states = [
+    solving_test_pack_states = [
         SolveThePackStates.WELCOME,
         SolveThePackStates.SOLVING,
         SolveThePackStates.COMPLETING,
@@ -178,7 +183,7 @@ async def start_command(message: types.Message, state: FSMContext):
         PassTestMenuStates.STARTING,
     ]
 
-    if current_state in forbidden_states and test_pack_id is None:
+    if current_state in solving_test_pack_states and test_pack_id is None:
         state_data = await state.get_data()
         test_pack_completion_id = state_data.get("test_pack_completion_id")
 
@@ -266,7 +271,9 @@ async def start_command(message: types.Message, state: FSMContext):
                     test_pack_completion_id=existing_test_pack_completion.id
                 )
                 # TODO: Add notification for creator and set status to IN_PROGRESS (( ! ))
-                await continue_completion(message, existing_test_pack_completion, session)
+                await continue_completion(
+                    message, existing_test_pack_completion, session
+                )
                 await get_solve_test_menu(message, state)
                 return
 
@@ -291,6 +298,7 @@ async def start_command(message: types.Message, state: FSMContext):
 
 
 @router.callback_query(F.data == "end_first_greeting")
+@handle_as_task(priority=TaskPriority.HIGH)
 async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMContext):
 
     await callback_query.answer("Главное меню")  # TODO: Move to config
@@ -306,21 +314,14 @@ async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMCont
     await send_or_edit_message(callback_query, text, keyboard, media_url)
 
 
-@router.callback_query(F.data == "back_to_start")
-async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
+# @router.callback_query(F.data == "back_to_start")
+# @handle_as_task(priority=TaskPriority.NORMAL)
+# async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
 
-    await callback_query.answer("Главное меню")  # TODO: Move to config
+#     await callback_query.answer("Главное меню")  # TODO: Move to config
 
-    await state.clear()
-    chat_id = int(callback_query.from_user.id)
-    username = callback_query.from_user.username
-    text, keyboard, media_url, _ = await get_start_content(chat_id, username)
-    await send_or_edit_message(callback_query.message, text, keyboard, media_url)
-
-
-async def back_to_start_from_message(message: types.Message, state: FSMContext):
-    await state.clear()
-    chat_id = int(message.chat.id)
-    username = message.from_user.username
-    text, keyboard, media_url, _ = await get_start_content(chat_id, username)
-    await send_or_edit_message(message, text, keyboard, media_url)
+#     await state.clear()
+#     chat_id = int(callback_query.from_user.id)
+#     username = callback_query.from_user.username
+#     text, keyboard, media_url, _ = await get_start_content(chat_id, username)
+#     await send_or_edit_message(callback_query.message, text, keyboard, media_url)

@@ -12,7 +12,9 @@ from core.models import db_helper
 from core.models.test_pack import TestPack
 from handlers.utils import send_or_edit_message
 
-from ..utils import get_default_media
+from handlers.utils import get_default_media
+
+from services.decorators import handle_as_task, TaskPriority
 
 
 router = Router()
@@ -23,6 +25,7 @@ class TestPackDeleteState(StatesGroup):
 
 
 @router.callback_query(F.data == "my_tests_packs")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def my_tests_packs(callback_query: types.CallbackQuery, state: FSMContext) -> None:  # TODO: Add link (to pass the pack) to the output
     
     await callback_query.answer("Command called")
@@ -60,6 +63,7 @@ async def my_tests_packs(callback_query: types.CallbackQuery, state: FSMContext)
 
 @router.callback_query(TestPackDeleteState.DELETING, F.data.startswith("test_pack_check_"))
 @router.callback_query(F.data.startswith("test_pack_check_"))
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def test_pack_check(callback_query: types.CallbackQuery, state: FSMContext):
     
     await callback_query.answer("Command called")
@@ -113,6 +117,7 @@ async def test_pack_check(callback_query: types.CallbackQuery, state: FSMContext
 
 
 @router.callback_query(F.data.startswith("test_pack_delete_"))
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def test_pack_delete(callback_query: types.CallbackQuery, state: FSMContext):
     
     await callback_query.answer("Command called")
@@ -135,6 +140,7 @@ async def test_pack_delete(callback_query: types.CallbackQuery, state: FSMContex
 
 
 @router.callback_query(TestPackDeleteState.DELETING, F.data == "yes")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def test_pack_delete_yes(callback_query: types.CallbackQuery, state: FSMContext):
     state_data = await state.get_data()
     await state.clear()

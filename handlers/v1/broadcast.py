@@ -11,6 +11,8 @@ from aiogram.fsm.state import StatesGroup, State
 from core import settings, log
 from services.user_services import UserService
 
+from services.decorators import handle_as_task, TaskPriority
+
 
 router = Router()
 
@@ -21,6 +23,7 @@ class AdminBroadcastStates(StatesGroup):
 
 
 @router.message(Command("broadcast"))
+@handle_as_task(priority=TaskPriority.HIGH)
 async def start_broadcast(message: types.Message, state: FSMContext):
     try:
         if not await UserService.is_superuser(int(message.from_user.id)):
@@ -38,6 +41,7 @@ async def start_broadcast(message: types.Message, state: FSMContext):
 
 
 @router.message(Command("done"))
+@handle_as_task(priority=TaskPriority.HIGH)
 async def process_done_command(message: types.Message, state: FSMContext):
     try:
         data = await state.get_data()
@@ -121,6 +125,7 @@ async def process_done_command(message: types.Message, state: FSMContext):
 
 
 @router.message(AdminBroadcastStates.WAITING_FOR_MESSAGE)
+@handle_as_task(priority=TaskPriority.HIGH)
 async def process_broadcast_message(message: types.Message, state: FSMContext):
     try:
         data = await state.get_data()
@@ -138,6 +143,7 @@ async def process_broadcast_message(message: types.Message, state: FSMContext):
 
 
 @router.message(AdminBroadcastStates.WAITING_FOR_CONFIRMATION)
+@handle_as_task(priority=TaskPriority.HIGH)
 async def confirm_broadcast(message: types.Message, state: FSMContext):
     user_service = UserService()
 

@@ -11,6 +11,8 @@ from aiogram.fsm.state import StatesGroup, State
 from core import settings, logger as log
 from services.user_services import UserService
 
+from services.decorators import handle_as_task, TaskPriority
+
 
 router = Router()
 
@@ -36,6 +38,7 @@ def get_cancel_keyboard():
 
 
 @router.callback_query(F.data == "cancel_broadcast")
+@handle_as_task(priority=TaskPriority.HIGH)
 async def cancel_broadcast(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text("Рассылка отменена.")
@@ -43,6 +46,7 @@ async def cancel_broadcast(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.message(Command("direct_broadcast"))
+@handle_as_task(priority=TaskPriority.HIGH)
 async def start_direct_broadcast(message: types.Message, state: FSMContext):
     try:
         if not await UserService.is_superuser(int(message.from_user.id)):
@@ -62,6 +66,7 @@ async def start_direct_broadcast(message: types.Message, state: FSMContext):
 
 
 @router.message(Command("next"), AdminBroadcastStates.DIRECT_WAITING_FOR_MESSAGE)
+@handle_as_task(priority=TaskPriority.HIGH)
 async def process_direct_messages_done(message: types.Message, state: FSMContext):
     try:
         data = await state.get_data()
@@ -146,6 +151,7 @@ async def process_direct_messages_done(message: types.Message, state: FSMContext
 
 
 @router.message(Command("continue"), AdminBroadcastStates.DIRECT_WAITING_FOR_PREVIEW)
+@handle_as_task(priority=TaskPriority.HIGH)
 async def continue_after_preview(message: types.Message, state: FSMContext):
     await state.set_state(AdminBroadcastStates.DIRECT_WAITING_FOR_IDS)
     await message.answer(
@@ -156,12 +162,14 @@ async def continue_after_preview(message: types.Message, state: FSMContext):
 
 
 @router.message(Command("cancel"), AdminBroadcastStates.DIRECT_WAITING_FOR_PREVIEW)
+@handle_as_task(priority=TaskPriority.HIGH)
 async def cancel_after_preview(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("Рассылка отменена.")
 
 
 @router.message(AdminBroadcastStates.DIRECT_WAITING_FOR_MESSAGE)
+@handle_as_task(priority=TaskPriority.HIGH)
 async def process_direct_broadcast_message(message: types.Message, state: FSMContext):
     try:
         data = await state.get_data()
@@ -182,6 +190,7 @@ async def process_direct_broadcast_message(message: types.Message, state: FSMCon
 
 
 @router.message(AdminBroadcastStates.DIRECT_WAITING_FOR_IDS)
+@handle_as_task(priority=TaskPriority.HIGH)
 async def process_direct_chat_ids(message: types.Message, state: FSMContext):
     try:
         chat_ids_raw = message.text.replace(" ", "").split(",")
@@ -227,6 +236,7 @@ async def process_direct_chat_ids(message: types.Message, state: FSMContext):
 
 
 @router.message(AdminBroadcastStates.DIRECT_WAITING_FOR_CONFIRMATION)
+@handle_as_task(priority=TaskPriority.HIGH)
 async def confirm_direct_broadcast(message: types.Message, state: FSMContext):
     try:
         if message.text.lower() != "да":

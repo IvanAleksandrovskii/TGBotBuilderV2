@@ -1,6 +1,6 @@
 # handlers/universal_page.py
 
-from aiogram import Router, types, Bot
+from aiogram import Router, types, Bot, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
@@ -10,13 +10,17 @@ from ..utils import send_or_edit_message, get_content
 from ..on_start import get_start_content
 
 
+from services.decorators import handle_as_task, TaskPriority
+
+
 router = Router()
 
 
 class UniversalPageStates(StatesGroup):
     VIEWING_UNIVERSAL_PAGE = State()
 
-@router.callback_query(lambda c: c.data and c.data.startswith("show_page_"))
+@router.callback_query(F.data.startswith("show_page_"))
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def show_universal_page(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
 
@@ -43,6 +47,7 @@ async def show_universal_page(callback_query: types.CallbackQuery, state: FSMCon
 
 
 @router.callback_query(UniversalPageStates.VIEWING_UNIVERSAL_PAGE)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_page_action(callback_query: types.CallbackQuery, state: FSMContext, bot: Bot):
     await callback_query.answer()
     
@@ -79,10 +84,10 @@ async def process_page_action(callback_query: types.CallbackQuery, state: FSMCon
         await state.clear()
         await start_reading(callback_query, state)
     
-    elif action == "ai_chat":
-        from .ai_chat import start_ai_chat
-        await state.clear()
-        await start_ai_chat(callback_query, state)
+    # elif action == "ai_chat":
+    #     from ..__unused__.ai_chat import start_ai_chat
+    #     await state.clear()
+    #     await start_ai_chat(callback_query, state)
     
     elif action == "ai_chat_with_memory":
         from .ai_chat_with_memory import start_ai_chat_with_memory
@@ -94,7 +99,7 @@ async def process_page_action(callback_query: types.CallbackQuery, state: FSMCon
         await state.clear()
         await dice(callback_query, bot)
         
-    elif action == "getpromo":
-        from .promocode import get_promo_command
-        await state.clear()
-        await get_promo_command(callback_query)
+    # elif action == "getpromo":
+    #     from .promocode import get_promo_command
+    #     await state.clear()
+    #     await get_promo_command(callback_query)

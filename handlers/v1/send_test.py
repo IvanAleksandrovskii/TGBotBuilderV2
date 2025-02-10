@@ -21,6 +21,8 @@ from core.models.sent_test import SentTest, TestStatus
 from handlers.utils import send_or_edit_message
 from services.text_service import TextService
 
+from services.decorators import handle_as_task, TaskPriority
+
 
 router = Router()
 
@@ -67,7 +69,8 @@ async def get_send_test_media_url():
         return None
 
 
-@router.callback_query(lambda c: c.data == "export_csv_all")
+@router.callback_query(F.data == "export_csv_all")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def export_all_sent_tests_csv(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -77,7 +80,8 @@ async def export_all_sent_tests_csv(
     await export_sent_tests_csv(callback_query, sender_id, all_tests=True)
 
 
-@router.callback_query(lambda c: c.data == "export_csv_by_test")
+@router.callback_query(F.data == "export_csv_by_test")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def show_export_by_test_options(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -135,7 +139,8 @@ async def show_export_by_test_options(
             await session.close()
 
 
-@router.callback_query(lambda c: c.data.startswith("export_csv_test_"))
+@router.callback_query(F.data.startswith("export_csv_test_"))
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def export_sent_tests_by_test_csv(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -450,6 +455,7 @@ async def show_available_tests(callback_query: types.CallbackQuery, state: FSMCo
 
 
 @router.callback_query(SendTestStates.CHOOSING_TEST_TYPE)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_test_type_choice(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -478,7 +484,8 @@ async def process_test_type_choice(
     await show_available_tests(callback_query, state)
 
 
-@router.callback_query(lambda c: c.data == "send_test")
+@router.callback_query(F.data == "send_test")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
 
@@ -518,7 +525,8 @@ async def start_send_test(callback_query: types.CallbackQuery, state: FSMContext
     await state.set_state(SendTestStates.CHOOSING_TEST_TYPE)
 
 
-@router.callback_query(lambda c: c.data == "view_sent_tests")
+@router.callback_query(F.data == "view_sent_tests")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def view_sent_tests(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
 
@@ -637,6 +645,7 @@ async def show_sent_tests_page(
 
 
 @router.callback_query(SendTestStates.VIEWING_SENT_TESTS)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_sent_tests_navigation(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -834,6 +843,7 @@ async def view_user_tests(
 
 
 @router.callback_query(SendTestStates.VIEWING_USER_TESTS)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_user_tests_navigation(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -864,6 +874,7 @@ async def process_user_tests_navigation(
 
 
 @router.callback_query(SendTestStates.VIEWING_USER_TESTS)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_user_tests_navigation(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -925,6 +936,7 @@ async def confirm_test_selection(
 
 
 @router.callback_query(SendTestStates.CHOOSING_TEST)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_test_choice(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
 
@@ -997,7 +1009,8 @@ async def process_test_choice(callback_query: types.CallbackQuery, state: FSMCon
             await session.close()
 
 
-@router.callback_query(lambda c: c.data and c.data.startswith("add_test_"))
+@router.callback_query(F.data.startswith("add_test_"))
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def add_test(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
 
@@ -1042,7 +1055,8 @@ async def process_confirm_tests(callback_query: types.CallbackQuery, state: FSMC
         await state.set_state(SendTestStates.ENTERING_RECEIVER)
 
 
-@router.callback_query(lambda c: c.data == "back_to_test_selection")
+@router.callback_query(F.data == "back_to_test_selection")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_receiver_input(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
@@ -1052,6 +1066,7 @@ async def process_receiver_input(
 
 
 @router.message(SendTestStates.ENTERING_RECEIVER, F.text)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_receiver_input(message: types.Message, state: FSMContext):
     receiver_username = message.text.strip().lstrip("@")
     data = await state.get_data()
@@ -1191,6 +1206,7 @@ async def process_receiver_input(message: types.Message, state: FSMContext):
 
 
 @router.callback_query(SendTestStates.CONFIRMING)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
 
@@ -1279,8 +1295,9 @@ async def confirm_send_tests(callback_query: types.CallbackQuery, state: FSMCont
 
 
 @router.callback_query(
-    lambda c: c.data and c.data.startswith(("choose_", "confirm_", "back_to_"))
+    F.data.startswith(("choose_", "confirm_", "back_to_"))
 )
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def process_send_test_callback(
     callback_query: types.CallbackQuery, state: FSMContext
 ):

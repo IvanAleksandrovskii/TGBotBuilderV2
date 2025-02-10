@@ -2,7 +2,7 @@
 
 from typing import List, Dict
 
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.utils.chat_action import ChatActionSender
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -13,6 +13,8 @@ from core.models import db_helper
 from services.ai_services import get_ai_response
 from services.text_service import TextService
 from handlers.utils import send_or_edit_message
+
+from services.decorators import handle_as_task, TaskPriority
 
 
 router = Router()
@@ -55,7 +57,8 @@ async def update_chat_history(state: FSMContext, role: str, content: str):
     await state.update_data(chat_history=messages)
 
 
-@router.callback_query(lambda c: c.data == "ai_chat_with_memory")
+@router.callback_query(F.data == "ai_chat_with_memory")
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def start_ai_chat_with_memory(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
     
@@ -82,6 +85,7 @@ async def start_ai_chat_with_memory(callback_query: types.CallbackQuery, state: 
 
 
 @router.message(AIChatMemoryStates.CHATTING_WITH_MEMORY)
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def handle_memory_chat(message: types.Message, state: FSMContext):
     
     # await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)

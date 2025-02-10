@@ -5,15 +5,18 @@ from aiogram.fsm.context import FSMContext
 
 from .back_to_start import back_to_start
 
+from services.decorators import handle_as_task, TaskPriority
+
+
 router = Router()
 
 
 @router.callback_query()
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def fallback(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer("Fallback callback query")
-    
+
     await callback_query.message.answer(
-        "Sorry, bot was restarted or some error happened, "
-        "turning you back to start"
-        )  # TODO: Move to config
+        "Sorry, bot was restarted or some error happened, " "turning you back to start"
+    )  # TODO: Move to config
     await back_to_start(callback_query, state)

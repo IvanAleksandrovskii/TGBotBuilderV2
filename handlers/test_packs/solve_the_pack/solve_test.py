@@ -54,7 +54,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
             "Пока вы проходили тест бот был перезагружен, пожалуйста, откройте свое прохождение "
             "тестов снова используя ссылку по которой вы начали ранее, чтобы продолжить прохождение."
         )
-        from handlers.on_start import back_to_start
+        from handlers.back_to_start import back_to_start
         await back_to_start(callback_query, state)
         return
 

@@ -40,8 +40,8 @@ services:
       - SQLADMIN_USERNAME=${SQLADMIN_USERNAME:-admin} # UNSECURE, update it
       - SQLADMIN_PASSWORD=${SQLADMIN_PASSWORD:-password} # UNSECURE, update it
 
-      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://dkjsyk-ip-184-22-35-246.tunnelmole.net}
-      - BASE_BOT_URL=${BASE_BOT_URL:-https://jrqmts-ip-184-22-35-246.tunnelmole.net} # Better to put the inner (docker) network address (( ! )) For now unused but gonna be implemented
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://628a-184-22-35-246.ngrok-free.app}
+      - BASE_BOT_URL=${BASE_BOT_URL:-https://b10b-184-22-35-246.ngrok-free.app} # Better to put the inner (docker) network address (( ! )) For now unused but gonna be implemented
 
     command: /app/start.sh
     volumes:
@@ -69,8 +69,8 @@ services:
       - DEBUG=${DEBUG:-True}
       - BOT_PORT=${BOT_PORT:-8080}
 
-      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://dkjsyk-ip-184-22-35-246.tunnelmole.net}
-      - BASE_BOT_URL=${BASE_BOT_URL:-https://jrqmts-ip-184-22-35-246.tunnelmole.net}
+      - BASE_SERVER_URL=${BASE_SERVER_URL:-https://628a-184-22-35-246.ngrok-free.app}
+      - BASE_BOT_URL=${BASE_BOT_URL:-https://b10b-184-22-35-246.ngrok-free.app}
       # (( ! ))
       # - BOT_TOKEN=${BOT_TOKEN:-7638664164:AA...}  # Fill with the bot token or make a .env file with BOT_TOKEN=...
 

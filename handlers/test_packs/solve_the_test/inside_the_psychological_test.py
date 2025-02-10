@@ -601,6 +601,6 @@ async def process_quiz_callback(callback_query: types.CallbackQuery, state: FSMC
         await process_comment(callback_query, state)
 
     else:
-        from handlers.on_start import back_to_start_from_message
+        from handlers.back_to_start import back_to_start_from_message
 
         await back_to_start_from_message(callback_query.message, state)

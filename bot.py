@@ -25,6 +25,8 @@ from handlers import router as main_router
 
 from abandoned_tests import main as check_abandoned_tests
 
+from services.decorators import task_manager
+
 
 # Создаем планировщик
 scheduler = AsyncIOScheduler()
@@ -110,13 +112,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Настраиваем и запускаем планировщик
     scheduler.add_job(
         check_abandoned_tests,
-        trigger=CronTrigger(minute="*/15"),  # TODO: Make it configurable (( ! ))
+        trigger=CronTrigger(minute="*/30"),  # TODO: Make it configurable (( ! ))
         id="check_abandoned_tests",
         name="Check and process abandoned tests",
         replace_existing=True,
     )
     scheduler.start()
     log.info("Scheduler started")
+
+    await task_manager.start()
+    log.info("Task manager started")
 
     yield
 
@@ -126,6 +131,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await client_manager.dispose_all_clients()
 
     scheduler.shutdown()
+
+    await task_manager.stop()
+    log.info("Task manager stopped")
+
     log.info("BOT application shutdown complete")
 
 

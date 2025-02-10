@@ -28,7 +28,7 @@ async def send_notification(
 
 async def get_abandoned_tests(session):
     current_time = datetime.datetime.now(datetime.UTC)
-    timedelta = current_time - datetime.timedelta(hours=0.25)  # TODO: Make it configurable (( ! ))
+    timedelta = current_time - datetime.timedelta(hours=5)  # TODO: Make it configurable (( ! ))
 
     query = select(TestPackCompletion).where(
         TestPackCompletion.status == CompletionStatus.IN_PROGRESS,
@@ -61,12 +61,12 @@ async def main():
                 # Anti flood
                 await asyncio.sleep(0.05)
 
-                if completion.updated_at < current_time - datetime.timedelta(hours=12):
+                if completion.updated_at < current_time - datetime.timedelta(hours=6):  # TODO: Make it configurable (( ! ))
                     log.info(f"Marking completion {completion.id} as abandoned")
                     await send_notification(
                         bot,
                         completion,
-                        "1 test pack completion was abandoned.",
+                        "Одно из прохождений набора тестов было заброшено.",
                         notify_creator=True,
                     )
                     completion.status = CompletionStatus.ABANDONED
@@ -76,7 +76,7 @@ async def main():
                     await send_notification(
                         bot,
                         completion,
-                        f"Your test pack has been abandoned. Please continue -> https://t.me/{bot_username}?start={completion.test_pack_id}",
+                        f"Вы не завершили прохождение набора тестов. Пожалуйста, продолжите (перейти по ссылке) -> https://t.me/{bot_username}?start={completion.test_pack_id}",
                     )
 
             # Batch update all modified completions

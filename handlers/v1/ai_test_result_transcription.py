@@ -2,7 +2,7 @@
 
 from typing import List
 
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.enums import ChatAction
 from aiogram.utils.chat_action import ChatActionSender
 
@@ -16,11 +16,14 @@ from core.models.sent_test import TestStatus
 from services.ai_services import get_ai_response
 from handlers.utils import send_or_edit_message
 
+from services.decorators import handle_as_task, TaskPriority
+
 
 router = Router()
 
 
-@router.callback_query(lambda c: c.data.startswith("get_ai_transcription_"))
+@router.callback_query(F.data.startswith("get_ai_transcription_"))
+@handle_as_task(priority=TaskPriority.NORMAL)
 async def get_ai_transcription(callback_query: types.CallbackQuery):
     await callback_query.answer()
     
@@ -123,8 +126,6 @@ async def get_ai_transcription(callback_query: types.CallbackQuery):
             except Exception as e:
                 log.exception(e)
                 await callback_query.answer("An error occurred while generating the AI transcription. Please try again.")
-            finally:
-                await session.close()
 
 
 from prompt import prompt
