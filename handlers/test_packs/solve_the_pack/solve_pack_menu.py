@@ -61,7 +61,7 @@ async def get_solve_test_menu(
         PassTestMenuStates.STARTING,
     ]:
         await message.answer(
-            "Сейчас вы не находитесь в состоянии прохождения наботра тестов, пожалуйста, откройте набор который вы хотите пройти по ссылке-приглашению."
+            "Сейчас вы не находитесь в состоянии прохождения набора тестов. Пожалуйста, откройте набор, который хотите пройти, по ссылке-приглашению."
         )  # TODO: Move to config
         return
 
@@ -80,12 +80,13 @@ async def get_solve_test_menu(
             test_pack_completion = await session.execute(test_pack_completion_query)
             test_pack_completion = test_pack_completion.scalar_one_or_none()
 
-            if not test_pack_completion:
+            if not test_pack_completion:  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
                 await message.answer("Test pack completion not found, ERROR")
                 return
         except Exception as e:
             log.exception(f"Error in get_solve_test_menu: {e}")
-            await message.answer("An error occurred. Please try again later.")
+            await message.answer("Произошла ошибка. Попробуйте позже.")
+            return
 
     if test_pack_completion.pending_tests == []:
         from .final_all_tests_done import finish_the_pack
@@ -125,7 +126,7 @@ async def get_solve_test_menu(
         len(tests_to_complete) + len(custom_tests_to_complete) == 0
     ):  # TODO: Make it finalize the completion here
         await message.answer(
-            "No tests to complete. Error happened. Please press -> /abort"
+            "Нет тестов для прохождения. Ошибка произошла. Пожалуйста, нажмите -> /abort"
         )
         return
 

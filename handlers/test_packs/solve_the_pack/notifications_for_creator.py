@@ -16,7 +16,7 @@ async def notify_creator(message: types.Message, test_pack_creator_chat_id: int,
     if username is None:
         username = message.from_user.first_name
     if (username.strip() == "") or (username is None):
-        username = f"User {message.from_user.id}"
+        username = f"Пользователь {message.from_user.id}"
     
     notification_text: str = f"{username}: {text}" 
     

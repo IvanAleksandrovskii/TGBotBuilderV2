@@ -30,7 +30,7 @@ class PassCustomTestStates(StatesGroup):
 async def inside_the_custom_test(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
-    await callback_query.answer("Command called")
+    await callback_query.answer()
 
     data = await state.get_data()
     test_id = data.get("test_id")  # UUID custom-теста
@@ -221,13 +221,13 @@ async def handle_free_text_answer(message: types.Message, state: FSMContext):
 
     # Bounds checking
     if not questions_ids:
-        await message.answer("Error: No questions found in the test.")
+        await message.answer("Ошибка: нет вопросов в тесте.")
         await finalize_custom_test(message, state)
         return
 
     if current_index >= len(questions_ids):
         # We've somehow gone past the end of questions
-        await message.answer("All questions have been answered.")
+        # await message.answer("Все вопросы уже отвечены.")
         await finalize_custom_test(message, state)
         return
 
@@ -244,7 +244,7 @@ async def handle_free_text_answer(message: types.Message, state: FSMContext):
         question = q_db.scalar_one_or_none()
 
     if not question:
-        await message.answer("Error: Question not found in database.")
+        await message.answer("Ошибка: Вопрос не найден.")
         # Skip this question and move to next
         await state.update_data(current_index=current_index + 1)
         await ask_next_question(message, state)
@@ -258,7 +258,7 @@ async def handle_free_text_answer(message: types.Message, state: FSMContext):
     # Save the answer with additional validation
     answer_text = message.text.strip()
     if not answer_text:
-        await message.answer("Please provide a non-empty answer.")
+        await message.answer("Пожалуйста, напишите свой ответ текстом в чате. Ответ не может быть пустым.")
         return
 
     user_answers.append(
@@ -356,7 +356,8 @@ async def finalize_custom_test(message: types.Message, state: FSMContext):  # TO
             log.error(
                 f"Ошибка при обновлении TestPackCompletion {test_pack_completion_id}: {str(e)}"
             )
-            await message.answer(f"Произошла ошибка при сохранении теста: {str(e)}")
+            await message.answer(f"Произошла ошибка. Попробуйте позже.")
+            return
 
     await message.answer(
         f"Тест '{test_name}' завершён!\nВаш итоговый балл: {total_score}"

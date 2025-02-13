@@ -181,11 +181,11 @@ async def handle_contact(message: types.Message, state: FSMContext):
     await notify_creator(
         message,
         test_pack_creator_id,
-        f"started solving the test pack {test_pack_name}\n\nUsed Contact:\n"
+        f"Пользователь начал прохождение набора тестов {test_pack_name}\n\nКонтактные данные:\n"
         f" - Username: {f"@{username}" if (username and username != 'Не указано') else 'Не указано'}\n"
-        f" - Phone: {phone}\n"
-        f" - First name: {first_name}\n"
-        f" - Last name: {last_name}\n",
+        f" - Телефон: {phone}\n"
+        f" - Имя: {first_name}\n"
+        f" - Фамилия: {last_name}\n",
     )
 
     # Create a new test pack completion
@@ -197,7 +197,7 @@ async def handle_contact(message: types.Message, state: FSMContext):
             test_pack = test_pack.scalar_one_or_none()
 
             if not test_pack:
-                await message.answer("Test pack not found.")
+                await message.answer("Набор тестов не найден, ссылка более не активна, пожалуйста, получите новую ссылку.")  # TODO: Move to config
                 return
 
             new_test_pack_completion = (
@@ -221,7 +221,7 @@ async def handle_contact(message: types.Message, state: FSMContext):
         except Exception as e:
             log.exception(f"Error in handle_contact: {e}")
             await message.answer(
-                "An error occurred while creating test pack completion."
+                "Произошла ошибка при старте прохождения набора тестов. Попробуйте позже."
             )
             await state.clear()
             return

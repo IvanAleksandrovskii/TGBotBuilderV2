@@ -32,7 +32,7 @@ async def abort(message: types.Message, state: FSMContext) -> None:
 
     if not user:
         log.error(f"Failed to get/create user for user_id {user_id}")
-        await message.answer("An error occurred. Please try again later.")
+        await message.answer("Произошла ошибка, попробуйте позже")  # TODO: Move to config
         return
 
     # Set state and send message

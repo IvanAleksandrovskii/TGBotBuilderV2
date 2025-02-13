@@ -156,7 +156,7 @@ async def confirm_start_test(
                 category_scores={},
                 intro_shown=False,
                 sorted_questions=sorted_questions,  # Save the order
-                start_time=datetime.utcnow().isoformat(),  # Add start time tracking
+                start_time=datetime.utcnow().isoformat(),  # Start time tracking
             )
             # Вызов send_question с объектом callback_query
             await send_question(callback_query, state)
@@ -446,7 +446,7 @@ async def finish_test(callback_query: types.CallbackQuery, state: FSMContext):
 
             if not test or not test_pack_completion or not user:
                 await callback_query.answer(
-                    "An error occurred. Please try again later."
+                    "Произошла ошибка. Попробуйте позже."
                 )
                 return
 

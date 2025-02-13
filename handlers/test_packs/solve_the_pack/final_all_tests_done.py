@@ -30,16 +30,16 @@ async def finish_the_pack(message: types.Message, state: FSMContext) -> None:
             result = await session.execute(query)
             test_pack_completion = result.scalar_one_or_none()
 
-            if test_pack_completion is None:
+            if test_pack_completion is None:  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
                 log.error(
                     f"Failed to get test pack completion with id {test_pack_completion_id}"
                 )
-                await message.answer("An error occurred. Please try again later.")
+                await message.answer("Произошла ошибка. Попробуйте позже.")
                 return
 
         except Exception as e:
             log.exception(e)
-            await message.answer("An error occurred. Please try again later.")
+            await message.answer("Произошла ошибка. Попробуйте позже.")
             return
 
     await message.answer(
@@ -78,7 +78,7 @@ async def recive_resume(message: types.Message, state: FSMContext):
 
         except Exception as e:
             log.exception(e)
-            await message.answer("An error occurred. Please try again later.")
+            await message.answer("Произошла ошибка. Попробуйте позже.")
             return
         
         await message.bot.forward_message(test_pack_completion.test_pack_creator_id, message.chat.id, message.message_id)

@@ -14,9 +14,9 @@ router = Router()
 @router.callback_query()
 @handle_as_task(priority=TaskPriority.NORMAL)
 async def fallback(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.answer("Fallback callback query")
+    await callback_query.answer("Что-то пошло не так")
 
     await callback_query.message.answer(
-        "Sorry, bot was restarted or some error happened, " "turning you back to start"
+        "Извините, что-то пошло не так, загружаю главное меню..."
     )  # TODO: Move to config
     await back_to_start(callback_query, state)

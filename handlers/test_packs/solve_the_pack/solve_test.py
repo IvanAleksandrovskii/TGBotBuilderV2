@@ -102,7 +102,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                 test = await session.execute(test_query)
                 test = test.scalar_one_or_none()
 
-                if not test:  # TODO: Write this scenario
+                if not test:  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!! 
                     await callback_query.message.answer(
                         f"Test with id {test_id} not found"
                     )
@@ -131,7 +131,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
             except Exception as e:
                 log.exception(f"Error in solve_test: {e}")
                 await callback_query.message.answer(
-                    "An error occurred. Please try again later."
+                    "Произошла ошибка. Попробуйте позже."
                 )
                 return
 
@@ -145,7 +145,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                 custom_test = await session.execute(custom_test_query)
                 custom_test = custom_test.scalar_one_or_none()
 
-                if not custom_test:  # TODO: Write this scenario
+                if not custom_test:  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
                     await callback_query.message.answer(
                         f"Custom test with id {test_id} not found"
                     )
@@ -174,17 +174,17 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
             except Exception as e:
                 log.exception(f"Error in solve_test: {e}")
                 await callback_query.message.answer(
-                    "An error occurred. Please try again later."
+                    "Произошла ошибка. Попробуйте позже."
                 )
                 return
 
     else:
-        await callback_query.message.answer("Error occured")
+        await callback_query.message.answer("Произошла ошибка. Попробуйте позже.")
 
 
 @router.callback_query(PassTestMenuStates.STARTING, F.data == "yes")
 async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.answer("Начат тест")  # TODO: Move to config
+    await callback_query.answer("Тест начат")  # TODO: Move to config
 
     data = await state.get_data()
     test_pack_completion_id = data.get(
@@ -212,7 +212,7 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
                 from handlers.test_packs.solve_the_test.inside_the_psychological_test import (
                     confirm_start_test,
                 )
-                await confirm_start_test(callback_query, state, test_id)
+                await confirm_start_test(callback_query, state, test_id)  # TODO: Check (( ! ))  # TODO: !!! Need to make the scenario error for the missing test
                 return
 
             elif test_type == "custom":
@@ -220,7 +220,7 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
                 custom_test = await session.execute(custom_test_query)
                 custom_test = custom_test.scalar_one_or_none()
 
-                if not custom_test:  # TODO: Write this scenario
+                if not custom_test:  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
                     await callback_query.message.answer(
                         f"Custom test with id {test_id} not found"
                     )
@@ -231,13 +231,13 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
                 await inside_the_custom_test(callback_query, state)
 
             else:
-                await callback_query.message.answer("Error occured")
+                await callback_query.message.answer("Произошла ошибка. Попробуйте позже.")
                 return
 
         except Exception as e:
             log.exception(f"Error in start_test: {e}")
             await callback_query.message.answer(
-                "An error occurred. Please try again later."
+                "Произошла ошибка. Попробуйте позже."
             )
             await state.clear()
             await state.set_state(SolveThePackStates.SOLVING)
