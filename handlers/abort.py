@@ -17,20 +17,21 @@ router = Router()
 
 @router.message(Command("abort"))
 @handle_as_task(priority=TaskPriority.NORMAL)
-async def abortk(message: types.Message, state: FSMContext) -> None:
-    chat_id = int(message.chat.id)
+async def abort(message: types.Message, state: FSMContext) -> None:
+    # chat_id = int(message.chat.id)
+    user_id = int(message.from_user.id)
     username = message.from_user.username
 
     await state.clear()
 
     # Get start content will create user if needed
-    text, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
+    text, keyboard, media_url, is_new_user = await get_start_content(user_id, username)
 
     # Now get the user that was just created or retrieved
-    user = await UserService.get_user(chat_id)
+    user = await UserService.get_user(user_id)
 
     if not user:
-        log.error(f"Failed to get/create user for chat_id {chat_id}")
+        log.error(f"Failed to get/create user for user_id {user_id}")
         await message.answer("An error occurred. Please try again later.")
         return
 

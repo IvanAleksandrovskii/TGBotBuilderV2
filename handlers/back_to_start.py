@@ -19,17 +19,18 @@ async def back_to_start(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer("Главное меню")  # TODO: Move to config
 
     await state.clear()
-    chat_id = int(callback_query.from_user.id)
+    user_id = int(callback_query.from_user.id)
     username = callback_query.from_user.username
-    text, keyboard, media_url, _ = await get_start_content(chat_id, username)
+    text, keyboard, media_url, _ = await get_start_content(user_id, username)
     await send_or_edit_message(callback_query.message, text, keyboard, media_url)
 
 
 async def back_to_start_from_message(message: types.Message, state: FSMContext):
     await state.clear()
-    chat_id = int(message.chat.id)
+    # chat_id = int(message.chat.id)
+    user_id = int(message.from_user.id)
     username = message.from_user.username
-    text, keyboard, media_url, _ = await get_start_content(chat_id, username)
+    text, keyboard, media_url, _ = await get_start_content(user_id, username)
     try:
         await message.answer(text, reply_markup=keyboard, media=media_url)
     except Exception as e:

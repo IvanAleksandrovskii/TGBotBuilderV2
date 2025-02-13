@@ -15,7 +15,7 @@ class CustomFileSystemStorage(FileSystemStorage):
         self.allowed_extensions = allowed_extensions or []
         super().__init__(self.root_path)
 
-    # async def put(self, file: UploadFile) -> str:
+    # async def put(self, file: UploadFile) -> str:  # TODO: Implement or remove
     #     if not self._check_extension(file.filename):
     #         raise ValueError(f"File extension not allowed. Allowed extensions: {', '.join(self.allowed_extensions)}")
 

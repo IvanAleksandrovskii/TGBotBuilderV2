@@ -49,68 +49,68 @@ class PromoCodeService:
             finally:
                 await session.close()
 
-    @staticmethod
-    async def register_promo_usage(promocode: str, registered_user_id: UUID) -> bool:
-        """Records when a user registers using a promocode"""
-        async with db_helper.db_session() as session:
-            try:
-                # Find the promocode
-                result = await session.execute(
-                    select(Promocode).where(
-                        and_(Promocode.code == promocode, Promocode.is_active == True)
-                    )
-                )
-                promo = result.scalar_one_or_none()
-                if not promo:
-                    return False
+    # @staticmethod
+    # async def register_promo_usage(promocode: str, registered_user_id: UUID) -> bool:
+    #     """Records when a user registers using a promocode"""
+    #     async with db_helper.db_session() as session:
+    #         try:
+    #             # Find the promocode
+    #             result = await session.execute(
+    #                 select(Promocode).where(
+    #                     and_(Promocode.code == promocode, Promocode.is_active == True)
+    #                 )
+    #             )
+    #             promo = result.scalar_one_or_none()
+    #             if not promo:
+    #                 return False
                 
-                # TODO: Doublecheck for case of one or none violating situations
-                result = await session.execute(
-                    select(PromoRegistration)
-                    .where(PromoRegistration.registered_user_id == registered_user_id)
-                    )
+    #             # TODO: Double check for case of one or none violating situations
+    #             result = await session.execute(
+    #                 select(PromoRegistration)
+    #                 .where(PromoRegistration.registered_user_id == registered_user_id)
+    #                 )
                 
-                is_already_registered = result.scalar_one_or_none()
+    #             is_already_registered = result.scalar_one_or_none()
                 
-                if is_already_registered:
-                    return False
+    #             if is_already_registered:
+    #                 return False
                     
-                # Record the usage
-                registration = PromoRegistration(
-                    promocode_id=promo.id,
-                    registered_user_id=registered_user_id
-                )
-                session.add(registration)
-                await session.commit()
-                return True
-            except Exception as e:
-                log.exception(f"Error in register_promo_usage: {e}")
-                await session.rollback()
-                return False
+    #             # Record the usage
+    #             registration = PromoRegistration(
+    #                 promocode_id=promo.id,
+    #                 registered_user_id=registered_user_id
+    #             )
+    #             session.add(registration)
+    #             await session.commit()
+    #             return True
+    #         except Exception as e:
+    #             log.exception(f"Error in register_promo_usage: {e}")
+    #             await session.rollback()
+    #             return False
 
 
     # TODO: Not implemented
-    @staticmethod
-    async def get_registrations_count(promocode: str) -> int:
-        """Gets the number of registrations for a specific promocode"""
-        async for session in db_helper.session_getter():
-            try:
-                result = await session.execute(
-                    select(Promocode)
-                    .where(and_(Promocode.code == promocode, Promocode.is_active == True))
-                )
-                promo = result.scalar_one_or_none()
-                if not promo:
-                    return 0
+    # @staticmethod
+    # async def get_registrations_count(promocode: str) -> int:
+    #     """Gets the number of registrations for a specific promocode"""
+    #     async for session in db_helper.session_getter():
+    #         try:
+    #             result = await session.execute(
+    #                 select(Promocode)
+    #                 .where(and_(Promocode.code == promocode, Promocode.is_active == True))
+    #             )
+    #             promo = result.scalar_one_or_none()
+    #             if not promo:
+    #                 return 0
 
-                count = await session.execute(
-                    select(func.count())
-                    .select_from(PromoRegistration)
-                    .where(PromoRegistration.promocode_id == promo.id)
-                )
-                return count.scalar_one()
-            except Exception as e:
-                log.exception(f"Error in get_registrations_count: {e}")
-                return 0
-            finally:
-                await session.close()
+    #             count = await session.execute(
+    #                 select(func.count())
+    #                 .select_from(PromoRegistration)
+    #                 .where(PromoRegistration.promocode_id == promo.id)
+    #             )
+    #             return count.scalar_one()
+    #         except Exception as e:
+    #             log.exception(f"Error in get_registrations_count: {e}")
+    #             return 0
+    #         finally:
+    #             await session.close()

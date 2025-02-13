@@ -21,7 +21,7 @@ class ButtonService:
             log.exception(f"Error in get_buttons_by_marker: {e}")
             return []
 
-    @staticmethod
+    """@staticmethod  # TODO: Unimplemented
     async def get_button_by_id(button_id: str, session: AsyncSession) -> Button | None:
         try:
             result = await session.execute(
@@ -30,9 +30,9 @@ class ButtonService:
             return result.scalar_one_or_none()
         except Exception as e:
             log.exception(f"Error in get_button_by_id: {e}")
-            return None
+            return None"""
 
-    @staticmethod
+    @staticmethod  # TODO: Upgrade and implement it more
     async def create_inline_keyboard(context_marker: str, session: AsyncSession) -> InlineKeyboardMarkup:
         buttons = await ButtonService.get_buttons_by_marker(context_marker, session)
         

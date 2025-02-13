@@ -68,26 +68,26 @@ class FirstGreetingStates(StatesGroup):
     GREETING = State()
 
 
-async def get_start_content(chat_id: int, username: str | None):
+async def get_start_content(user_id: int, username: str | None):
     user_service = UserService()
     text_service = TextService()
     button_service = ButtonService()
     async for session in db_helper.session_getter():
         try:
-            user = await user_service.get_user(chat_id)
+            user = await user_service.get_user(user_id)
             is_new_user = False
             if not user:
-                user = await user_service.create_user(chat_id, username)
+                user = await user_service.create_user(user_id, username)
                 log.info(
                     "Created new user: %s, username: %s", user.chat_id, user.username
                 )
                 is_new_user = True
             elif user.username != username:
-                updated = await user_service.update_username(chat_id, username)
+                updated = await user_service.update_username(user_id, username)
                 if updated:
-                    log.info("Updated username for user %s to %s", chat_id, username)
+                    log.info("Updated username for user %s to %s", user_id, username)
                 else:
-                    log.warning("Failed to update username for user %s", chat_id)
+                    log.warning("Failed to update username for user %s", user_id)
 
             context_marker = (
                 "first_greeting"
@@ -143,7 +143,7 @@ async def get_start_content(chat_id: int, username: str | None):
                     if test.status == TestStatus.SENT:
                         test.status = TestStatus.DELIVERED
                         test.delivered_at = datetime.now()
-                        test.receiver_id = chat_id
+                        test.receiver_id = user_id
                 await session.commit()
 
             return formatted_text, keyboard, media_url, is_new_user or user.is_new_user
@@ -162,7 +162,10 @@ async def get_start_content(chat_id: int, username: str | None):
 async def start_command(message: types.Message, state: FSMContext):
     """Handler for /start command with promocode support"""
     args = message.text.split()[1:]
-    chat_id = int(message.chat.id)
+    
+    chat_id = int(message.chat.id)  
+    user_id = int(message.from_user.id)
+    
     username = message.from_user.username
     test_pack_id = args[0] if args else None
 
@@ -197,14 +200,14 @@ async def start_command(message: types.Message, state: FSMContext):
     user = await user_service.get_user(chat_id)
 
     if not user:
-        user = await user_service.create_user(chat_id, username)
+        user = await user_service.create_user(user_id, username)
         log.info("Created new user: %s, username: %s", user.chat_id, user.username)
     elif user.username != username:
-        updated = await user_service.update_username(chat_id, username)
+        updated = await user_service.update_username(user_id, username)
         if updated:
-            log.info("Updated username for user %s to %s", chat_id, username)
+            log.info("Updated username for user %s to %s", user_id, username)
         else:
-            log.warning("Failed to update username for user %s", chat_id)
+            log.warning("Failed to update username for user %s", user_id)
 
     # if not user.is_active:
     #     log.info("Blocked user pressed start command: %s", chat_id)
@@ -214,7 +217,7 @@ async def start_command(message: types.Message, state: FSMContext):
     # If user came to solve the pack
     if test_pack_id:
         log.info(
-            f"Start command received. Chat ID: {chat_id}, Username: {username}, Test pack ID: {test_pack_id}"
+            f"Start command received. Chat ID: {chat_id}, User ID: {user_id}, Username: {username}, Test pack ID: {test_pack_id}"
         )
         async with db_helper.db_session() as session:
             try:
@@ -281,10 +284,10 @@ async def start_command(message: types.Message, state: FSMContext):
         return
 
     # Get start content will create user if needed
-    text, keyboard, media_url, is_new_user = await get_start_content(chat_id, username)
+    text, keyboard, media_url, is_new_user = await get_start_content(user_id, username)
 
     if not user:
-        log.error(f"Failed to get/create user for chat_id {chat_id}")
+        log.error(f"Failed to get/create user for chat_id {user_id}")
         await message.answer("An error occurred. Please try again later.")
         return
 
@@ -303,13 +306,14 @@ async def end_first_greeting(callback_query: types.CallbackQuery, state: FSMCont
 
     await callback_query.answer("Главное меню")  # TODO: Move to config
 
-    chat_id = int(callback_query.from_user.id)
+    # chat_id = int(callback_query.from_user.id)
+    user_id = int(callback_query.from_user.id)
     username = callback_query.from_user.username
 
     user_service = UserService()
-    await user_service.mark_user_as_not_new(chat_id)
+    await user_service.mark_user_as_not_new(user_id)
 
-    text, keyboard, media_url, _ = await get_start_content(chat_id, username)
+    text, keyboard, media_url, _ = await get_start_content(user_id, username)
     await state.clear()
     await send_or_edit_message(callback_query, text, keyboard, media_url)
 
