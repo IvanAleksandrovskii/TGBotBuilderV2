@@ -8,6 +8,7 @@ from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from aiogram.types import InlineKeyboardMarkup
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,11 +69,11 @@ class FirstGreetingStates(StatesGroup):
     GREETING = State()
 
 
-async def get_start_content(user_id: int, username: str | None):
+async def get_start_content(user_id: int, username: str | None) -> tuple[str, InlineKeyboardMarkup | None, str | None, bool]:
     user_service = UserService()
     text_service = TextService()
     button_service = ButtonService()
-    async for session in db_helper.session_getter():
+    async with db_helper.db_session() as session:
         try:
             user = await user_service.get_user(user_id)
             is_new_user = False
@@ -151,8 +152,6 @@ async def get_start_content(user_id: int, username: str | None):
         except Exception as e:
             log.error("Error in get_start_content: %s", e)
             return settings.bot_main_page_text.user_error_message, None, None, False
-        finally:
-            await session.close()
 
 
 @router.message(Command("start"))

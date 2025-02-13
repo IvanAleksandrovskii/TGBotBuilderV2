@@ -32,7 +32,7 @@ async def back_to_start_from_message(message: types.Message, state: FSMContext):
     username = message.from_user.username
     text, keyboard, media_url, _ = await get_start_content(user_id, username)
     try:
-        await message.answer(text, reply_markup=keyboard, media=media_url)
+        await message.answer_photo(photo=media_url, caption=text, reply_markup=keyboard)
     except Exception as e:
         log.exception(e)
         await send_or_edit_message(message, text, keyboard, media_url)
