@@ -7,6 +7,7 @@ from handlers.utils import send_or_edit_message
 from handlers.on_start import get_start_content
 
 from services.decorators import handle_as_task, TaskPriority
+from core import log
 
 
 router = Router()
@@ -29,4 +30,8 @@ async def back_to_start_from_message(message: types.Message, state: FSMContext):
     chat_id = int(message.chat.id)
     username = message.from_user.username
     text, keyboard, media_url, _ = await get_start_content(chat_id, username)
-    await send_or_edit_message(message, text, keyboard, media_url)
+    try:
+        await message.answer(text, reply_markup=keyboard, media=media_url)
+    except Exception as e:
+        log.exception(e)
+        await send_or_edit_message(message, text, keyboard, media_url)
