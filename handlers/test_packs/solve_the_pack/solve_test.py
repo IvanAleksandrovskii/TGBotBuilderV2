@@ -18,10 +18,11 @@ from core.models import (
     CustomTest,
 )
 
-
+from core import settings
 from handlers.test_packs.solve_the_pack import SolveThePackStates
 from handlers.utils import send_or_edit_message, get_default_media
 from handlers.test_packs.solve_the_pack.solve_pack_menu import get_solve_test_menu
+
 
 router = Router()
 
@@ -113,6 +114,9 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                 custom_test_description = test.description
 
                 media = test.picture if test.picture else await get_default_media()
+                
+                if media and not media.startswith(("http://", "https://")):
+                    media = f"{settings.media.base_url}/app/{media}"
 
                 # jinja environment
                 env = Environment(
