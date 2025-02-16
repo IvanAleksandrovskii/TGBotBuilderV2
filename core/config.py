@@ -205,7 +205,7 @@ class AIChatConfig(BaseSettings):
 
 
 class QuizTexts(BaseModel):
-    quiz_back_to_start: str = "В главное меню"
+    quiz_back_to_start: str = "🏠 В главное меню"
     quiz_list_menu_button_for_end_quiz: str = "◀️ К списку тестов"
     psycological_menu_button_for_end_quiz: str = "◀️ К списку тестов"
     quizes_list_menu: str = "Выберите тест для прохождения: "  # will be used if no quiz_list text is provided
