@@ -4,6 +4,7 @@ from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from sqlalchemy import func, select
+from sqlalchemy.sql.expression import and_
 import random
 from collections import defaultdict
 
@@ -203,48 +204,253 @@ async def show_quizzes(callback_query: types.CallbackQuery, state: FSMContext):
 
 
 # @router.callback_query(lambda c: c.data and c.data.startswith("start_quiz_"))
+# async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
+#     await state.clear()
+#     quiz_id = callback_query.data.split("_")[-1]
+
+#     async with db_helper.db_session() as session:
+#         try:
+#             test = await session.execute(select(Test).where(Test.id == quiz_id))
+#             test = test.scalar_one_or_none()
+
+#             if not test:
+#                 await callback_query.answer(settings.quiz_text.quiz_not_found)
+#                 return
+
+#             user = await session.execute(
+#                 select(User).where(User.chat_id == callback_query.from_user.id)
+#             )
+#             user = user.scalar_one_or_none()
+
+#             if not user:
+#                 await callback_query.answer(settings.quiz_text.user_not_found)
+#                 return
+
+#             # Check if user's result already exists and pick the latest one
+#             latest_results = await session.execute(
+#                 select(QuizResult)
+#                 .where(QuizResult.user_id == user.id, QuizResult.test_id == test.id)
+#                 .order_by(QuizResult.created_at.desc())
+#                 .limit(1)
+#             )
+#             latest_result = latest_results.scalar_one_or_none()
+
+#             has_passed_test = False
+#             if not test.allow_play_again:
+#                 # Check if the user has already played the test
+#                 result_count = await session.execute(
+#                     select(func.count())
+#                     .select_from(QuizResult)
+#                     .where(QuizResult.user_id == user.id, QuizResult.test_id == test.id)
+#                 )
+#                 has_passed_test = result_count.scalar() > 0
+
+#             if test.is_psychological:
+#                 keyboard = types.InlineKeyboardMarkup(
+#                     inline_keyboard=[
+#                         [
+#                             types.InlineKeyboardButton(
+#                                 text=settings.quiz_text.psycological_menu_button_for_end_quiz,
+#                                 callback_data="show_psycho_tests",
+#                             )
+#                         ],
+#                     ]
+#                 )
+#             else:
+#                 keyboard = types.InlineKeyboardMarkup(
+#                     inline_keyboard=[
+#                         [
+#                             types.InlineKeyboardButton(
+#                                 text=settings.quiz_text.quiz_list_menu_button_for_end_quiz,
+#                                 callback_data="show_quizzes",
+#                             )
+#                         ],
+#                     ]
+#                 )
+
+#             if latest_result:
+
+#                 await state.update_data(latest_result=latest_result)
+#                 # await state.update_data(quiz_id=quiz_id)
+
+#                 keyboard.inline_keyboard.append(
+#                     [
+#                         types.InlineKeyboardButton(
+#                             text="💾 Посмотреть результат",
+#                             callback_data="check_existing_test_result",
+#                         )
+#                     ]
+#                 )
+
+#             keyboard.inline_keyboard.append(
+#                 [
+#                     types.InlineKeyboardButton(
+#                         text=settings.quiz_text.quiz_back_to_start,
+#                         callback_data="back_to_start",
+#                     )
+#                 ]
+#             )
+
+#             # TODO: Add old result check if has passed the test and the result exists
+
+#             if not has_passed_test:
+#                 keyboard.inline_keyboard.insert(
+#                     0,
+#                     [
+#                         types.InlineKeyboardButton(
+#                             text=settings.quiz_text.quiz_start_approve,
+#                             callback_data=f"confirm_start_{quiz_id}",
+#                         )
+#                     ],
+#                 )
+
+#             text_service = TextService()
+#             media_url = (
+#                 test.picture
+#                 if test.picture
+#                 else await text_service.get_default_media(session)
+#             )
+#             if media_url and not media_url.startswith(("http://", "https://")):
+#                 media_url = f"{settings.media.base_url}/app/{media_url}"
+
+#             log.info("Generated media URL: %s", media_url)
+
+#             description = f"<b>{test.name}</b>\n\n"
+#             if has_passed_test:
+#                 description += settings.quiz_text.forbidden_to_play_again_quiz_text
+
+#             if not has_passed_test:
+#                 description += test.description.replace("\\n", "\n")
+
+#             await send_or_edit_message(
+#                 callback_query.message, description, keyboard, media_url
+#             )
+
+#             if not has_passed_test:
+#                 await state.set_state(QuizStates.CONFIRMING)
+#                 await state.update_data(quiz_id=quiz_id)
+#             else:
+#                 await state.clear()
+
+#         except Exception as e:
+#             log.exception(e)
+
+
 async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()
     quiz_id = callback_query.data.split("_")[-1]
+    tg_user_id = callback_query.from_user.id
 
     async with db_helper.db_session() as session:
         try:
-            test = await session.execute(select(Test).where(Test.id == quiz_id))
-            test = test.scalar_one_or_none()
+            # Подзапрос на последний QuizResult для конкретного теста
+            latest_result_subquery = (
+                select(
+                    QuizResult.id.label("lr_id"),
+                    QuizResult.user_id.label("lr_user_id"),
+                    QuizResult.test_id.label("lr_test_id"),
+                    QuizResult.is_psychological.label("lr_is_psychological"),
+                    QuizResult.category_id.label("lr_category_id"),
+                    QuizResult.score.label("lr_score"),
+                    QuizResult.result_text.label("lr_result_text"),
+                    QuizResult.is_active.label("lr_is_active"),
+                    QuizResult.updated_at.label("lr_updated_at"),
+                    QuizResult.created_at.label("lr_created_at"),
+                )
+                .where(
+                    and_(
+                        QuizResult.user_id == User.id,
+                        QuizResult.test_id
+                        == quiz_id,  # Теперь фильтруем по конкретному тесту
+                    )
+                )
+                .order_by(QuizResult.created_at.desc())
+                .limit(1)
+            ).subquery("latest_result")
 
-            if not test:
+            # Подзапрос на количество результатов для конкретного теста
+            result_count_subquery = (
+                select(func.count().label("count"))
+                .select_from(QuizResult)
+                .where(
+                    and_(
+                        QuizResult.user_id == User.id,
+                        QuizResult.test_id == quiz_id,  # Фильтруем по конкретному тесту
+                    )
+                )
+            ).scalar_subquery()
+
+            # Основной запрос
+            query = (
+                select(
+                    Test.id.label("test_id"),
+                    Test.name.label("test_name"),
+                    Test.description.label("test_description"),
+                    Test.picture.label("test_picture"),
+                    Test.is_psychological.label("test_is_psychological"),
+                    Test.allow_play_again.label("test_allow_play_again"),
+                    User.id.label("user_id"),
+                    latest_result_subquery.c.lr_id,
+                    latest_result_subquery.c.lr_is_psychological,
+                    latest_result_subquery.c.lr_category_id,
+                    latest_result_subquery.c.lr_score,
+                    latest_result_subquery.c.lr_result_text,
+                    latest_result_subquery.c.lr_is_active,
+                    latest_result_subquery.c.lr_updated_at,
+                    latest_result_subquery.c.lr_created_at,
+                    result_count_subquery.label("result_count"),
+                )
+                .select_from(Test)
+                .join(User, User.chat_id == tg_user_id, isouter=True)
+                .outerjoin(
+                    latest_result_subquery,
+                    User.id == latest_result_subquery.c.lr_user_id,
+                )
+                .where(Test.id == quiz_id)
+            )
+
+            # Выполняем запрос и получаем результат
+            result = await session.execute(query)
+            row = result.mappings().first()
+
+            if not row:
                 await callback_query.answer(settings.quiz_text.quiz_not_found)
                 return
 
-            user = await session.execute(
-                select(User).where(User.chat_id == callback_query.from_user.id)
-            )
-            user = user.scalar_one_or_none()
+            test_data = {
+                "id": row["test_id"],
+                "name": row["test_name"],
+                "description": row["test_description"],
+                "picture": row["test_picture"],
+                "is_psychological": row["test_is_psychological"],
+                "allow_play_again": row["test_allow_play_again"],
+            }
 
-            if not user:
+            db_user_id = row["user_id"]
+            result_count = row["result_count"] or 0
+
+            latest_result = None
+            if row["lr_id"] is not None:
+                latest_result = {
+                    "id": row["lr_id"],
+                    "is_psychological": row["lr_is_psychological"],
+                    "category_id": row["lr_category_id"],
+                    "score": row["lr_score"],
+                    "result_text": row["lr_result_text"],
+                    "is_active": row["lr_is_active"],
+                    "updated_at": row["lr_updated_at"],
+                    "created_at": row["lr_created_at"],
+                }
+
+            if not db_user_id:
                 await callback_query.answer(settings.quiz_text.user_not_found)
                 return
 
-            # Check if user's result already exists and pick the latest one
-            latest_results = await session.execute(
-                select(QuizResult)
-                .where(QuizResult.user_id == user.id, QuizResult.test_id == test.id)
-                .order_by(QuizResult.created_at.desc())
-                .limit(1)
-            )
-            latest_result = latest_results.scalar_one_or_none()
-
             has_passed_test = False
-            if not test.allow_play_again:
-                # Check if the user has already played the test
-                result_count = await session.execute(
-                    select(func.count())
-                    .select_from(QuizResult)
-                    .where(QuizResult.user_id == user.id, QuizResult.test_id == test.id)
-                )
-                has_passed_test = result_count.scalar() > 0
+            if not test_data["allow_play_again"]:
+                has_passed_test = result_count > 0
 
-            if test.is_psychological:
+            if test_data["is_psychological"]:
                 keyboard = types.InlineKeyboardMarkup(
                     inline_keyboard=[
                         [
@@ -268,10 +474,7 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
                 )
 
             if latest_result:
-
                 await state.update_data(latest_result=latest_result)
-                # await state.update_data(quiz_id=quiz_id)
-
                 keyboard.inline_keyboard.append(
                     [
                         types.InlineKeyboardButton(
@@ -290,8 +493,6 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
                 ]
             )
 
-            # TODO: Add old result check if has passed the test and the result exists
-
             if not has_passed_test:
                 keyboard.inline_keyboard.insert(
                     0,
@@ -305,8 +506,8 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
 
             text_service = TextService()
             media_url = (
-                test.picture
-                if test.picture
+                test_data["picture"]
+                if test_data["picture"]
                 else await text_service.get_default_media(session)
             )
             if media_url and not media_url.startswith(("http://", "https://")):
@@ -314,12 +515,11 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
 
             log.info("Generated media URL: %s", media_url)
 
-            description = f"<b>{test.name}</b>\n\n"
+            description = f"<b>{test_data['name']}</b>\n\n"
             if has_passed_test:
                 description += settings.quiz_text.forbidden_to_play_again_quiz_text
-
-            if not has_passed_test:
-                description += test.description.replace("\\n", "\n")
+            else:
+                description += test_data["description"].replace("\\n", "\n")
 
             await send_or_edit_message(
                 callback_query.message, description, keyboard, media_url
@@ -347,7 +547,7 @@ async def check_existing_test_result(
     # media_url = None  # TODO: Add media
 
     text = "Ваш результат:\n\n"
-    text += latest_result.result_text
+    text += latest_result["result_text"]
 
     keyboard = types.InlineKeyboardMarkup(
         inline_keyboard=[
@@ -371,7 +571,7 @@ async def check_existing_test_result(
 async def destroy_latest_result_message(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
-    await callback_query.answer("Очистка последнего сообщения...")
+    await callback_query.answer("Очистка сообщения...")
     await callback_query.message.delete()
 
 
