@@ -35,7 +35,7 @@ class PassTestMenuStates(StatesGroup):
 async def back_to_solve_test_menu(
     callback_query: types.CallbackQuery, state: FSMContext
 ):
-    await callback_query.answer("Назад к менюу")  # TODO: Move to config
+    await callback_query.answer("Назад к меню")  # TODO: Move to config
     data = await state.get_data()
     test_pack_completion_id = data.get("test_pack_completion_id")
     await state.set_state(SolveThePackStates.SOLVING)
@@ -55,6 +55,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
             "тестов снова используя ссылку по которой вы начали ранее, чтобы продолжить прохождение."
         )
         from handlers.back_to_start import back_to_start
+
         await back_to_start(callback_query, state)
         return
 
@@ -67,8 +68,6 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
     # Get the test ID from the callback data
     parts = callback_query.data.split("_")
     test_id = parts[-1]
-
-    default_media = await get_default_media()
 
     await state.set_state(PassTestMenuStates.STARTING)
     await state.update_data(test_pack_completion_id=test_pack_completion_id)
@@ -102,7 +101,9 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                 test = await session.execute(test_query)
                 test = test.scalar_one_or_none()
 
-                if not test:  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!! 
+                if (
+                    not test
+                ):  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
                     await callback_query.message.answer(
                         f"Test with id {test_id} not found"
                     )
@@ -110,6 +111,8 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
 
                 test_name = test.name
                 custom_test_description = test.description
+
+                media = test.picture if test.picture else await get_default_media()
 
                 # jinja environment
                 env = Environment(
@@ -125,7 +128,7 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                         test_name=test_name, test_description=custom_test_description
                     ),
                     types.InlineKeyboardMarkup(inline_keyboard=keyboard),
-                    default_media,
+                    media,
                 )
 
             except Exception as e:
@@ -145,7 +148,9 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                 custom_test = await session.execute(custom_test_query)
                 custom_test = custom_test.scalar_one_or_none()
 
-                if not custom_test:  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
+                if (
+                    not custom_test
+                ):  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
                     await callback_query.message.answer(
                         f"Custom test with id {test_id} not found"
                     )
@@ -161,6 +166,8 @@ async def solve_test(callback_query: types.CallbackQuery, state: FSMContext):
                     )
                 )
                 template = env.get_template("confirm_start_test.html")
+
+                default_media = await get_default_media()
 
                 await send_or_edit_message(
                     callback_query.message,
@@ -212,7 +219,10 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
                 from handlers.test_packs.solve_the_test.inside_the_psychological_test import (
                     confirm_start_test,
                 )
-                await confirm_start_test(callback_query, state, test_id)  # TODO: Check (( ! ))  # TODO: !!! Need to make the scenario error for the missing test
+
+                await confirm_start_test(
+                    callback_query, state, test_id
+                )  # TODO: Check (( ! ))  # TODO: !!! Need to make the scenario error for the missing test
                 return
 
             elif test_type == "custom":
@@ -220,7 +230,9 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
                 custom_test = await session.execute(custom_test_query)
                 custom_test = custom_test.scalar_one_or_none()
 
-                if not custom_test:  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
+                if (
+                    not custom_test
+                ):  # TODO: Write this scenario  # TODO: Check (( ! ))  # TODO: !!!
                     await callback_query.message.answer(
                         f"Custom test with id {test_id} not found"
                     )
@@ -231,14 +243,14 @@ async def start_test(callback_query: types.CallbackQuery, state: FSMContext):
                 await inside_the_custom_test(callback_query, state)
 
             else:
-                await callback_query.message.answer("Произошла ошибка. Попробуйте позже.")
+                await callback_query.message.answer(
+                    "Произошла ошибка. Попробуйте позже."
+                )
                 return
 
         except Exception as e:
             log.exception(f"Error in start_test: {e}")
-            await callback_query.message.answer(
-                "Произошла ошибка. Попробуйте позже."
-            )
+            await callback_query.message.answer("Произошла ошибка. Попробуйте позже.")
             await state.clear()
             await state.set_state(SolveThePackStates.SOLVING)
             await state.update_data(test_pack_completion_id=test_pack_completion_id)
