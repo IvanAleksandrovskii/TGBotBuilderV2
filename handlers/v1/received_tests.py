@@ -18,7 +18,7 @@ from services.user_services import UserService
 
 from ..back_to_start import back_to_start
 from ..utils import send_or_edit_message
-from .quiz import get_sorted_questions
+from ..quiz import get_sorted_questions
 
 
 router = Router()
