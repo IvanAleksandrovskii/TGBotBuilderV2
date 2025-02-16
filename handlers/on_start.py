@@ -120,32 +120,32 @@ async def get_start_content(user_id: int, username: str | None) -> tuple[str, In
                 media_url = await text_service.get_default_media(session)
 
             # Check for undelivered tests
-            undelivered_tests = await session.execute(
-                select(SentTest).where(
-                    SentTest.receiver_username == username,
-                    SentTest.status.in_([TestStatus.SENT, TestStatus.DELIVERED]),
-                )
-            )
-            undelivered_tests = undelivered_tests.scalars().all()
+            # undelivered_tests = await session.execute(
+            #     select(SentTest).where(
+            #         SentTest.receiver_username == username,
+            #         SentTest.status.in_([TestStatus.SENT, TestStatus.DELIVERED]),
+            #     )
+            # )
+            # undelivered_tests = undelivered_tests.scalars().all()
 
-            if undelivered_tests:
-                new_keyboard = keyboard.inline_keyboard + [
-                    [
-                        types.InlineKeyboardButton(
-                            text=settings.on_start_text.start_recived_tests_button,
-                            callback_data="view_received_tests",
-                        )
-                    ]
-                ]
-                keyboard = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+            # if undelivered_tests:
+            #     new_keyboard = keyboard.inline_keyboard + [
+            #         [
+            #             types.InlineKeyboardButton(
+            #                 text=settings.on_start_text.start_recived_tests_button,
+            #                 callback_data="view_received_tests",
+            #             )
+            #         ]
+            #     ]
+            #     keyboard = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
 
                 # Notify senders
-                for test in undelivered_tests:
-                    if test.status == TestStatus.SENT:
-                        test.status = TestStatus.DELIVERED
-                        test.delivered_at = datetime.now()
-                        test.receiver_id = user_id
-                await session.commit()
+                # for test in undelivered_tests:
+                #     if test.status == TestStatus.SENT:
+                #         test.status = TestStatus.DELIVERED
+                #         test.delivered_at = datetime.now()
+                #         test.receiver_id = user_id
+                # await session.commit()
 
             return formatted_text, keyboard, media_url, is_new_user or user.is_new_user
 
