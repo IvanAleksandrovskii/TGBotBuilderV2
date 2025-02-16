@@ -225,6 +225,15 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
                 await callback_query.answer(settings.quiz_text.user_not_found)
                 return
 
+            # Check if user's result already exists and pick the latest one
+            latest_results = await session.execute(
+                select(QuizResult)
+                .where(QuizResult.user_id == user.id, QuizResult.test_id == test.id)
+                .order_by(QuizResult.created_at.desc())
+                .limit(1)
+            )
+            latest_result = latest_results.scalar_one_or_none()
+
             has_passed_test = False
             if not test.allow_play_again:
                 # Check if the user has already played the test
@@ -244,12 +253,6 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
                                 callback_data="show_psycho_tests",
                             )
                         ],
-                        [
-                            types.InlineKeyboardButton(
-                                text=settings.quiz_text.quiz_back_to_start,
-                                callback_data="back_to_start",
-                            )
-                        ],
                     ]
                 )
             else:
@@ -261,14 +264,31 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
                                 callback_data="show_quizzes",
                             )
                         ],
-                        [
-                            types.InlineKeyboardButton(
-                                text=settings.quiz_text.quiz_back_to_start,
-                                callback_data="back_to_start",
-                            )
-                        ],
                     ]
                 )
+
+            if latest_result:
+
+                await state.update_data(latest_result=latest_result)
+                # await state.update_data(quiz_id=quiz_id)
+
+                keyboard.inline_keyboard.append(
+                    [
+                        types.InlineKeyboardButton(
+                            text="💾 Посмотреть результат",
+                            callback_data="check_existing_test_result",
+                        )
+                    ]
+                )
+
+            keyboard.inline_keyboard.append(
+                [
+                    types.InlineKeyboardButton(
+                        text=settings.quiz_text.quiz_back_to_start,
+                        callback_data="back_to_start",
+                    )
+                ]
+            )
 
             # TODO: Add old result check if has passed the test and the result exists
 
@@ -313,6 +333,46 @@ async def start_quiz(callback_query: types.CallbackQuery, state: FSMContext):
 
         except Exception as e:
             log.exception(e)
+
+
+@router.callback_query(F.data == "check_existing_test_result")
+async def check_existing_test_result(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
+    await callback_query.answer()
+    data = await state.get_data()
+    latest_result = data["latest_result"]
+    # quiz_id = data["quiz_id"]
+
+    # media_url = None  # TODO: Add media
+
+    text = "Ваш результат:\n\n"
+    text += latest_result.result_text
+
+    keyboard = types.InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                types.InlineKeyboardButton(
+                    text="⬅️ Назад к тесту",
+                    callback_data="destroy_latest_result_message",
+                ),
+                types.InlineKeyboardButton(
+                    text="🏠 Назад в меню",
+                    callback_data="back_to_start",
+                ),
+            ],
+        ]
+    )
+
+    await callback_query.message.answer(text, reply_markup=keyboard)
+
+
+@router.callback_query(F.data == "destroy_latest_result_message")
+async def destroy_latest_result_message(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
+    await callback_query.answer("Очистка последнего сообщения...")
+    await callback_query.message.delete()
 
 
 async def get_sorted_questions(session, test_id):
@@ -447,9 +507,7 @@ async def send_question(
 
                 intro_text = question_data["intro_text"].replace("\\n", "\n")
 
-                await send_or_edit_message(
-                    message, intro_text, keyboard, media_url
-                )
+                await send_or_edit_message(message, intro_text, keyboard, media_url)
 
                 data["intro_shown"] = True
                 await state.update_data(data)
@@ -505,9 +563,7 @@ async def send_question(
                 + f"{len(sorted_questions)}:\n\n{question.question_text.replace('\\n', '\n')}"
             )
 
-            await send_or_edit_message(
-                message, question_text, reply_markup, media_url
-            )
+            await send_or_edit_message(message, question_text, reply_markup, media_url)
 
             data["intro_shown"] = False  # Drop the flag for the next question
             await state.update_data(data)
@@ -806,9 +862,7 @@ async def finish_quiz(message: types.Message, state: FSMContext):
             if media_url and not media_url.startswith(("http://", "https://")):
                 media_url = f"{settings.media.base_url}/app/{media_url}"
 
-            await send_or_edit_message(
-                message, result_message, keyboard, media_url
-            )
+            await send_or_edit_message(message, result_message, keyboard, media_url)
 
         except Exception as e:
             log.exception(e)
